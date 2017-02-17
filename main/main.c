@@ -3,11 +3,7 @@
 //
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "control_packet.h"
-
-#define WELCOME "WELCOME to the thing or somthing"
 
 int main() {
     int number = 12;
