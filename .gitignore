@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 cmake-build-debug/
 *.cmake
 .idea/
@@ -52,5 +53,5 @@ cmake-build-debug/
 modules.order
 Module.symvers
 Mkfile.old
+dkms.conf
 
-dkms.conf.idea/
