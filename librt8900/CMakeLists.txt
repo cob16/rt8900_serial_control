@@ -1,12 +1,16 @@
+project(${CMAKE_PROJECT_NAME} C)
+
 set(librt8900_SRCS
     control_packet.h
     control_packet.c
-        serial.c packet.c packet.h)
+        packet.c packet.h)
 
 # Declare the library
 add_library(librt8900 STATIC
     ${librt8900_SRCS}
 )
+
+
 
 # Specify here the include directories exported
 # by this library
