@@ -11,9 +11,15 @@
 
 #define MILLISECONDS_BETWEEN_PACKETS 3
 
-int *example_function(int *n);
+#define DEFAULT_VOLUME 0x1f //25% volume
 
-void set_to_3(int *n);
+enum menu_buttons_values { //TODO This assumes that a 1 bit is the pressed postion WARNING: check this assumption
+    NOT_PRESSED      = 0x00,
+    WIRES_BUTTON     = 0x08,
+    SET_BUTTON       = 0x10,
+    L_ENCODER_BUTTON = 0x20,
+    R_ENCODER_BUTTON = 0x40,
+};
 
 //To make a new CONTROL_PACKET please use "CONTROL_PACKET mypacket = control_packet_defaults"
 //struct is in the order the packet requires
@@ -33,9 +39,6 @@ typedef struct {
     PACKET_BYTE hyper_mem_buttons; //hyper memory buttons
 } CONTROL_PACKET;
 
-#define DEFAULT_VOLUME 0x1f //25% volume
-
-
 /// recommended defaults for the controll packet
 const CONTROL_PACKET control_packet_defaults = {
         /*There are manny defaults that are 0 so we leave them as "{}"
@@ -52,11 +55,12 @@ const CONTROL_PACKET control_packet_defaults = {
         {.section = {.data = DATA_MAX_NUM   }}, // keypad_input_column  | full is no buttons being pressed TODO: verify if 0 or 127 is standard behavior
         {.section = {.data = DATA_MAX_NUM   }}, // panel_buttons_right  | full is no buttons being pressed
         {.section = {.data = DATA_MAX_NUM   }}, // panel_buttons_left   | full is no buttons being pressed
-        {},                                     // menu_buttons         |
+        {.section = {.data = NOT_PRESSED    }}, // menu_buttons         |
         {},                                     // hyper_mem_buttons    |
 };
 
 #pragma pack(1) //as we don't want space between our bits
+///used to get the struct as an array
 typedef union {
     CONTROL_PACKET as_struct;
     PACKET_BYTE as_array[13];
