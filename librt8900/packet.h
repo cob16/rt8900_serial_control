@@ -23,7 +23,7 @@ enum common_7bit_data_values {
 
 #pragma pack(1) //as we don't want space between our bits
 typedef struct {
-    unsigned int data: 7;  // 6 more bits of the byte
+    unsigned int data: 7;  // 7 more bits of the byte
     unsigned int check_num: 1;  // the last bit int he byte (1st in packet is 1 else 0)
 } FT8900BYTE;
 

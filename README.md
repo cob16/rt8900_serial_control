@@ -17,6 +17,9 @@ make
 sudo apt install check
 cmake .
 make test
+
+#for verbose output
+./test/test_librt8900/test_librt8900
 ```
 
 ##Credits

@@ -29,24 +29,31 @@ typedef struct {
     PACKET_BYTE keypad_input_column;
     PACKET_BYTE panel_buttons_right; // (via voltage divider)
     PACKET_BYTE panel_buttons_left;  // (via voltage divider)
-
+    PACKET_BYTE menu; // L/R encoder, set, and wires buttons
+    PACKET_BYTE hyper_memory; //hyper memory buttons
 } CONTROL_PACKET;
 
-#define DEFAULT_VOLUME 0x3f
-
-//const PACKET_BYTE encoder_right = {.section={.data=DATA_MIN_NUM, .check_num=SBO}};
+#define DEFAULT_VOLUME 0x1f //25% volume
 
 
-//there are manny defaults that are 0 that we leave to be initialised as 0
+/// recommended defaults for the controll packet
 const CONTROL_PACKET control_packet_defaults = {
-        .encoder_right        = {.section = {.data = DATA_MIN_NUM, .check_num=SBO}},
-        .ptt                  = {.section = {.data= DATA_MAX_NUM    }}, // off
-        .volume_control_right = {.section = {.data = DEFAULT_VOLUME }}, // 50% volume
-        .keypad_input_row     = {.section = {.data = DATA_MAX_NUM   }}, // no buttons being pressed TODO: verify if 0 or 127 is standard behavior
-        .volume_control_left  = {.section = {.data = DEFAULT_VOLUME }}, // 50% volume
-        .keypad_input_column  = {.section = {.data = DATA_MAX_NUM   }}, // no buttons being pressed TODO: verify if 0 or 127 is standard behavior
-        .panel_buttons_right  = {.section = {.data = DATA_MAX_NUM   }}, // no buttons being pressed
-        .panel_buttons_left   = {.section = {.data = DATA_MAX_NUM   }}, // no buttons being pressed
+        /*There are manny defaults that are 0 so we leave them as "{}"
+        The elements are not addressed by name for c++ compatibility so we can test*/
+
+        {.section = {.data = DATA_MIN_NUM, .check_num=SBO}}, //encoder_right | 0 turns
+        {},                                     //encoder_left          | 0 turns
+        {.section = {.data= DATA_MAX_NUM    }}, // ptt                  | set to high (off)
+        {},                                     //squelch_right         | 0%
+        {.section = {.data = DEFAULT_VOLUME }}, // volume_control_right | set to 25% volume
+        {.section = {.data = DATA_MAX_NUM   }}, // keypad_input_row     | no buttons being pressed TODO: verify if 0 or 127 is standard behavior
+        {},                                     // squelch_left         | 0%
+        {.section = {.data = DEFAULT_VOLUME }}, // volume_control_left  | set to 25% volume
+        {.section = {.data = DATA_MAX_NUM   }}, // keypad_input_column  | full is no buttons being pressed TODO: verify if 0 or 127 is standard behavior
+        {.section = {.data = DATA_MAX_NUM   }}, // panel_buttons_right  | full is no buttons being pressed
+        {.section = {.data = DATA_MAX_NUM   }}, // panel_buttons_left   | full is no buttons being pressed
+        {},                                     // menu buttons         |
+        {},                                     // squelch_left         |
 };
 
 #pragma pack(1) //as we don't want space between our bits
