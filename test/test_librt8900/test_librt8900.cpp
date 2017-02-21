@@ -30,19 +30,19 @@ TEST(ControlPacketTest, CONTROL_PACKET) {
         CONTROL_PACKET_INDEXED packet_arr = {.as_struct = test_packet};
 
         char controll_packet_expected_output[13] = {
-                0x80,
-                0x00,
-                0x7f,
-                0x00,
-                0x1f,
-                0x7f,
-                0x00,
-                0x00,
-                0x7f,
-                0x7f,
-                0x7f,
-                0x00,
-                0x00
+                0x80, //encoder_right
+                0x00, //encoder_left
+                0x7f, //ptt
+                0x00, //squelch_right
+                0x1f, //volume_control_right
+                0x7f, //keypad_input_row
+                0x00, //squelch_left
+                0x1f, //volume_control_left
+                0x7f, //keypad_input_column
+                0x7f, //panel_buttons_right
+                0x7f, //panel_buttons_left
+                0x00, //menu
+                0x00  //hyper_memory
         };
 
         //test to see we have the same array size
