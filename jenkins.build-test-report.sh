@@ -25,7 +25,7 @@ cat << EndOfMessage
 #####################
 EndOfMessage
 cd test/test_librt8900
-./test_librt8900 --gtest_output=xml:gtestresults.xml
+./test_librt8900 --gtest_color=yes --gtest_output=xml:gtestresults.xml
 
 
 ##then point jenkins run "sh -x $WORKSPACE/jenkins.build-test-report.sh"
