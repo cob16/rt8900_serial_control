@@ -29,8 +29,8 @@ typedef struct {
     PACKET_BYTE keypad_input_column;
     PACKET_BYTE panel_buttons_right; // (via voltage divider)
     PACKET_BYTE panel_buttons_left;  // (via voltage divider)
-    PACKET_BYTE menu; // L/R encoder, set, and wires buttons
-    PACKET_BYTE hyper_memory; //hyper memory buttons
+    PACKET_BYTE menu_buttons; // L/R encoder, set, and wires buttons
+    PACKET_BYTE hyper_mem_buttons; //hyper memory buttons
 } CONTROL_PACKET;
 
 #define DEFAULT_VOLUME 0x1f //25% volume
@@ -52,8 +52,8 @@ const CONTROL_PACKET control_packet_defaults = {
         {.section = {.data = DATA_MAX_NUM   }}, // keypad_input_column  | full is no buttons being pressed TODO: verify if 0 or 127 is standard behavior
         {.section = {.data = DATA_MAX_NUM   }}, // panel_buttons_right  | full is no buttons being pressed
         {.section = {.data = DATA_MAX_NUM   }}, // panel_buttons_left   | full is no buttons being pressed
-        {},                                     // menu buttons         |
-        {},                                     // squelch_left         |
+        {},                                     // menu_buttons         |
+        {},                                     // hyper_mem_buttons    |
 };
 
 #pragma pack(1) //as we don't want space between our bits

@@ -41,8 +41,8 @@ TEST(ControlPacketTest, CONTROL_PACKET) {
                 0x7f, //keypad_input_column
                 0x7f, //panel_buttons_right
                 0x7f, //panel_buttons_left
-                0x00, //menu
-                0x00  //hyper_memory
+                0x00, //menu_buttons
+                0x00  //hyper_mem_buttons
         };
 
         //test to see we have the same array size
