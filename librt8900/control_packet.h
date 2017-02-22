@@ -5,8 +5,7 @@
 #ifndef RT8900_SERIAL_CONTROLL_FOO_H
 #define RT8900_SERIAL_CONTROLL_FOO_H
 
-#endif //RT8900_SERIAL_CONTROLL_FOO_H
-
+#include <stdbool.h>
 #include "packet.h"
 
 #define MILLISECONDS_BETWEEN_PACKETS 3
@@ -65,3 +64,15 @@ typedef union {
     CONTROL_PACKET as_struct;
     PACKET_BYTE as_array[13];
 } CONTROL_PACKET_INDEXED;
+
+CONTROL_PACKET * make_packet();
+
+typedef struct {
+    CONTROL_PACKET** packet_pp; // we use a pointer pointer so we can update the pointer latter
+    bool keep_alive;
+} CONFIG;
+
+CONFIG make_config(CONTROL_PACKET *packet);
+void send_new_packet(CONFIG *config, CONTROL_PACKET *new_packet);
+
+#endif //RT8900_SERIAL_CONTROLL_FOO_H
