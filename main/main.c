@@ -12,6 +12,47 @@
 #include <control_packet.h>
 
 #include "control_packet.c"
+#include "serial.c"
+
+//refrence taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
+const char *argp_program_version = "0.0.1";
+const char *argp_program_bug_address = "<cormac.brady@hotmai.co.uk>";
+static char doc[] = "Provides serial control for the YAESU FT-8900R Transceiver.";
+static char args_doc[] = "<serial port path>";
+
+static struct argp_option options[] = {
+        { 0 }
+};
+
+///Parse options
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
+{
+        /* Get the input argument from argp_parse, which we
+           know is a pointer to our arguments structure. */
+        SERIAL_CFG *cfg = state->input;
+
+        switch (key)
+        {
+                case ARGP_KEY_ARG:
+                        if (state->arg_num >= 1)
+                                /* Too many arguments. */
+                                argp_usage (state);
+
+                        cfg->serial_path = arg;
+                        break;
+
+                case ARGP_KEY_END:
+                        if (state->arg_num < 1)
+                                /* Not enough arguments. */
+                                argp_usage (state);
+                        break;
+
+                default:
+                        return ARGP_ERR_UNKNOWN;
+        }
+        return 0;
+}
+static struct argp argp = { options, parse_opt, args_doc, doc };
 
 void print_char(char byte)
 {
@@ -68,19 +109,21 @@ void* start_send_packet(void* c)
         printf("-- ENDING CONTROL PACKET THREAD\n");
 }
 
-int main() {
+int main(int argc, char **argv)
+{
+        SERIAL_CFG c = {
+                .keep_alive = true,
+        };
+
+        argp_parse (&argp, argc, argv, 0, 0, &c);
+
         pthread_t packet_send_thread;
 
         CONTROL_PACKET *packet = malloc(sizeof(CONTROL_PACKET));
         memcpy(packet,&control_packet_defaults,sizeof(CONTROL_PACKET));
 
         CONTROL_PACKET **packet_ptr_ptr = &packet;
-
-        SERIAL_CFG c = {
-                .packet = packet_ptr_ptr,
-                .keep_alive = true,
-                .port = "/dev/ttyUSB0",
-        };
+        c.packet = packet_ptr_ptr;
 
         //cast our pointer pointer to void pointer for thred creation
         pthread_create(&packet_send_thread, NULL, start_send_packet, &c);
