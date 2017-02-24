@@ -5,8 +5,6 @@
 #ifndef RT8900_SERIAL_CONTROLL_PACKET_H
 #define RT8900_SERIAL_CONTROLL_PACKET_H
 
-#endif //RT8900_SERIAL_CONTROLL_PACKET_H
-
 #define NUM_DATA_BITS 8
 #define NUM_STOP_BITS 1
 #define NUM_PARITY_BITS 0
@@ -21,7 +19,7 @@ enum common_7bit_data_values {
     DATA_MIN_NUM = 0X00
 };
 
-#pragma pack(1) //as we don't want space between our bits
+#pragma pack(1) //as we don't want space between our bits here
 typedef struct {
     unsigned int data: 7;  // 7 more bits of the byte
     unsigned int check_num: 1;  // the last bit int he byte (1st in packet is 1 else 0)
@@ -31,3 +29,6 @@ typedef union {
     FT8900BYTE section;
     char raw;
 } PACKET_BYTE;
+#pragma pack() //undo this once we are done (IF THIS LINE IS REMOVED LIBS WILL STOP WORKING FOR YOU SUDDENLY)
+
+#endif //RT8900_SERIAL_CONTROLL_PACKET_H
