@@ -5,7 +5,6 @@
 #ifndef RT8900_SERIAL_CONTROLL_FOO_H
 #define RT8900_SERIAL_CONTROLL_FOO_H
 
-#include <stdbool.h>
 #include "packet.h"
 
 #define MILLISECONDS_BETWEEN_PACKETS 3
@@ -58,21 +57,10 @@ const CONTROL_PACKET control_packet_defaults = {
         {},                                     // hyper_mem_buttons    |
 };
 
-#pragma pack(1) //as we don't want space between our bits
-///used to get the struct as an array
+/// used to get the struct as an array
 typedef union {
     CONTROL_PACKET as_struct;
     PACKET_BYTE as_array[13];
 } CONTROL_PACKET_INDEXED;
-
-CONTROL_PACKET * make_packet();
-
-typedef struct {
-    CONTROL_PACKET **packet;
-    bool keep_alive;
-    char* port;
-}SERIAL_CFG;
-
-void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet);
 
 #endif //RT8900_SERIAL_CONTROLL_FOO_H

@@ -1,6 +1,5 @@
 #include "control_packet.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,19 +19,3 @@ CONTROL_PACKET * make_packet() {
 //        };
 //        return conf;
 //}
-
-///changes the pointer that the thread follows to send the packet AND FREES THE OLD ONE
-void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet) {
-        CONTROL_PACKET **cfg_pointer = config->packet;
-        CONTROL_PACKET *active_packet = *cfg_pointer;
-
-        //save the old pointer to free latter
-        CONTROL_PACKET *oldpacket = active_packet;
-        //do the swap
-        *cfg_pointer = new_packet;
-
-        free(oldpacket);
-        oldpacket = NULL;
-
-//        printf("Changed to new packet and freed to %p\n", new_packet);
-}

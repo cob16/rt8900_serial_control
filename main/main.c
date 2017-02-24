@@ -8,10 +8,10 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
-#include <control_packet.h>
+#include <argp.h>
 
-#include "control_packet.c"
 #include "serial.c"
 
 //refrence taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
@@ -65,19 +65,21 @@ void print_char(char byte)
 
 void* start_send_packet(void* c)
 {
+        printf("-- STARTING CONTROL PACKET THREAD\n");
         SERIAL_CFG *conf = (SERIAL_CFG*) c;
         CONTROL_PACKET** packet_ptr = conf->packet;
         CONTROL_PACKET* last_ptr;
 
-        printf("--------------------------\n");
-        printf("-- STARTING CONTROLL PACKET THREAD %p\n", packet_ptr);
+        init_serial(conf); //setup our serial connection
 
         int packets_sent = 0; //TODO does it matter that this counter will overflow in 246 days?
         int packets_sent_to_user = 0;
+
+        printf("-- Now Sending --\n");
         while (conf->keep_alive) {
-                CONTROL_PACKET *packet = *packet_ptr;
+                CONTROL_PACKET *packet = *packet_ptr; //we dereference each time so that we can change the pointer elsewhere
+                CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *packet};
                 if (packet != last_ptr) {
-                        CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *packet};
                         int i;
                         printf("\n");
                         printf("--------------------------\n");
@@ -97,7 +99,8 @@ void* start_send_packet(void* c)
                         }
                 }
 
-                //TODO SEND THE actual PACKET
+                //SEND THE PACKET
+                write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
 
                 #ifdef _WIN32
                         Sleep(MILLISECONDS_BETWEEN_PACKETS);
