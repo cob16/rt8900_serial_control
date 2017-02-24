@@ -1,9 +1,10 @@
 project(${CMAKE_PROJECT_NAME} C)
 
 set(librt8900_SRCS
-    control_packet.h
-    control_packet.c
-        packet.c packet.h)
+        serial.c serial.h
+        control_packet.h control_packet.c
+        packet.h
+        )
 
 # Declare the library
 add_library(librt8900 STATIC
