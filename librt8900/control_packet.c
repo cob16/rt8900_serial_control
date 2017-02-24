@@ -11,32 +11,28 @@ CONTROL_PACKET * make_packet() {
         return packet;
 }
 
-///Creates a config struct, you must supply an inital CONTROL_PACKET.
-CONFIG make_config(CONTROL_PACKET *packet){
-        CONTROL_PACKET **packet_ptr_ptr = &packet;
-        CONFIG conf = {
-                .packet_pp = packet_ptr_ptr,
-                .keep_alive = true
-        };
-        return conf;
-}
+/////Creates a config struct, you must supply an inital CONTROL_PACKET.
+//SERIAL_CFG make_config(CONTROL_PACKET *packet){
+//        CONTROL_PACKET **packet_ptr_ptr = &packet;
+//        CONFIG conf = {
+//                .packet = packet_ptr_ptr,
+//                .keep_alive = true
+//        };
+//        return conf;
+//}
 
-///points the thred to the new packet and frees the old one
-void send_new_packet(CONFIG *config, CONTROL_PACKET *new_packet) {
-        CONTROL_PACKET **cfg_pointer = config->packet_pp;
+///changes the pointer that the thread follows to send the packet AND FREES THE OLD ONE
+void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet) {
+        CONTROL_PACKET **cfg_pointer = config->packet;
         CONTROL_PACKET *active_packet = *cfg_pointer;
 
-        printf("+ active_pointer is  %p\n", cfg_pointer);
-        printf("+ points to  %p\n", active_packet);
-
+        //save the old pointer to free latter
         CONTROL_PACKET *oldpacket = active_packet;
-
+        //do the swap
         *cfg_pointer = new_packet;
-        printf("+ changed to %p\n", new_packet);
 
-        printf("+ about to free %p\n", oldpacket);
         free(oldpacket);
         oldpacket = NULL;
 
-
+//        printf("Changed to new packet and freed to %p\n", new_packet);
 }

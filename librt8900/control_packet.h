@@ -68,11 +68,11 @@ typedef union {
 CONTROL_PACKET * make_packet();
 
 typedef struct {
-    CONTROL_PACKET** packet_pp; // we use a pointer pointer so we can update the pointer latter
+    CONTROL_PACKET **packet;
     bool keep_alive;
-} CONFIG;
+    char* port;
+}SERIAL_CFG;
 
-CONFIG make_config(CONTROL_PACKET *packet);
-void send_new_packet(CONFIG *config, CONTROL_PACKET *new_packet);
+void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet);
 
 #endif //RT8900_SERIAL_CONTROLL_FOO_H
