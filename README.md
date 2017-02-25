@@ -14,7 +14,6 @@ make
 
 ##Run tests
 ```bash
-sudo apt install check
 cmake .
 make test
 
