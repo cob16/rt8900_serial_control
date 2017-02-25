@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rt8900_serial_controll)
+project(rt8900_serial_control)
 
 set(CMAKE_C_STANDARD 11)
 

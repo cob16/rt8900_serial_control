@@ -14,13 +14,13 @@
 
 #include "serial.c"
 
-//refrence taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
+//reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
 const char *argp_program_bug_address = "<cormac.brady@hotmai.co.uk>";
-static char doc[] = "Provides serial control for the YAESU FT-8900R Transceiver.";
-static char args_doc[] = "<serial port path>";
+static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Transceiver.";
+static char rt8900_args_doc[] = "<serial port path>";
 
-static struct argp_option options[] = {
+static struct argp_option rt8900options[] = {
         { 0 }
 };
 
@@ -52,7 +52,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         }
         return 0;
 }
-static struct argp argp = { options, parse_opt, args_doc, doc };
+static struct argp argp = { rt8900options, parse_opt, rt8900_args_doc, rt8900_doc };
 
 void print_char(char byte)
 {
@@ -68,7 +68,7 @@ void* start_send_packet(void* c)
         printf("-- STARTING CONTROL PACKET THREAD\n");
         SERIAL_CFG *conf = (SERIAL_CFG*) c;
         CONTROL_PACKET** packet_ptr = conf->packet;
-        CONTROL_PACKET* last_ptr;
+        CONTROL_PACKET *last_ptr = NULL;
 
         init_serial(conf); //setup our serial connection
 
@@ -83,7 +83,7 @@ void* start_send_packet(void* c)
                         int i;
                         printf("\n");
                         printf("--------------------------\n");
-                        printf("SERIAL CONTROLL THREAD\nnew pointer address: %p \nNow sending:\n", packet);
+                        printf("SERIAL CONTROL THREAD\nnew pointer address: %p \nNow sending:\n", packet);
                         for (i = 0; i < sizeof(packet_arr.as_array); i++) {
                                 print_char(packet_arr.as_array[i].raw);
                         }
@@ -110,6 +110,7 @@ void* start_send_packet(void* c)
         }
         printf("\n");
         printf("-- ENDING CONTROL PACKET THREAD\n");
+        return NULL;
 }
 
 int main(int argc, char **argv)
@@ -125,10 +126,9 @@ int main(int argc, char **argv)
         CONTROL_PACKET *packet = malloc(sizeof(CONTROL_PACKET));
         memcpy(packet,&control_packet_defaults,sizeof(CONTROL_PACKET));
 
-        CONTROL_PACKET **packet_ptr_ptr = &packet;
-        c.packet = packet_ptr_ptr;
+        c.packet =  &packet;
 
-        //cast our pointer pointer to void pointer for thred creation
+        //cast our pointer pointer to void pointer for thread creation
         pthread_create(&packet_send_thread, NULL, start_send_packet, &c);
 
         usleep(1000 * 1000);

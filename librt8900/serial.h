@@ -2,8 +2,8 @@
 // Created by cormac on 24/02/17.
 //
 
-#ifndef RT8900_SERIAL_CONTROLL_SERIAL_H
-#define RT8900_SERIAL_CONTROLL_SERIAL_H
+#ifndef RT8900_SERIAL_CONTROL_SERIAL_H
+#define RT8900_SERIAL_CONTROL_SERIAL_H
 
 #include <stdbool.h>
 #include "control_packet.c"

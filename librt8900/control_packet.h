@@ -33,8 +33,8 @@ typedef struct {
     PACKET_BYTE keypad_input_column;
     PACKET_BYTE panel_buttons_right; // (via voltage divider)
     PACKET_BYTE panel_buttons_left;  // (via voltage divider)
-    PACKET_BYTE menu_buttons; // L/R encoder, set, and wires buttons
-    PACKET_BYTE hyper_mem_buttons; //hyper memory buttons
+    PACKET_BYTE menu_buttons;        // L/R encoder, set, and wires buttons
+    PACKET_BYTE hyper_mem_buttons;   //hyper memory buttons
 } CONTROL_PACKET;
 
 /// recommended defaults for the controll packet

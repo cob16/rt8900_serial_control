@@ -5,14 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
 
 #include "serial.h"
 
-/////Set our serial port attributes. Radio expects these constants
-int set_serial_attributes(int fd)
+/// Set our serial port attributes. Radio expects these constants
+void set_serial_attributes(int fd)
 {
         struct termios tty;
         memset(&tty, 0, sizeof(tty));
@@ -23,7 +22,7 @@ int set_serial_attributes(int fd)
                 exit(EXIT_FAILURE);
         }
 
-        //set send and recive baud rates
+        //set send and receive baud rates
         cfsetospeed (&tty, B19200);
         cfsetispeed (&tty, B19200);
 
@@ -34,7 +33,7 @@ int set_serial_attributes(int fd)
         tty.c_cflag |= CS8;         /* 8-bit characters */
         tty.c_cflag &= ~PARENB;     /* no parity bit */
         tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-        tty.c_cflag &= ~CRTSCTS;    /* no hardware flowcontrol */
+        tty.c_cflag &= ~CRTSCTS;    /* no hardware flow control */
 
 //        TODO VERIFY that these settings will not be needed for reading
 //        /* setup for non-canonical mode */
@@ -54,7 +53,7 @@ int set_serial_attributes(int fd)
 
 }
 
-/////Open and configure a serial port for sending and receiving from radio
+/// Open and configure a serial port for sending and receiving from radio
 void init_serial(SERIAL_CFG *cfg)
 {
         int fd = 0;
@@ -70,7 +69,8 @@ void init_serial(SERIAL_CFG *cfg)
 }
 
 ///changes the pointer that the thread follows to send the packet AND FREES THE OLD ONE
-void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet) {
+void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet)
+{
         CONTROL_PACKET **cfg_pointer = config->packet;
         CONTROL_PACKET *active_packet = *cfg_pointer;
 
