@@ -19,7 +19,7 @@ cat << EndOfMessage
 ## Starting compile  ##
 #######################
 EndOfMessage
-make
+make -j`nproc`
 
 cat << EndOfMessage
 #####################
