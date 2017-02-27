@@ -6,7 +6,7 @@
 #define RT8900_SERIAL_CONTROL_SERIAL_H
 
 #include <stdbool.h>
-#include "control_packet.c"
+#include "control_packet.h"
 
 typedef struct {
     CONTROL_PACKET **packet;

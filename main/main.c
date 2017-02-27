@@ -1,12 +1,6 @@
 //
 // Created by cormac on 16/02/17.
 //
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#include <unistd.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -54,82 +48,22 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 }
 static struct argp argp = { rt8900options, parse_opt, rt8900_args_doc, rt8900_doc };
 
-void print_char(char byte)
-{
-        int i;
-        for (i = 0; i < 8; i++) {
-                printf("%d", ((byte<< i) & 0x80) != 0);
-        }
-        printf("\n");
-}
-
-void* start_send_packet(void* c)
-{
-        printf("-- STARTING CONTROL PACKET THREAD\n");
-        SERIAL_CFG *conf = (SERIAL_CFG*) c;
-        CONTROL_PACKET** packet_ptr = conf->packet;
-        CONTROL_PACKET *last_ptr = NULL;
-
-        init_serial(conf); //setup our serial connection
-
-        int packets_sent = 0; //TODO does it matter that this counter will overflow in 246 days?
-        int packets_sent_to_user = 0;
-
-        printf("-- Now Sending --\n");
-        while (conf->keep_alive) {
-                CONTROL_PACKET *packet = *packet_ptr; //we dereference each time so that we can change the pointer elsewhere
-                CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *packet};
-                if (packet != last_ptr) {
-                        int i;
-                        printf("\n");
-                        printf("--------------------------\n");
-                        printf("SERIAL CONTROL THREAD\nnew pointer address: %p \nNow sending:\n", packet);
-                        for (i = 0; i < sizeof(packet_arr.as_array); i++) {
-                                print_char(packet_arr.as_array[i].raw);
-                        }
-                        printf("--------------------------\n");
-                        last_ptr = packet;
-                        packets_sent = 0;
-                }else{
-                        packets_sent++;
-                        if (packets_sent - packets_sent_to_user > 100){
-                                printf("Sent: %3d Packets\r", packets_sent); /* \r returns the caret to the line start */
-                                fflush(stdout);
-                                packets_sent_to_user = packets_sent;
-                        }
-                }
-
-                //SEND THE PACKET
-                write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
-
-                #ifdef _WIN32
-                        Sleep(MILLISECONDS_BETWEEN_PACKETS);
-                #else
-                        usleep(MILLISECONDS_BETWEEN_PACKETS * 1000);  /* sleep 3 milliSeconds */
-                #endif
-        }
-        printf("\n");
-        printf("-- ENDING CONTROL PACKET THREAD\n");
-        return NULL;
-}
-
 int main(int argc, char **argv)
 {
+        //Create our config
         SERIAL_CFG c = {
                 .keep_alive = true,
         };
 
-        argp_parse (&argp, argc, argv, 0, 0, &c);
-
-        pthread_t packet_send_thread;
+        argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
         CONTROL_PACKET *packet = malloc(sizeof(CONTROL_PACKET));
         memcpy(packet,&control_packet_defaults,sizeof(CONTROL_PACKET));
-
         c.packet =  &packet;
 
+        pthread_t packet_send_thread;
         //cast our pointer pointer to void pointer for thread creation
-        pthread_create(&packet_send_thread, NULL, start_send_packet, &c);
+        pthread_create(&packet_send_thread, NULL, send_control_packets, &c);
 
         usleep(1000 * 1000);
 

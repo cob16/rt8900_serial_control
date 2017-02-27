@@ -2,6 +2,12 @@
 // Created by cormac on 24/02/17.
 //
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -9,6 +15,7 @@
 #include <termios.h>
 
 #include "serial.h"
+#include "packet.c"
 
 /// Set our serial port attributes. Radio expects these constants
 void set_serial_attributes(int fd)
@@ -18,7 +25,7 @@ void set_serial_attributes(int fd)
 
         //read in existing settings
         if (tcgetattr(fd, &tty) != 0) {
-                printf("Failed getting terminal settings");
+                printf("Failed reading terminal settings");
                 exit(EXIT_FAILURE);
         }
 
@@ -47,7 +54,7 @@ void set_serial_attributes(int fd)
 
         //write our new settings
         if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-                printf("Failed setting our new terminal settings");
+                printf("Failed to set terminal settings");
                 exit(EXIT_FAILURE);
         }
 
@@ -66,6 +73,57 @@ void init_serial(SERIAL_CFG *cfg)
         set_serial_attributes(fd);
 
         cfg->serial_fd = fd;
+}
+
+void* send_control_packets(void *c)
+{
+        printf("-- STARTING CONTROL PACKET THREAD\n");
+        SERIAL_CFG *conf = (SERIAL_CFG*) c;
+        CONTROL_PACKET** packet_ptr = conf->packet;
+        CONTROL_PACKET *last_ptr = NULL;
+
+        init_serial(conf); //setup our serial connection
+
+        int packets_sent = 0; //TODO does it matter that this counter will overflow in 246 days?
+        int packets_sent_to_user = 0;
+
+        printf("-- Now Sending --\n");
+        while (conf->keep_alive) {
+                CONTROL_PACKET *packet = *packet_ptr; //we dereference each time so that we can change the pointer elsewhere
+                CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *packet};
+                if (packet != last_ptr) {
+                        int i;
+                        printf("\n");
+                        printf("--------------------------\n");
+                        printf("SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
+                        for (i = 0; i < sizeof(packet_arr.as_array); i++) {
+                                print_char(packet_arr.as_array[i].raw);
+                        }
+                        printf("--------------------------\n");
+                        last_ptr = packet;
+                        packets_sent = 0;
+                }else{
+                        packets_sent++;
+                        if (packets_sent - packets_sent_to_user > 100){
+                                printf("Sent: %3d Packets\r", packets_sent); /* \r returns the caret to the line start */
+                                fflush(stdout);
+                                packets_sent_to_user = packets_sent;
+                        }
+                }
+
+                //SEND THE PACKET
+                write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
+                tcdrain(conf->serial_fd); //wait for the packet to send
+
+#ifdef _WIN32
+                Sleep(MILLISECONDS_BETWEEN_PACKETS);
+#else
+                usleep(MILLISECONDS_BETWEEN_PACKETS * 1000);  /* sleep 3 milliSeconds */
+#endif
+        }
+        printf("\n");
+        printf("-- ENDING CONTROL PACKET THREAD\n");
+        return NULL;
 }
 
 ///changes the pointer that the thread follows to send the packet AND FREES THE OLD ONE
