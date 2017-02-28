@@ -22,4 +22,5 @@ make test
 ```
 
 ##Credits
-CmakeLists build files taken from [this example](https://github.com/kaizouman/gtest-cmake-example)
+- CmakeLists build files taken from [this example](https://github.com/kaizouman/gtest-cmake-example)
+- [Erik Soma's Thread-Safe FIFO Queue.](https://github.com/esoma/io-queue) 

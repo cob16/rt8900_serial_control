@@ -12,7 +12,8 @@ add_executable(rt8900c
 
 # Specify here the libraries this program depends on
 target_link_libraries(rt8900c
-    librt8900 pthread
+        librt8900
+        pthread
 )
 
 install(TARGETS rt8900c DESTINATION bin)
