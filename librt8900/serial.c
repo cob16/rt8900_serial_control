@@ -17,7 +17,7 @@
 #include "serial.h"
 #include "packet.c"
 
-void packet_debug(const struct CONTROL_PACKET *packet, CONTROL_PACKET_INDEXED *packet_arr);
+void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr);
 
 /// Set our serial port attributes. Radio expects these constants
 void set_serial_attributes(int fd)
@@ -77,7 +77,7 @@ void open_serial(SERIAL_CFG *cfg)
         cfg->serial_fd = fd;
 }
 
-void packet_debug(const struct CONTROL_PACKET *packet, CONTROL_PACKET_INDEXED *packet_arr)
+void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr)
 {
         int i;
         printf("\n");
@@ -101,7 +101,7 @@ void* send_control_packets(void *c)
         TAILQ_INIT(&head);
         conf->queue = &head;
 
-        struct CONTROL_PACKET *current_packet = NULL;
+        struct control_packet *current_packet = NULL;
         while (conf->keep_alive) {
 
                 if  (!TAILQ_EMPTY(&head)) {
@@ -138,8 +138,8 @@ void* send_control_packets(void *c)
         }
 }
 
-///adds a CONTROL_PACKET (pointer) to the send queue
-void send_new_packet(SERIAL_CFG *config, struct CONTROL_PACKET *new_packet)
+///adds a control_packet (pointer) to the send queue
+void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet)
 {
         while(config->queue == NULL){
                 printf("BLOCKING send_new_packet as q does not yet exist (packet)");

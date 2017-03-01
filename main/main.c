@@ -63,13 +63,13 @@ int main(int argc, char **argv)
 
         usleep(1000 * 1000);
 
-        struct CONTROL_PACKET *new_packet = malloc(sizeof(struct CONTROL_PACKET));
-        memcpy(new_packet, &control_packet_defaults,sizeof(struct CONTROL_PACKET));
+        struct control_packet *new_packet = malloc(sizeof(struct control_packet));
+        memcpy(new_packet, &control_packet_defaults,sizeof(struct control_packet));
         new_packet->squelch_left.section.data = 0x00;
         send_new_packet(&c, new_packet);
 
-        struct CONTROL_PACKET *more_new_packet = malloc(sizeof(struct CONTROL_PACKET));
-        memcpy(more_new_packet, &control_packet_defaults,sizeof(struct CONTROL_PACKET));
+        struct control_packet *more_new_packet = malloc(sizeof(struct control_packet));
+        memcpy(more_new_packet, &control_packet_defaults,sizeof(struct control_packet));
         more_new_packet->keypad_input_column.section.data = 0x00;
         send_new_packet(&c, more_new_packet);
 
