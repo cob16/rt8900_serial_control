@@ -16,6 +16,9 @@
 
 #include "serial.h"
 #include "packet.c"
+#include "control_packet.h"
+
+void packet_debug(const struct CONTROL_PACKET *packet, CONTROL_PACKET_INDEXED *packet_arr);
 
 /// Set our serial port attributes. Radio expects these constants
 void set_serial_attributes(int fd)
@@ -61,7 +64,7 @@ void set_serial_attributes(int fd)
 }
 
 /// Open and configure a serial port for sending and receiving from radio
-void init_serial(SERIAL_CFG *cfg)
+void open_serial(SERIAL_CFG *cfg)
 {
         int fd = 0;
         fd = open(cfg->serial_path, O_RDWR | O_NOCTTY | O_NDELAY );
@@ -75,70 +78,137 @@ void init_serial(SERIAL_CFG *cfg)
         cfg->serial_fd = fd;
 }
 
+//void* send_control_packets(void *c)
+//{
+//        printf("-- STARTING CONTROL PACKET THREAD\n");
+//        SERIAL_CFG *conf = (SERIAL_CFG*) c;
+//
+//        CONTROL_PACKET** packet_ptr = conf->packet;
+//        CONTROL_PACKET *last_ptr = NULL;
+//
+//        open_serial(conf); //setup our serial connection
+//
+//        int packets_sent = 0; //TODO does it matter that this counter will overflow in 246 days?
+//        int packets_sent_to_user = 0;
+//
+//        printf("-- Now Sending --\n");
+//        while (conf->keep_alive) {
+//                CONTROL_PACKET *packet = *packet_ptr; //we dereference each time so that we can change the pointer elsewhere
+//                CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *packet};
+//                if (packet != last_ptr) {
+//                        packet_debug(packet, &packet_arr);
+//                        last_ptr = packet;
+//                        packets_sent = 0;
+//                }else{
+//                        packets_sent++;
+//                        if (packets_sent - packets_sent_to_user > 100){
+//                                printf("Sent: %3d Packets\r", packets_sent); /* \r returns the caret to the line start */
+//                                fflush(stdout);
+//                                packets_sent_to_user = packets_sent;
+//                        }
+//                }
+//
+//                //SEND THE PACKET
+//                write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
+//                tcdrain(conf->serial_fd); //wait for the packet to send
+//                #ifdef _WIN32
+//                Sleep(MILLISECONDS_BETWEEN_PACKETS);
+//                #else
+//                usleep(MILLISECONDS_BETWEEN_PACKETS * 1000);  /* sleep 3 milliSeconds */
+//                #endif
+//        }
+//        printf("\n");
+//        printf("-- ENDING CONTROL PACKET THREAD\n");
+//        return NULL;
+//}
+
+void packet_debug(const struct CONTROL_PACKET *packet, CONTROL_PACKET_INDEXED *packet_arr)
+{
+        int i;
+        printf("\n");
+        printf("--------------------------\n");
+        printf("SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
+        for (i = 0; i < sizeof((*packet_arr).as_array); i++) {
+                                print_char((*packet_arr).as_array[i].raw);
+                        }
+        printf("--------------------------\n");
+}
+
 void* send_control_packets(void *c)
 {
         printf("-- STARTING CONTROL PACKET THREAD\n");
         SERIAL_CFG *conf = (SERIAL_CFG*) c;
-        CONTROL_PACKET** packet_ptr = conf->packet;
-        CONTROL_PACKET *last_ptr = NULL;
+        open_serial(conf); //setup our serial connection
 
-        init_serial(conf); //setup our serial connection
+        //setup queue
+        CONTROL_PACKET_Q head;
+        TAILQ_INIT(&head);
+        conf->queue = &head;
 
-        int packets_sent = 0; //TODO does it matter that this counter will overflow in 246 days?
-        int packets_sent_to_user = 0;
+        printf("q created starting loop\n");
 
-        printf("-- Now Sending --\n");
+        struct CONTROL_PACKET *current_packet = NULL;
+        printf("CONTROL_PACKET made\n");
         while (conf->keep_alive) {
-                CONTROL_PACKET *packet = *packet_ptr; //we dereference each time so that we can change the pointer elsewhere
-                CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *packet};
-                if (packet != last_ptr) {
-                        int i;
-                        printf("\n");
-                        printf("--------------------------\n");
-                        printf("SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
-                        for (i = 0; i < sizeof(packet_arr.as_array); i++) {
-                                print_char(packet_arr.as_array[i].raw);
+
+                if  (!TAILQ_EMPTY(&head)) {
+                        current_packet = TAILQ_FIRST(conf->queue);
+                        CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *current_packet};
+
+                        packet_debug(current_packet, &packet_arr);
+
+                        //SEND THE PACKET
+                        write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
+                        tcdrain(conf->serial_fd); //wait for the packet to send
+
+                        if (current_packet->nodes.tqe_next != NULL) { //pop and free if there is more to send
+                                TAILQ_REMOVE(conf->queue, current_packet, nodes);
+                                free(current_packet);
+                                current_packet = NULL;
                         }
-                        printf("--------------------------\n");
-                        last_ptr = packet;
-                        packets_sent = 0;
-                }else{
-                        packets_sent++;
-                        if (packets_sent - packets_sent_to_user > 100){
-                                printf("Sent: %3d Packets\r", packets_sent); /* \r returns the caret to the line start */
-                                fflush(stdout);
-                                packets_sent_to_user = packets_sent;
-                        }
+
+                        #ifdef _WIN32
+                                Sleep(MILLISECONDS_BETWEEN_PACKETS);
+                        #else
+                                usleep(MILLISECONDS_BETWEEN_PACKETS * 1000);  /* sleep 3 milliSeconds */
+                        #endif
+                } else {
+                        printf("READY FOR INPUT \n");
                 }
 
-                //SEND THE PACKET
-                write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
-                tcdrain(conf->serial_fd); //wait for the packet to send
-
-#ifdef _WIN32
-                Sleep(MILLISECONDS_BETWEEN_PACKETS);
-#else
-                usleep(MILLISECONDS_BETWEEN_PACKETS * 1000);  /* sleep 3 milliSeconds */
-#endif
         }
-        printf("\n");
-        printf("-- ENDING CONTROL PACKET THREAD\n");
-        return NULL;
+
+        //clean out our queue incase of shutdown
+        while (!TAILQ_EMPTY(conf->queue)) {
+                current_packet = TAILQ_FIRST(conf->queue);
+                TAILQ_REMOVE(conf->queue, current_packet, nodes);
+                free(current_packet);
+                current_packet = NULL;
+        }
 }
 
-///changes the pointer that the thread follows to send the packet AND FREES THE OLD ONE
-void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet)
+///adds a CONTROL_PACKET (pointer) to the send queue
+void send_new_packet(SERIAL_CFG *config, struct CONTROL_PACKET *new_packet)
 {
-        CONTROL_PACKET **cfg_pointer = config->packet;
-        CONTROL_PACKET *active_packet = *cfg_pointer;
-
-        //save the old pointer to free latter
-        CONTROL_PACKET *oldpacket = active_packet;
-        //do the swap
-        *cfg_pointer = new_packet;
-
-        free(oldpacket);
-        oldpacket = NULL;
-
-//        printf("Changed to new packet and freed to %p\n", new_packet);
+        while(config->queue == NULL){
+                printf("BLOCKING Q ADD as q does not yet exist (packet)");
+        }
+        TAILQ_INSERT_TAIL(config->queue, new_packet, nodes);
 }
+
+/////changes the pointer that the thread follows to send the packet AND FREES THE OLD ONE
+//void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet)
+//{
+//        CONTROL_PACKET **cfg_pointer = config->packet;
+//        CONTROL_PACKET *active_packet = *cfg_pointer;
+//
+//        //save the old pointer to free latter
+//        CONTROL_PACKET *oldpacket = active_packet;
+//        //do the swap
+//        *cfg_pointer = new_packet;
+//
+//        free(oldpacket);
+//        oldpacket = NULL;
+//
+////        printf("Changed to new packet and freed to %p\n", new_packet);
+//}

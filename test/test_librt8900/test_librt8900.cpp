@@ -23,7 +23,7 @@ TEST(ControlPacketTest, PACKET_BYTE)
 TEST(ControlPacketTest, CONTROL_PACKET) {
 
         //create our object
-        CONTROL_PACKET test_packet = control_packet_defaults;
+        struct CONTROL_PACKET test_packet = control_packet_defaults;
         //test we can access our data though the struct
         ASSERT_EQ(test_packet.ptt.section.data, 0x7F);
 

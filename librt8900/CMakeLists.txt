@@ -12,9 +12,7 @@ add_library(librt8900 STATIC
 )
 
 # Specify here the libraries this program depends on
-target_link_libraries(librt8900
-        io_queue
-)
+#target_link_libraries(librt8900)
 
 # Specify here the include directories exported
 # by this library

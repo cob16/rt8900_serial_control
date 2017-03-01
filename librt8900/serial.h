@@ -6,13 +6,15 @@
 #define RT8900_SERIAL_CONTROL_SERIAL_H
 
 #include <stdbool.h>
+#include <sys/queue.h>
+
 #include "control_packet.h"
 
 typedef struct {
-    CONTROL_PACKET **packet;
+    CONTROL_PACKET_Q *queue;
     bool keep_alive;
-    char* serial_path;
+    char *serial_path;
     int serial_fd;
-}SERIAL_CFG;
+} SERIAL_CFG;
 
 #endif //RT8900_SERIAL_CONTROLL_SERIAL_H

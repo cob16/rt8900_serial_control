@@ -57,9 +57,8 @@ int main(int argc, char **argv)
 
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
-        CONTROL_PACKET *packet = malloc(sizeof(CONTROL_PACKET));
-        memcpy(packet,&control_packet_defaults,sizeof(CONTROL_PACKET));
-        c.packet =  &packet;
+        struct CONTROL_PACKET *packet = malloc(sizeof(struct CONTROL_PACKET));
+        memcpy(packet,&control_packet_defaults,sizeof(struct CONTROL_PACKET));
 
         pthread_t packet_send_thread;
         //cast our pointer pointer to void pointer for thread creation
@@ -67,17 +66,19 @@ int main(int argc, char **argv)
 
         usleep(1000 * 1000);
 
-        CONTROL_PACKET *new_packet = malloc(sizeof(CONTROL_PACKET));
-        memcpy(new_packet, &control_packet_defaults,sizeof(CONTROL_PACKET));
-        new_packet->ptt.section.data = 0x00;
+        struct CONTROL_PACKET *new_packet = malloc(sizeof(struct CONTROL_PACKET));
+        memcpy(new_packet, &control_packet_defaults,sizeof(struct CONTROL_PACKET));
+        new_packet->squelch_left.section.data = 0x00;
 
         send_new_packet(&c, new_packet);
+
+        struct CONTROL_PACKET *more_new_packet = malloc(sizeof(struct CONTROL_PACKET));
+        memcpy(more_new_packet, &control_packet_defaults,sizeof(struct CONTROL_PACKET));
+        more_new_packet->keypad_input_column.section.data = 0x00;
 
         usleep(1000 * 1000);
 
         c.keep_alive = false;
         pthread_join(packet_send_thread, NULL);
-
-        free(new_packet);
         return 0;
 }

@@ -5,6 +5,7 @@
 #ifndef RT8900_SERIAL_CONTROLL_FOO_H
 #define RT8900_SERIAL_CONTROLL_FOO_H
 
+#include <sys/queue.h>
 #include "packet.h"
 
 #define MILLISECONDS_BETWEEN_PACKETS 3
@@ -21,7 +22,7 @@ enum menu_buttons_values { //TODO This assumes that a 1 bit is the pressed posti
 
 //To make a new CONTROL_PACKET please use "CONTROL_PACKET mypacket = control_packet_defaults"
 //struct is in the order the packet requires
-typedef struct {
+struct CONTROL_PACKET{
     PACKET_BYTE encoder_right;        // <--twos complement, positive is num of clockwise turns
     PACKET_BYTE encoder_left;
     PACKET_BYTE ptt;                  // Push To Talk button, DATA_MAX_NUM for high (unpressed)
@@ -35,10 +36,14 @@ typedef struct {
     PACKET_BYTE panel_buttons_left;  // (via voltage divider)
     PACKET_BYTE menu_buttons;        // L/R encoder, set, and wires buttons
     PACKET_BYTE hyper_mem_buttons;   //hyper memory buttons
-} CONTROL_PACKET;
+    TAILQ_ENTRY(CONTROL_PACKET) nodes; //link to next packet (for que)
+};
+
+////create our packet que stuct
+typedef TAILQ_HEAD(CONTROL_PACKET_Q, CONTROL_PACKET) CONTROL_PACKET_Q;
 
 /// recommended defaults for the controll packet
-const CONTROL_PACKET control_packet_defaults = {
+const struct CONTROL_PACKET control_packet_defaults = {
         /*There are manny defaults that are 0 so we leave them as "{}"
         The elements are not addressed by name for c++ compatibility so we can test*/
 
@@ -59,7 +64,7 @@ const CONTROL_PACKET control_packet_defaults = {
 
 /// used to get the struct as an array
 typedef union {
-    CONTROL_PACKET as_struct;
+    struct CONTROL_PACKET as_struct;
     PACKET_BYTE as_array[13];
 } CONTROL_PACKET_INDEXED;
 
