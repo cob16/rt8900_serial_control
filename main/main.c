@@ -57,9 +57,6 @@ int main(int argc, char **argv)
 
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
-        struct CONTROL_PACKET *packet = malloc(sizeof(struct CONTROL_PACKET));
-        memcpy(packet,&control_packet_defaults,sizeof(struct CONTROL_PACKET));
-
         pthread_t packet_send_thread;
         //cast our pointer pointer to void pointer for thread creation
         pthread_create(&packet_send_thread, NULL, send_control_packets, &c);
@@ -69,12 +66,12 @@ int main(int argc, char **argv)
         struct CONTROL_PACKET *new_packet = malloc(sizeof(struct CONTROL_PACKET));
         memcpy(new_packet, &control_packet_defaults,sizeof(struct CONTROL_PACKET));
         new_packet->squelch_left.section.data = 0x00;
-
         send_new_packet(&c, new_packet);
 
         struct CONTROL_PACKET *more_new_packet = malloc(sizeof(struct CONTROL_PACKET));
         memcpy(more_new_packet, &control_packet_defaults,sizeof(struct CONTROL_PACKET));
         more_new_packet->keypad_input_column.section.data = 0x00;
+        send_new_packet(&c, more_new_packet);
 
         usleep(1000 * 1000);
 

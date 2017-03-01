@@ -134,6 +134,7 @@ void packet_debug(const struct CONTROL_PACKET *packet, CONTROL_PACKET_INDEXED *p
         printf("--------------------------\n");
 }
 
+///Starts sending controll packets as defined by SERIAL_CFG
 void* send_control_packets(void *c)
 {
         printf("-- STARTING CONTROL PACKET THREAD\n");
@@ -145,10 +146,7 @@ void* send_control_packets(void *c)
         TAILQ_INIT(&head);
         conf->queue = &head;
 
-        printf("q created starting loop\n");
-
         struct CONTROL_PACKET *current_packet = NULL;
-        printf("CONTROL_PACKET made\n");
         while (conf->keep_alive) {
 
                 if  (!TAILQ_EMPTY(&head)) {
@@ -166,16 +164,14 @@ void* send_control_packets(void *c)
                                 free(current_packet);
                                 current_packet = NULL;
                         }
-
-                        #ifdef _WIN32
-                                Sleep(MILLISECONDS_BETWEEN_PACKETS);
-                        #else
-                                usleep(MILLISECONDS_BETWEEN_PACKETS * 1000);  /* sleep 3 milliSeconds */
-                        #endif
                 } else {
                         printf("READY FOR INPUT \n");
                 }
-
+                #ifdef _WIN32
+                                Sleep(MILLISECONDS_BETWEEN_PACKETS);
+                #else
+                                usleep(MILLISECONDS_BETWEEN_PACKETS * 1000);  /* sleep 3 milliSeconds */
+                #endif
         }
 
         //clean out our queue incase of shutdown
@@ -191,24 +187,7 @@ void* send_control_packets(void *c)
 void send_new_packet(SERIAL_CFG *config, struct CONTROL_PACKET *new_packet)
 {
         while(config->queue == NULL){
-                printf("BLOCKING Q ADD as q does not yet exist (packet)");
+                printf("BLOCKING send_new_packet as q does not yet exist (packet)");
         }
         TAILQ_INSERT_TAIL(config->queue, new_packet, nodes);
 }
-
-/////changes the pointer that the thread follows to send the packet AND FREES THE OLD ONE
-//void send_new_packet(SERIAL_CFG *config, CONTROL_PACKET *new_packet)
-//{
-//        CONTROL_PACKET **cfg_pointer = config->packet;
-//        CONTROL_PACKET *active_packet = *cfg_pointer;
-//
-//        //save the old pointer to free latter
-//        CONTROL_PACKET *oldpacket = active_packet;
-//        //do the swap
-//        *cfg_pointer = new_packet;
-//
-//        free(oldpacket);
-//        oldpacket = NULL;
-//
-////        printf("Changed to new packet and freed to %p\n", new_packet);
-//}
