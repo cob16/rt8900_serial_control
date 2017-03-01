@@ -2,16 +2,6 @@
 #include "gtest/gtest.h"
 #include "control_packet.h"
 
-//used for debugging tests
-void print_char(char byte)
-{
-        int i;
-        for (i = 0; i < 8; i++) {
-                printf("%d", ((byte<< i) & 0x80) != 0);
-        }
-        printf("\n");
-}
-
 TEST(ControlPacketTest, PACKET_BYTE)
 {
         PACKET_BYTE test_byte = {.raw = (signed char) 0x84};
