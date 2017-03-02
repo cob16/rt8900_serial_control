@@ -2,7 +2,7 @@ project(${CMAKE_PROJECT_NAME} C)
 
 set(librt8900_SRCS
         serial.c serial.h
-        control_packet.h
+        control_packet.h control_packet.c
         packet.h packet.c
         )
 

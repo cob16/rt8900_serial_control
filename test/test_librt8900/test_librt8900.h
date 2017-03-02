@@ -21,6 +21,7 @@ protected:
     // Code here will be called immediately after each test (right
     // before the destructor).
     virtual void TearDown();
-
-
 };
+
+// The fixture for testing class Foo.
+class TestKeypadButtons : public ::testing::Test {};
