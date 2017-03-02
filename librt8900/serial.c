@@ -136,6 +136,7 @@ void* send_control_packets(void *c)
                 free(current_packet);
                 current_packet = NULL;
         }
+        return NULL;
 }
 
 ///adds a control_packet (pointer) to the send queue

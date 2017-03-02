@@ -7,6 +7,7 @@
 #include <argp.h>
 
 #include "serial.c"
+#include "control_packet.c"
 
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
@@ -63,9 +64,10 @@ int main(int argc, char **argv)
 
         usleep(1000 * 1000);
 
-        struct control_packet *new_packet = malloc(sizeof(struct control_packet));
-        memcpy(new_packet, &control_packet_defaults,sizeof(struct control_packet));
+        struct control_packet *new_packet = malloc(sizeof(*new_packet));
+        memcpy(new_packet, &control_packet_defaults,sizeof(*new_packet));
         new_packet->squelch_left.section.data = 0x00;
+        set_button(new_packet, &BUTTON_1);
         send_new_packet(&c, new_packet);
 
         struct control_packet *more_new_packet = malloc(sizeof(struct control_packet));
