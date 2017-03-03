@@ -101,6 +101,7 @@ void* send_control_packets(void *c)
         TAILQ_INIT(&head);
         conf->queue = &head;
 
+        struct control_packet *last_packet = NULL;
         struct control_packet *current_packet = NULL;
         while (conf->keep_alive) {
 
@@ -108,7 +109,10 @@ void* send_control_packets(void *c)
                         current_packet = TAILQ_FIRST(conf->queue);
                         CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *current_packet};
 
-                        packet_debug(current_packet, &packet_arr);
+                        if (current_packet != last_packet) {
+                            packet_debug(current_packet, &packet_arr);
+                            last_packet = current_packet;
+                        }
 
                         //SEND THE PACKET
                         write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
@@ -143,7 +147,8 @@ void* send_control_packets(void *c)
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet)
 {
         while(config->queue == NULL){
-                printf("BLOCKING send_new_packet as q does not yet exist (packet)");
+                printf("BLOCKING send_new_packet as q does not yet exist (packet)\r");
         }
+        printf("ADDDED TO QUEUE \n");
         TAILQ_INSERT_TAIL(config->queue, new_packet, nodes);
 }
