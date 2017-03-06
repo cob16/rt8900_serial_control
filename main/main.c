@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <argp.h>
+#include <serial.h>
 
 #include "serial.c"
 #include "control_packet.c"
@@ -49,20 +50,48 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 }
 static struct argp argp = { rt8900options, parse_opt, rt8900_args_doc, rt8900_doc };
 
+
+///Creates the required packet to dial a number. they should then be added to the head of the queue*
+void dial_number(SERIAL_CFG *cfg, int number) //TODO FINISH THIS
+{
+        //get the number of digits
+        int num_digets = snprintf(NULL, 0, "%d", number);
+        if (num_digets > 6){
+                //this number
+                printf("WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
+        }
+
+        //create a char array of the digits
+        char digits[num_digets];
+        snprintf(digits, sizeof(num_digets), "%d", number);
+
+        //add packets that 'press' the seletced buttons
+        int i;
+        for (i=0; i<num_digets; i++){
+                create_button_packet(base_packet, button_from_int(digits[i] - '0'));
+
+                send_new_packet(&c, packet);
+        }
+
+        return 0;
+}
+
+
 int main(int argc, char **argv)
 {
         //Create our config
-        SERIAL_CFG c = {
-                .keep_alive = true,
-        };
-
+        SERIAL_CFG c;
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
         pthread_t packet_send_thread;
+
+        pthread_barrier_t wait_for_init;
+        pthread_barrier_init(&wait_for_init, NULL, 2);
+        c.initialised = &wait_for_init;
         //cast our pointer pointer to void pointer for thread creation
         pthread_create(&packet_send_thread, NULL, send_control_packets, &c);
 
-        usleep(1000 * 1000);
+        pthread_barrier_wait(&wait_for_init); //wait for thread to be ready
 
         struct control_packet *new_packet = malloc(sizeof(*new_packet));
         memcpy(new_packet, &control_packet_defaults,sizeof(*new_packet));
@@ -78,6 +107,7 @@ int main(int argc, char **argv)
         usleep(1000 * 1000);
 
         c.keep_alive = false;
+        pthread_barrier_destroy(&wait_for_init);
         pthread_join(packet_send_thread, NULL);
         return 0;
 }

@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <termios.h>
 
+#include <pthread.h>
+
 #include "serial.h"
 #include "packet.c"
 
@@ -100,9 +102,11 @@ void* send_control_packets(void *c)
         CONTROL_PACKET_Q head;
         TAILQ_INIT(&head);
         conf->queue = &head;
+        conf->keep_alive = true;
 
         struct control_packet *last_packet = NULL;
         struct control_packet *current_packet = NULL;
+        pthread_barrier_wait(conf->initialised);
         while (conf->keep_alive) {
 
                 if  (!TAILQ_EMPTY(&head)) {
@@ -124,7 +128,8 @@ void* send_control_packets(void *c)
                                 current_packet = NULL;
                         }
                 } else {
-                        printf("READY FOR INPUT \n");
+                        printf("ERROR QUEUE BECAME EMPTY");
+                        exit(1);
                 }
                 #ifdef _WIN32
                                 Sleep(MILLISECONDS_BETWEEN_PACKETS);
@@ -143,12 +148,9 @@ void* send_control_packets(void *c)
         return NULL;
 }
 
-///adds a control_packet (pointer) to the send queue
+///adds a control_packet (pointer) to the send queue, should only be called once the queu h
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet)
 {
-        while(config->queue == NULL){
-                printf("BLOCKING send_new_packet as q does not yet exist (packet)\r");
-        }
-        printf("ADDDED TO QUEUE \n");
         TAILQ_INSERT_TAIL(config->queue, new_packet, nodes);
+        printf("ADDDED TO QUEUE \n");
 }

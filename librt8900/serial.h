@@ -11,6 +11,7 @@
 #include "control_packet.h"
 
 typedef struct {
+    pthread_barrier_t* initialised;
     CONTROL_PACKET_Q *queue;
     bool keep_alive;
     char *serial_path;
