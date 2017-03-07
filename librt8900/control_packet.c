@@ -15,24 +15,10 @@ void set_button(struct control_packet *packet, const struct button_transmit_valu
 }
 
 ///Creates the required packet to dial a number. they should then be added to the head of the queue*
-int dial_number(struct control_packet *base_packet, int number) //TODO FINISH THIS
+int dial_number(struct control_packet *base_packet, int number)
 {
-        int num_digets = snprintf(NULL, 0, "%d", number);
-        if (num_digets > 6){
-                //this number
-                printf("WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
-        }
-        char digits[num_digets];
-        snprintf(digits, sizeof(num_digets), "%d", number);
-
-        int i;
-        for (i=0; i<num_digets; i++){
-                struct control_packet *packet = (struct control_packet*) malloc(sizeof(*packet));
-                memcpy(packet, &control_packet_defaults,sizeof(*packet));
-
-                const struct button_transmit_value *button = button_from_int(digits[i] - '0');
-                set_button(packet, button);
-        }
+        const struct button_transmit_value *button = button_from_int(number);
+        set_button(base_packet, button);
 
         return 0;
 }

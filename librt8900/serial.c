@@ -106,31 +106,40 @@ void* send_control_packets(void *c)
 
         struct control_packet *last_packet = NULL;
         struct control_packet *current_packet = NULL;
+        int numpackets = 0;
         pthread_barrier_wait(conf->initialised);
-        while (conf->keep_alive) {
 
+        while (conf->keep_alive) {
                 if  (!TAILQ_EMPTY(&head)) {
                         current_packet = TAILQ_FIRST(conf->queue);
                         CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *current_packet};
 
                         if (current_packet != last_packet) {
-                            packet_debug(current_packet, &packet_arr);
-                            last_packet = current_packet;
+                                if (conf->verbose) {
+                                        printf("-\n");
+                                        packet_debug(current_packet, &packet_arr);
+                                }
+                                last_packet = current_packet;
+                                numpackets = 0;
+                        } else {
+                                numpackets++;
+                                printf("Sent %d packets\r",numpackets);
                         }
 
                         //SEND THE PACKET
                         write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
                         tcdrain(conf->serial_fd); //wait for the packet to send
 
-                        if (current_packet->nodes.tqe_next != NULL) { //pop and free if there is more to send
+                        if (current_packet->nodes.tqe_next != NULL) { //pop if there is more to send
+//                            if (numpackets >= 7) {
+                                printf("removed at %d\n", numpackets);
                                 TAILQ_REMOVE(conf->queue, current_packet, nodes);
-                                free(current_packet);
-                                current_packet = NULL;
+//                            }
                         }
                 } else {
-                        printf("ERROR QUEUE BECAME EMPTY");
-                        exit(1);
+                    printf("empty!\n");
                 }
+
                 #ifdef _WIN32
                                 Sleep(MILLISECONDS_BETWEEN_PACKETS);
                 #else
@@ -151,6 +160,10 @@ void* send_control_packets(void *c)
 ///adds a control_packet (pointer) to the send queue, should only be called once the queu h
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet)
 {
-        TAILQ_INSERT_TAIL(config->queue, new_packet, nodes);
-        printf("ADDDED TO QUEUE \n");
+        if (new_packet == NULL) {
+            printf("NULL packet attempted to be added to QUEUE\n");
+        } else {
+            TAILQ_INSERT_TAIL(config->queue, new_packet, nodes);
+            printf("ADDDED TO QUEUE \n");
+        }
 }
