@@ -20,10 +20,10 @@ static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Trans
 static char rt8900_args_doc[] = "<serial port path>";
 
 static struct argp_option rt8900options[] = {
-        {"verbose", 'v', "COUNT", OPTION_ARG_OPTIONAL,
-                "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'"},
+        {"verbose", 'v', "LEVEL", OPTION_ARG_OPTIONAL,
+                "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'."},
         {"hard-emulation", 991, 0, OPTION_ARG_OPTIONAL,
-                "Exactly emulates the radio head insted of being lazy (worse performance, no observed benefit, only useful for debugging"},
+                "Exactly emulates the radio head head instead of being lazy (worse performance, no observed benefit, only useful for debugging"},
         { 0 }
 };
 
