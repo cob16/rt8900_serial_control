@@ -9,6 +9,9 @@
 #include "packet.h"
 
 #define MILLISECONDS_BETWEEN_PACKETS 3
+#define USECONDS_DEBOUNCE_WAIT 40000 //40ms
+#define USECONDS_BUTTON_WAIT 50000 //50 seconds
+
 
 #define DEFAULT_VOLUME 0x1f //25% volume
 
@@ -43,8 +46,8 @@ struct control_packet{
     PACKET_BYTE squelch_right;        // analog range
     PACKET_BYTE volume_control_right;
     PACKET_BYTE keypad_input_row;     //this x the keypad_column_input gets a number that is pressed
-    PACKET_BYTE squelch_left;
     PACKET_BYTE volume_control_left;
+    PACKET_BYTE squelch_left;
     PACKET_BYTE keypad_input_column;
     PACKET_BYTE panel_buttons_right; // (via voltage divider)
     PACKET_BYTE panel_buttons_left;  // (via voltage divider)
@@ -138,8 +141,8 @@ const struct control_packet control_packet_defaults = {
         {},                                         //squelch_right         | 0%
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_right | set to 25% volume
         {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_row     | no buttons being pressed TODO: verify if 0 or 127 is standard behavior
-        {},                                         // squelch_left         | 0%
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_left  | set to 25% volume
+        {},                                         // squelch_left         | 0%
         {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_column  | full is no buttons being pressed TODO: verify if 0 or 127 is standard behavior
         {.section = {.data = DATA_MAX_NUM}},        // panel_buttons_right  | full is no buttons being pressed
         {.section = {.data = DATA_MAX_NUM}},        // panel_buttons_left   | full is no buttons being pressed
