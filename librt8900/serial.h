@@ -24,7 +24,6 @@ struct control_packet_q_node{
 typedef TAILQ_HEAD(CONTROL_PACKET_Q_HEAD, control_packet_q_node) CONTROL_PACKET_Q_HEAD;
 
 typedef struct {
-    bool verbose;
     bool lazy;
     char *serial_path;
     pthread_barrier_t* initialised;

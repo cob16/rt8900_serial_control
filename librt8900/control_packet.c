@@ -37,10 +37,10 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         int num_digets = snprintf(NULL, 0, "%d", number);
         if (num_digets > 6){
                 //this number
-                printf("WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
+                log_msg(RT8900_WARNING, "WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
                 return 1;
         }
-        printf("dialing %d", number);
+        log_msg(RT8900_INFO, "dialing %d\n", number);
 
         //create a char array of the digits
         char digits[num_digets];
@@ -61,7 +61,7 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
 ///Starts sending controll packets as defined by SERIAL_CFG
 void* send_control_packets(void *c)
 {
-        printf("-- STARTING CONTROL PACKET THREAD\n");
+        log_msg(RT8900_TRACE, "-- STARTING CONTROL PACKET THREAD\n");
         SERIAL_CFG *conf = (SERIAL_CFG*) c;
         open_serial(conf); //setup our serial connection
 
@@ -97,14 +97,12 @@ void* send_control_packets(void *c)
 
                         //print debug
                         if (current_packet != last_packet) {
-                                if (conf->verbose) {
-                                        printf("-\n");
-                                        packet_debug(current_packet, &packet_arr);
-                                }
+                                log_msg(RT8900_TRACE, "-\n");
+                                packet_debug(current_packet, &packet_arr);
                                 last_packet = current_packet;
                                 packets_sent = 0;
                         } else {
-                                printf("Sent %d packets\r",packets_sent);
+                                log_msg(RT8900_TRACE, "Sent %d packets\r",packets_sent);
                         }
 
                         //SEND THE PACKET
@@ -121,7 +119,7 @@ void* send_control_packets(void *c)
 
                         //move to the next packet and clean up
                         if (current_node->nodes.tqe_next != NULL) { //pop if there is more to send
-                                printf("removed after %d packets sent\n", packets_sent);
+                                log_msg(RT8900_TRACE, "removed after %d packets sent\n", packets_sent);
                                 TAILQ_REMOVE(conf->queue, current_node, nodes);
                                 if (current_node->do_not_free != 1) {
                                         free(current_packet);
@@ -131,7 +129,7 @@ void* send_control_packets(void *c)
                                 current_node = NULL;
                         }
                 } else {
-                        printf("empty!\n");
+                        log_msg(RT8900_TRACE, "empty!\n");
                 }
 
 
@@ -155,7 +153,7 @@ void* send_control_packets(void *c)
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, int do_not_free)
 {
         if (new_packet == NULL) {
-                printf("NULL packet attempted to be added to QUEUE\n");
+                log_msg(RT8900_ERROR, "NULL packet attempted to be added to QUEUE\n");
         } else {
                 struct control_packet_q_node *node = (struct control_packet_q_node*) malloc(sizeof(*(node)));
                 node->packet = new_packet;
@@ -163,19 +161,21 @@ void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, int 
                         node->do_not_free = do_not_free;
                 }
                 TAILQ_INSERT_TAIL(config->queue, node, nodes);
-                printf("ADDDED TO QUEUE \n");
+                log_msg(RT8900_TRACE, "ADDDED TO QUEUE \n");
         }
 }
 
 
 void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr)
 {
-        int i;
-        printf("\n");
-        printf("--------------------------\n");
-        printf("SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
-        for (i = 0; i < sizeof((*packet_arr).as_array); i++) {
-                print_char((*packet_arr).as_array[i].raw);
+        if (rt8900_verbose >= RT8900_TRACE) {
+                int i;
+                log_msg(RT8900_TRACE, "\n");
+                log_msg(RT8900_TRACE, "--------------------------\n");
+                log_msg(RT8900_TRACE, "SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
+                for (i = 0; i < sizeof((*packet_arr).as_array); i++) {
+                        print_char((*packet_arr).as_array[i].raw);
+                }
+                log_msg(RT8900_TRACE, "--------------------------\n");
         }
-        printf("--------------------------\n");
 }

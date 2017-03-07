@@ -19,7 +19,8 @@ static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Trans
 static char rt8900_args_doc[] = "<serial port path>";
 
 static struct argp_option rt8900options[] = {
-        {"verbose",'v',0,0, "Produce verbose output" },
+        {"verbose", 'v', "COUNT", OPTION_ARG_OPTIONAL,
+                "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'"},
         { 0 }
 };
 
@@ -33,7 +34,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         switch (key)
         {
         case 'v':
-                cfg->verbose = true;
+                rt8900_verbose = arg ? (enum rt8900_logging_level) atoi (arg) : RT8900_WARNING;
                 break;
         case ARGP_KEY_ARG:
                 if (state->arg_num >= 1)
@@ -66,7 +67,6 @@ int main(int argc, char **argv)
 {
         //Create our config
         SERIAL_CFG c = {
-                .verbose = false,
                 .lazy = true
         };
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config

@@ -9,6 +9,7 @@
 #endif
 
 #include "serial.h"
+#include "rt8900_log.h"
 
 /// Set our serial port attributes. Radio expects these constants
 void set_serial_attributes(int fd)
@@ -18,7 +19,7 @@ void set_serial_attributes(int fd)
 
         //read in existing settings
         if (tcgetattr(fd, &tty) != 0) {
-                printf("Failed reading terminal settings");
+                log_msg(RT8900_ERROR, "Failed reading terminal settings");
                 exit(EXIT_FAILURE);
         }
 
@@ -47,7 +48,7 @@ void set_serial_attributes(int fd)
 
         //write our new settings
         if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-                printf("Failed to set terminal settings");
+                log_msg(RT8900_ERROR, "Failed to set terminal settings");
                 exit(EXIT_FAILURE);
         }
 
@@ -59,7 +60,7 @@ void open_serial(SERIAL_CFG *cfg)
         int fd = 0;
         fd = open(cfg->serial_path, O_RDWR | O_NOCTTY | O_NDELAY );
         if (fd < 0) {
-                printf("Error while opening serial_path %s\n", cfg->serial_path); // Just if you want user interface error control
+                log_msg(RT8900_ERROR, "Error while opening serial_path %s\n", cfg->serial_path); // Just if you want user interface error control
                 exit(EXIT_FAILURE);
         }
 
