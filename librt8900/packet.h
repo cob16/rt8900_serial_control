@@ -9,6 +9,7 @@
 #define NUM_STOP_BITS 1
 #define NUM_PARITY_BITS 0
 
+
 //The last bit in a packet byte is 1 if it is the first in the packet
 enum check_num_values {
     SBZ = 0X00,
@@ -30,5 +31,7 @@ typedef union {
     signed char raw;
 } PACKET_BYTE;
 #pragma pack() //undo this once we are done (IF THIS LINE IS REMOVED LIBS WILL STOP WORKING FOR YOU SUDDENLY)
+
+void print_char(char byte);
 
 #endif //RT8900_SERIAL_CONTROLL_PACKET_H

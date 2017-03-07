@@ -7,8 +7,12 @@
 
 #include <stdbool.h>
 #include <sys/queue.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <termios.h>
 
-#include "control_packet.h"
 
 struct control_packet_q_node{
     struct control_packet *packet;
@@ -28,5 +32,8 @@ typedef struct {
     int serial_fd;
     bool keep_alive;
 } SERIAL_CFG;
+
+void open_serial(SERIAL_CFG *cfg);
+void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, int do_not_free);
 
 #endif //RT8900_SERIAL_CONTROLL_SERIAL_H

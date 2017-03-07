@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <argp.h>
-#include <serial.h>
 
-#include "serial.c"
+#include <unistd.h>
+
 #include "control_packet.c"
 
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
@@ -54,34 +54,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         return 0;
 }
 static struct argp argp = { rt8900options, parse_opt, rt8900_args_doc, rt8900_doc };
-
-///Creates the required packet to dial a number. they should then be added to the head of the queue*
-int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number) //TODO FINISH THIS
-{
-        //get the number of digits
-        int num_digets = snprintf(NULL, 0, "%d", number);
-        if (num_digets > 6){
-                //this number
-                printf("WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
-                return 1;
-        }
-        printf("dialing %d", number);
-
-        //create a char array of the digits
-        char digits[num_digets];
-        snprintf(digits, num_digets + 1, "%d", number);
-
-        //add packets that 'press' the seletced buttons
-        int i;
-        for (i=0; i<num_digets; i++){
-                create_packet(dialnum)
-                memcpy(dialnum, base_packet, sizeof(*base_packet));
-                set_button(dialnum, button_from_int(digits[i] - '0'));
-                send_new_packet(cfg, dialnum, 0);
-                send_new_packet(cfg, base_packet, 1);
-        }
-        return 0;
-}
 
 struct control_packet * create_a_packet(void) {
         struct control_packet *packet = malloc(sizeof(*packet));

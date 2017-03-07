@@ -7,15 +7,18 @@
 
 #include <sys/queue.h>
 #include <stdbool.h>
+
 #include "packet.h"
+#include "serial.h"
 
 //the observed standard packet gap with
 #define MILLISECONDS_BETWEEN_PACKETS_STANDARD 3
 //the time that the radio waits to account for denounce effect on physical buttons + 1 second for safty
 #define MILLISECONDS_DEBOUNCE_WAIT 51
 
-
 #define DEFAULT_VOLUME 0x1f //25% volume
+
+#define create_packet(pointer_name) struct control_packet *(pointer_name) = (struct control_packet*) malloc(sizeof(*(pointer_name)));
 
 enum misc_menu_buttons { //TODO This assumes that a 1 bit is the pressed position WARNING: check this assumption
     NOT_PRESSED      = 0x00,
@@ -153,6 +156,14 @@ typedef union {
     struct control_packet as_struct;
     PACKET_BYTE as_array[13];
 } CONTROL_PACKET_INDEXED;
+
+void set_button(struct control_packet *packet, const struct button_transmit_value *button);
+int dial_number(struct control_packet *base_packet, int number);
+int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
+void* send_control_packets(void *c);
+
+void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, int do_not_free);
+void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr);
 
 
 #endif //RT8900_SERIAL_CONTROL_FOO_H
