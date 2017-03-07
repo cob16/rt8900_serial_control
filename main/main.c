@@ -77,12 +77,9 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
                 create_packet(dialnum)
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_button(dialnum, button_from_int(digits[i] - '0'));
-                send_new_packet(cfg, dialnum);
-                usleep(USECONDS_BUTTON_WAIT);
-                send_new_packet(cfg, base_packet);
-                usleep(USECONDS_BUTTON_WAIT);
+                send_new_packet(cfg, dialnum, 0);
+                send_new_packet(cfg, base_packet, 1);
         }
-
         return 0;
 }
 
@@ -96,7 +93,10 @@ struct control_packet * create_a_packet(void) {
 int main(int argc, char **argv)
 {
         //Create our config
-        SERIAL_CFG c = {.verbose = false};
+        SERIAL_CFG c = {
+                .verbose = false,
+                .lazy = true
+        };
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
         pthread_t packet_send_thread;
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
         start_packet->volume_control_left.section.data = DATA_MIN_NUM;
         start_packet->volume_control_right.section.data = DATA_MIN_NUM;
 
-        send_new_packet(&c, start_packet);
+        send_new_packet(&c, start_packet, 1);
 
         sleep(5);
 

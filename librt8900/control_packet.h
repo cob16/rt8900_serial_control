@@ -6,11 +6,13 @@
 #define RT8900_SERIAL_CONTROL_FOO_H
 
 #include <sys/queue.h>
+#include <stdbool.h>
 #include "packet.h"
 
-#define MILLISECONDS_BETWEEN_PACKETS 3
-#define USECONDS_DEBOUNCE_WAIT 40000 //40ms
-#define USECONDS_BUTTON_WAIT 50000 //50 seconds
+//the observed standard packet gap with
+#define MILLISECONDS_BETWEEN_PACKETS_STANDARD 3
+//the time that the radio waits to account for denounce effect on physical buttons + 1 second for safty
+#define MILLISECONDS_DEBOUNCE_WAIT 51
 
 
 #define DEFAULT_VOLUME 0x1f //25% volume
@@ -53,11 +55,7 @@ struct control_packet{
     PACKET_BYTE panel_buttons_left;  // (via voltage divider)
     PACKET_BYTE menu_buttons;        // L/R encoder, set, and wires buttons
     PACKET_BYTE hyper_mem_buttons;   //hyper memory buttons
-    TAILQ_ENTRY(control_packet) nodes; //link to next packet (for que)
 };
-
-////create our packet que struct
-typedef TAILQ_HEAD(CONTROL_PACKET_Q, control_packet) CONTROL_PACKET_Q;
 
 //values in order to select a row
 enum voltage_divider_row_values {

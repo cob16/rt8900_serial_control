@@ -29,8 +29,8 @@ TEST(ControlPacketTest, CONTROL_PACKET) {
                 (signed char) 0x00, //squelch_right
                 (signed char) 0x1f, //volume_control_right
                 (signed char) 0x7f, //keypad_input_row
-                (signed char) 0x00, //squelch_left
                 (signed char) 0x1f, //volume_control_left
+                (signed char) 0x00, //squelch_left
                 (signed char) 0x7f, //keypad_input_column
                 (signed char) 0x7f, //panel_buttons_right
                 (signed char) 0x7f, //panel_buttons_left
