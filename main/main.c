@@ -9,6 +9,7 @@
 #include <argp.h>
 
 #include <unistd.h>
+#include <serial.h>
 
 #include "control_packet.c"
 
@@ -21,6 +22,8 @@ static char rt8900_args_doc[] = "<serial port path>";
 static struct argp_option rt8900options[] = {
         {"verbose", 'v', "COUNT", OPTION_ARG_OPTIONAL,
                 "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'"},
+        {"hard-emulation", 991, 0, OPTION_ARG_OPTIONAL,
+                "Exactly emulates the radio head insted of being lazy (worse performance, no observed benefit, only useful for debugging"},
         { 0 }
 };
 
@@ -33,13 +36,16 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 
         switch (key)
         {
+        case 991:
+                cfg->lazy = arg ? true : false;
+                break;
         case 'v':
                 rt8900_verbose = arg ? (enum rt8900_logging_level) atoi (arg) : RT8900_WARNING;
                 break;
         case ARGP_KEY_ARG:
                 if (state->arg_num >= 1)
                         /* Too many arguments. */
-                        argp_usage (state);
+                        argp_usage(state);
 
                 cfg->serial_path = arg;
                 break;
@@ -47,7 +53,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         case ARGP_KEY_END:
                 if (state->arg_num < 1)
                         /* Not enough arguments. */
-                        argp_usage (state);
+                        argp_usage(state);
                 break;
         default:
                 return ARGP_ERR_UNKNOWN;
