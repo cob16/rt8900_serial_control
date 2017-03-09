@@ -5,8 +5,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <argp.h>
+#include <pthread.h>
+#include <signal.h>
 
 #include <unistd.h>
 #include <serial.h>
@@ -23,7 +24,7 @@ static struct argp_option rt8900options[] = {
         {"verbose", 'v', "LEVEL", OPTION_ARG_OPTIONAL,
                 "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'."},
         {"hard-emulation", 991, 0, OPTION_ARG_OPTIONAL,
-                "Exactly emulates the radio head head instead of being lazy (worse performance, no observed benefit, only useful for debugging"},
+                "Exactly emulates the radio head instead of being lazy (worse performance, no observed benefit, only useful for debugging)"},
         { 0 }
 };
 
@@ -40,7 +41,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
                 cfg->lazy = arg ? true : false;
                 break;
         case 'v':
-                rt8900_verbose = arg ? (enum rt8900_logging_level) atoi (arg) : RT8900_WARNING;
+                rt8900_verbose = arg ? (enum rt8900_logging_level) atoi (arg) : RT8900_INFO;
                 break;
         case ARGP_KEY_ARG:
                 if (state->arg_num >= 1)
@@ -69,6 +70,23 @@ struct control_packet * create_a_packet(void) {
         return (packet);
 }
 
+static bool *keepalive = NULL;
+void graceful_shutdown(int signal)
+{
+        //use strsignal(signal) to get the name from int if we want to add others latter
+        log_msg(RT8900_INFO, "\nReceived SIGINT signal. Shutting down...\n");
+        if (keepalive != NULL) {
+                *keepalive = false;
+        }
+}
+
+
+void init_graceful_shutdown(SERIAL_CFG *c)
+{
+        keepalive = &(c->keep_alive);
+        signal(SIGINT, graceful_shutdown);
+}
+
 int main(int argc, char **argv)
 {
         //Create our config
@@ -85,6 +103,7 @@ int main(int argc, char **argv)
         //cast our pointer pointer to void pointer for thread creation
         pthread_create(&packet_send_thread, NULL, send_control_packets, &c);
         pthread_barrier_wait(&wait_for_init); //wait for thread to be ready
+        init_graceful_shutdown(&c);
 
         create_packet(start_packet)
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
