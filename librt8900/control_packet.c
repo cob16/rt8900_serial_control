@@ -22,15 +22,6 @@ void set_button(struct control_packet *packet, const struct button_transmit_valu
 }
 
 ///Creates the required packet to dial a number. they should then be added to the head of the queue*
-int dial_number(struct control_packet *base_packet, int number)
-{
-        const struct button_transmit_value *button = button_from_int(number);
-        set_button(base_packet, button);
-
-        return 0;
-}
-
-///Creates the required packet to dial a number. they should then be added to the head of the queue*
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
         //get the number of digits
