@@ -14,15 +14,15 @@
 #include <termios.h>
 
 
+enum pop_queue_behaviour {
+    PACKET_SEND_THEN_FREE = 0,
+    PACKET_SEND_ONLY = 1,
+};
+
 struct control_packet_q_node{
     struct control_packet *packet;
     enum pop_queue_behaviour free_packet; //should we free the packet once it is sent (default flase)
     TAILQ_ENTRY(control_packet_q_node) nodes; //link to next packet (for que)
-};
-
-enum pop_queue_behaviour {
-    PACKET_SEND_THEN_FREE = 0,
-    PACKET_SEND_ONLY = 1,
 };
 
 ///create our packet queue struct
