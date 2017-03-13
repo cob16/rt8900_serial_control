@@ -11,3 +11,6 @@ TARGET_LINK_LIBRARIES(test_librt8900
 
 add_test(NAME test_librt8900
          COMMAND test_librt8900)
+
+add_test(NAME test_lib_api
+        COMMAND test_librt8900)

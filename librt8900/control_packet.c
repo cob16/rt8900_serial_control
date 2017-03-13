@@ -21,7 +21,58 @@ void set_button(struct control_packet *packet, const struct button_transmit_valu
         packet->keypad_input_column.section.data = button->column;
 }
 
-///Creates the required packet to dial a number. they should then be added to the head of the queue*
+///returns null if the number will not fit into the packet (7 bits)
+signed char safe_int_char(int number)
+{
+        if (number > DATA_MAX_NUM || number < DATA_MIN_NUM) {
+                return NULL;
+        } else {
+                return (signed char) number;
+        }
+}
+
+int set_left_volume(struct control_packet *packet, int number)
+{
+        signed char left_volume = safe_int_char(number);
+        if (left_volume == NULL) {
+                return 1;
+        }
+        packet->volume_control_left.section.data = left_volume;
+        return 0;
+}
+
+int set_right_volume(struct control_packet *packet, int number)
+{
+        signed char right_volume = safe_int_char(number);
+        if (right_volume == NULL) {
+                return 1;
+        }
+        packet->volume_control_right.section.data = right_volume;
+        return 0;
+}
+
+
+///set the volume between 0-127. 0 is mute. NULL will not change
+///Will return 0 if there there are no errors, returns 1 for left error, 2 for right error and 3 for both errors
+int set_volumes(struct control_packet *packet, int left_volume, int right_volume)
+{
+        int errors = 0;
+        if (left_volume != NULL) {
+
+                if (!set_left_volume(packet, left_volume)){
+                        errors += 1;
+                }
+        }
+        if (right_volume != NULL) {
+
+                if (!set_right_volume(packet, right_volume)){
+                        errors += 2;
+                }
+        }
+        return errors;
+}
+
+///Adds the required packets to dial a number. they are then be added to the queue
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
         //get the number of digits
@@ -49,7 +100,7 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         return 0;
 }
 
-///Starts sending controll packets as defined by SERIAL_CFG
+///Starts sending control packets as defined by SERIAL_CFG
 void* send_control_packets(void *c)
 {
         log_msg(RT8900_TRACE, "-- STARTING CONTROL PACKET THREAD\n");

@@ -157,6 +157,10 @@ typedef union {
     PACKET_BYTE as_array[13];
 } CONTROL_PACKET_INDEXED;
 
+signed char safe_int_char(int number);
+int set_left_volume(struct control_packet *packet, int number);
+int set_right_volume(struct control_packet *packet, int number);
+int set_volumes(struct control_packet *packet, int left_volume, int right_volume);
 void set_button(struct control_packet *packet, const struct button_transmit_value *button);
 int dial_number(struct control_packet *base_packet, int number);
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);

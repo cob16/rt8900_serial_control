@@ -23,5 +23,4 @@ protected:
     virtual void TearDown();
 };
 
-// The fixture for testing class Foo.
 class TestKeypadButtons : public ::testing::Test {};

@@ -12,7 +12,8 @@ TEST(ControlPacketTest, PACKET_BYTE)
         EXPECT_EQ(test_byte.section.data, 0x04);
 }
 
-TEST(ControlPacketTest, CONTROL_PACKET) {
+TEST(ControlPacketTest, CONTROL_PACKET)
+{
 
         //create our object
         struct control_packet test_packet = control_packet_defaults;
