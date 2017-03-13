@@ -80,13 +80,6 @@ void graceful_shutdown(int signal)
         }
 }
 
-
-void init_graceful_shutdown(SERIAL_CFG *c)
-{
-        keepalive = &(c->keep_alive);
-        signal(SIGINT, graceful_shutdown);
-}
-
 int main(int argc, char **argv)
 {
         //Create our config
@@ -103,7 +96,7 @@ int main(int argc, char **argv)
         //cast our pointer pointer to void pointer for thread creation
         pthread_create(&packet_send_thread, NULL, send_control_packets, &c);
         pthread_barrier_wait(&wait_for_init); //wait for thread to be ready
-        init_graceful_shutdown(&c);
+        signal(SIGINT, graceful_shutdown);
 
         create_packet(start_packet)
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
