@@ -16,8 +16,13 @@
 
 struct control_packet_q_node{
     struct control_packet *packet;
-    int do_not_free; //should we free the packet once it is sent (default flase)
+    enum pop_queue_behaviour free_packet; //should we free the packet once it is sent (default flase)
     TAILQ_ENTRY(control_packet_q_node) nodes; //link to next packet (for que)
+};
+
+enum pop_queue_behaviour {
+    PACKET_SEND_THEN_FREE = 0,
+    PACKET_SEND_ONLY = 1,
 };
 
 ///create our packet queue struct
@@ -33,6 +38,5 @@ typedef struct {
 } SERIAL_CFG;
 
 void open_serial(SERIAL_CFG *cfg);
-void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, int do_not_free);
 
 #endif //RT8900_SERIAL_CONTROLL_SERIAL_H

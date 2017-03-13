@@ -161,8 +161,7 @@ void set_button(struct control_packet *packet, const struct button_transmit_valu
 int dial_number(struct control_packet *base_packet, int number);
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
 void* send_control_packets(void *c);
-
-void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, int do_not_free);
+void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
 void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr);
 
 

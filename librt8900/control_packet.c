@@ -52,8 +52,8 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
                 create_packet(dialnum)
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_button(dialnum, button_from_int(digits[i] - '0'));
-                send_new_packet(cfg, dialnum, 0);
-                send_new_packet(cfg, base_packet, 1);
+                send_new_packet(cfg, dialnum, PACKET_SEND_THEN_FREE);
+                send_new_packet(cfg, base_packet, PACKET_SEND_ONLY);
         }
         return 0;
 }
@@ -121,7 +121,7 @@ void* send_control_packets(void *c)
                         if (current_node->nodes.tqe_next != NULL) { //pop if there is more to send
                                 log_msg(RT8900_TRACE, "removed after %d packets sent\n", packets_sent);
                                 TAILQ_REMOVE(conf->queue, current_node, nodes);
-                                if (current_node->do_not_free != 1) {
+                                if (current_node->free_packet == PACKET_SEND_THEN_FREE) {
                                         free(current_packet);
                                 }
                                 current_packet = NULL;
@@ -150,16 +150,15 @@ void* send_control_packets(void *c)
 }
 
 ///adds a control_packet (pointer) to the send queue, should only be called once the queu h
-void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, int do_not_free)
+void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice)
 {
         if (new_packet == NULL) {
                 log_msg(RT8900_ERROR, "NULL packet attempted to be added to QUEUE\n");
         } else {
                 struct control_packet_q_node *node = (struct control_packet_q_node*) malloc(sizeof(*(node)));
                 node->packet = new_packet;
-                if (do_not_free) {
-                        node->do_not_free = do_not_free;
-                }
+                node->free_packet = free_choice;
+
                 TAILQ_INSERT_TAIL(config->queue, node, nodes);
                 log_msg(RT8900_TRACE, "ADDDED TO QUEUE \n");
         }

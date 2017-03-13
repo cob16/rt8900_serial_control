@@ -114,7 +114,7 @@ int main(int argc, char **argv)
         start_packet->volume_control_left.section.data = DATA_MIN_NUM;
         start_packet->volume_control_right.section.data = DATA_MIN_NUM;
 
-        send_new_packet(&c, start_packet, 1);
+        send_new_packet(&c, start_packet, PACKET_SEND_ONLY);
 
         sleep(5);
 
