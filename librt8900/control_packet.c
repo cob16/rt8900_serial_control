@@ -21,16 +21,80 @@ void set_button(struct control_packet *packet, const struct button_transmit_valu
         packet->keypad_input_column.section.data = button->column;
 }
 
-///Creates the required packet to dial a number. they should then be added to the head of the queue*
-int dial_number(struct control_packet *base_packet, int number)
+///returns null if the number will not fit into the packet (7 bits)
+signed char safe_int_char(int number)
 {
-        const struct button_transmit_value *button = button_from_int(number);
-        set_button(base_packet, button);
+        if(number < DATA_MIN_NUM) {
+                return (signed char) DATA_MIN_NUM;
 
+        } else if (number > DATA_MAX_NUM) {
+                return (signed char) DATA_MAX_NUM;
+        }
+        return (signed char) number;
+}
+
+///set the volume between 0-127. 0 is mute.
+int set_volume_left(struct control_packet *packet, int number)
+{
+        if (packet == NULL) {
+                return 1;
+        }
+        packet->volume_control_left.section.data = safe_int_char(number);
         return 0;
 }
 
-///Creates the required packet to dial a number. they should then be added to the head of the queue*
+///set the volume between 0-127. 0 is mute.
+int set_volume_right(struct control_packet *packet, int number)
+{
+        if (packet == NULL) {
+                return 1;
+        }
+        packet->volume_control_right.section.data = safe_int_char(number);
+        return 0;
+}
+
+/// Set the left and right volume. between 0-127. 0 is mute.
+int set_volume(struct control_packet *packet, int left, int right)
+{
+        int o = 0;
+        o += set_volume_left(packet, left);
+        o += set_volume_right(packet, right);
+        return o;
+}
+
+/// Set the left squelch between 0-127.
+///127 filters no noise.e.
+int set_squelch_left(struct control_packet *packet, int number)
+{
+        if (packet == NULL) {
+                return 1;
+        }
+        packet->squelch_left.section.data = safe_int_char(number);
+        return 0;
+}
+
+/// Set the right squelch between 0-127.
+///127 filters no noise.
+int set_squelch_right(struct control_packet *packet, int number)
+{
+        if (packet == NULL) {
+                return 1;
+        }
+        packet->squelch_right.section.data = safe_int_char(number);
+        return 0;
+}
+
+/// Set the left and right squelch. between 0-127.
+///127 filters no noise.
+int set_squelch(struct control_packet *packet, int left, int right)
+{
+        int o = 0;
+        o += set_squelch_left(packet, left);
+        o += set_squelch_right(packet, right);
+        return o;
+}
+
+///Adds the required packets to dial a number. they are then be added to the queue
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
         //get the number of digits
@@ -49,7 +113,7 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         //add packets that 'press' the seletced buttons
         int i;
         for (i=0; i<num_digets; i++){
-                create_packet(dialnum)
+                maloc_control_packet(dialnum)
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_button(dialnum, button_from_int(digits[i] - '0'));
                 send_new_packet(cfg, dialnum, PACKET_SEND_THEN_FREE);
@@ -58,7 +122,7 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         return 0;
 }
 
-///Starts sending controll packets as defined by SERIAL_CFG
+///Starts sending control packets as defined by SERIAL_CFG
 void* send_control_packets(void *c)
 {
         log_msg(RT8900_TRACE, "-- STARTING CONTROL PACKET THREAD\n");
@@ -98,7 +162,9 @@ void* send_control_packets(void *c)
                         //print debug
                         if (current_packet != last_packet) {
                                 log_msg(RT8900_TRACE, "-\n");
-                                packet_debug(current_packet, &packet_arr);
+                                if (rt8900_verbose >= RT8900_TRACE) {
+                                        packet_debug(current_packet, &packet_arr);
+                                }
                                 last_packet = current_packet;
                                 packets_sent = 0;
                         } else {
@@ -165,16 +231,21 @@ void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum
 }
 
 
-void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr)
+void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *input_packet_arr)
 {
-        if (rt8900_verbose >= RT8900_TRACE) {
-                int i;
-                log_msg(RT8900_TRACE, "\n");
-                log_msg(RT8900_TRACE, "--------------------------\n");
-                log_msg(RT8900_TRACE, "SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
-                for (i = 0; i < sizeof((*packet_arr).as_array); i++) {
-                        print_char((*packet_arr).as_array[i].raw);
-                }
-                log_msg(RT8900_TRACE, "--------------------------\n");
+        //Create a array to examine the packet if one was not supplied
+        CONTROL_PACKET_INDEXED *packet_array = input_packet_arr;
+        if (packet_array == NULL) {
+                CONTROL_PACKET_INDEXED new_array = {.as_struct = *packet};
+                packet_array = &new_array;
         }
+
+        int i;
+        printf("\n");
+        printf("--------------------------\n");
+        printf("SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
+        for (i = 0; i < sizeof((*packet_array).as_array); i++) {
+                print_char((*packet_array).as_array[i].raw);
+        }
+        printf("--------------------------\n");
 }

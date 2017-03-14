@@ -1,4 +1,3 @@
-#include <packet.h>
 #include "gtest/gtest.h"
 
 #include "test_librt8900.h"
@@ -12,7 +11,8 @@ TEST(ControlPacketTest, PACKET_BYTE)
         EXPECT_EQ(test_byte.section.data, 0x04);
 }
 
-TEST(ControlPacketTest, CONTROL_PACKET) {
+TEST(ControlPacketTest, CONTROL_PACKET)
+{
 
         //create our object
         struct control_packet test_packet = control_packet_defaults;
@@ -52,6 +52,7 @@ TEST(ControlPacketTest, CONTROL_PACKET) {
         }
 }
 
+
 TEST(TestKeypadButtons, test_set_button)
 {
         //create a packet
@@ -85,3 +86,67 @@ TEST(TestKeypadButtons, test_button_from_int)
         EXPECT_EQ(test_button_5->row,    (signed char) 0X1A);
         EXPECT_EQ(test_button_5->column, (signed char) 0X32);
 }
+
+TEST(TestAPISetters, test_safe_int_char)
+{
+        EXPECT_EQ(safe_int_char(-1), (signed char) 0);
+        EXPECT_EQ(safe_int_char(128), (signed char) 127);
+
+        EXPECT_EQ(safe_int_char(9999999), (signed char) 127);
+        EXPECT_EQ(safe_int_char((int)NULL), (signed char) 0);
+
+        EXPECT_EQ(safe_int_char(2), (signed char) 2);
+}
+
+TEST(TestAPISetters, test_set_L_R_volume)
+{
+        maloc_control_packet(packet)
+        memcpy(packet, &control_packet_defaults ,sizeof(*packet));
+
+        //set to 50
+        EXPECT_EQ(set_volume_left(packet, 50) , 0);
+        EXPECT_EQ(set_volume_right(packet, 50), 0);
+        EXPECT_EQ(packet->volume_control_left.section.data, (signed char) 50);
+        EXPECT_EQ(packet->volume_control_right.section.data, (signed char) 50);
+
+        //set to -100 (invalid should set to 0)
+        EXPECT_EQ(set_volume_left(packet, -100) , 0);
+        EXPECT_EQ(set_volume_right(packet, -100), 0);
+        EXPECT_EQ(packet->volume_control_left.section.data, (signed char) 0);
+        EXPECT_EQ(packet->volume_control_right.section.data, (signed char) 0);
+
+        //test we properly handle a null pointer
+        free(packet);
+        packet = NULL;
+        ASSERT_NO_THROW(set_volume_right(NULL, 666));
+        ASSERT_NO_THROW(set_volume_left(NULL, 666));
+        ASSERT_EQ(set_volume_right(NULL, 666), 1);
+        ASSERT_EQ(set_volume_left(NULL, 666), 1);
+}
+
+TEST(TestAPISetters, test_set_L_R_squelch)
+{
+        maloc_control_packet(packet)
+        memcpy(packet, &control_packet_defaults ,sizeof(*packet));
+
+        //set to 50
+        EXPECT_EQ(set_squelch_left(packet, 127) , 0);
+        EXPECT_EQ(set_squelch_right(packet, 127), 0);
+        EXPECT_EQ(packet->squelch_left.section.data, (signed char) 127);
+        EXPECT_EQ(packet->squelch_right.section.data, (signed char) 127);
+
+        //set to -100 (invalid should set to 0)
+        EXPECT_EQ(set_squelch_left(packet, -100) , 0);
+        EXPECT_EQ(set_squelch_right(packet, -100), 0);
+        EXPECT_EQ(packet->squelch_left.section.data, (signed char) 0);
+        EXPECT_EQ(packet->squelch_right.section.data, (signed char) 0);
+
+        //test we properly handle a null pointer
+        free(packet);
+        packet = NULL;
+        ASSERT_NO_THROW(set_squelch_left(NULL, 666));
+        ASSERT_NO_THROW(set_squelch_right(NULL, 666));
+        ASSERT_EQ(set_squelch_left(NULL, 666), 1);
+        ASSERT_EQ(set_squelch_right(NULL, 666), 1);
+}
+
