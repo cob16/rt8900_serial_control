@@ -18,7 +18,7 @@
 
 #define DEFAULT_VOLUME 0x1f //25% volume
 
-#define create_packet(pointer_name) struct control_packet *(pointer_name) = (struct control_packet*) malloc(sizeof(*(pointer_name)));
+#define maloc_control_packet(pointer_name) struct control_packet *(pointer_name) = (struct control_packet*) malloc(sizeof(*(pointer_name)));
 
 enum misc_menu_buttons { //TODO This assumes that a 1 bit is the pressed position WARNING: check this assumption
     NOT_PRESSED      = 0x00,
@@ -158,8 +158,8 @@ typedef union {
 } CONTROL_PACKET_INDEXED;
 
 signed char safe_int_char(int number);
-int set_left_volume(struct control_packet *packet, int number);
-int set_right_volume(struct control_packet *packet, int number);
+int set_volume_left(struct control_packet *packet, int number);
+int set_volume_right(struct control_packet *packet, int number);
 int set_volumes(struct control_packet *packet, int left_volume, int right_volume);
 void set_button(struct control_packet *packet, const struct button_transmit_value *button);
 int dial_number(struct control_packet *base_packet, int number);

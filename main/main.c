@@ -105,14 +105,12 @@ int main(int argc, char **argv)
         pthread_barrier_wait(&wait_for_init); //wait for thread to be ready
         init_graceful_shutdown(&c);
 
-        create_packet(start_packet)
+        maloc_control_packet(start_packet)
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
 
-        start_packet->squelch_left.section.data = DATA_MAX_NUM;
-        start_packet->squelch_right.section.data = DATA_MAX_NUM; //max is mim
 
-        start_packet->volume_control_left.section.data = DATA_MIN_NUM;
-        start_packet->volume_control_right.section.data = DATA_MIN_NUM;
+        set_squelch(start_packet, 127, 127);
+        set_volume(start_packet, 20, 20);
 
         send_new_packet(&c, start_packet, PACKET_SEND_ONLY);
 

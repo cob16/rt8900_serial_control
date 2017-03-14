@@ -24,52 +24,74 @@ void set_button(struct control_packet *packet, const struct button_transmit_valu
 ///returns null if the number will not fit into the packet (7 bits)
 signed char safe_int_char(int number)
 {
-        if (number > DATA_MAX_NUM || number < DATA_MIN_NUM) {
-                return NULL;
-        } else {
-                return (signed char) number;
+        if(number < DATA_MIN_NUM) {
+                return (signed char) DATA_MIN_NUM;
+
+        } else if (number > DATA_MAX_NUM) {
+                return (signed char) DATA_MAX_NUM;
         }
+        return (signed char) number;
 }
 
-int set_left_volume(struct control_packet *packet, int number)
+///set the volume between 0-127. 0 is mute.
+int set_volume_left(struct control_packet *packet, int number)
 {
-        signed char left_volume = safe_int_char(number);
-        if (left_volume == NULL) {
+        if (packet == NULL) {
                 return 1;
         }
-        packet->volume_control_left.section.data = left_volume;
+        packet->volume_control_left.section.data = safe_int_char(number);
         return 0;
 }
 
-int set_right_volume(struct control_packet *packet, int number)
+///set the volume between 0-127. 0 is mute.
+int set_volume_right(struct control_packet *packet, int number)
 {
-        signed char right_volume = safe_int_char(number);
-        if (right_volume == NULL) {
+        if (packet == NULL) {
                 return 1;
         }
-        packet->volume_control_right.section.data = right_volume;
+        packet->volume_control_right.section.data = safe_int_char(number);
         return 0;
 }
 
-
-///set the volume between 0-127. 0 is mute. NULL will not change
-///Will return 0 if there there are no errors, returns 1 for left error, 2 for right error and 3 for both errors
-int set_volumes(struct control_packet *packet, int left_volume, int right_volume)
+/// Set the left and right volume. between 0-127. 0 is mute.
+int set_volume(struct control_packet *packet, int left, int right)
 {
-        int errors = 0;
-        if (left_volume != NULL) {
+        int o = 0;
+        o += set_volume_left(packet, left);
+        o += set_volume_right(packet, right);
+        return o;
+}
 
-                if (!set_left_volume(packet, left_volume)){
-                        errors += 1;
-                }
+/// Set the left squelch between 0-127.
+///127 filters no noise.e.
+int set_squelch_left(struct control_packet *packet, int number)
+{
+        if (packet == NULL) {
+                return 1;
         }
-        if (right_volume != NULL) {
+        packet->squelch_left.section.data = safe_int_char(number);
+        return 0;
+}
 
-                if (!set_right_volume(packet, right_volume)){
-                        errors += 2;
-                }
+/// Set the right squelch between 0-127.
+///127 filters no noise.
+int set_squelch_right(struct control_packet *packet, int number)
+{
+        if (packet == NULL) {
+                return 1;
         }
-        return errors;
+        packet->squelch_right.section.data = safe_int_char(number);
+        return 0;
+}
+
+/// Set the left and right squelch. between 0-127.
+///127 filters no noise.
+int set_squelch(struct control_packet *packet, int left, int right)
+{
+        int o = 0;
+        o += set_squelch_left(packet, left);
+        o += set_squelch_right(packet, right);
+        return o;
 }
 
 ///Adds the required packets to dial a number. they are then be added to the queue
@@ -91,7 +113,7 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         //add packets that 'press' the seletced buttons
         int i;
         for (i=0; i<num_digets; i++){
-                create_packet(dialnum)
+                maloc_control_packet(dialnum)
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_button(dialnum, button_from_int(digits[i] - '0'));
                 send_new_packet(cfg, dialnum, PACKET_SEND_THEN_FREE);
@@ -140,7 +162,9 @@ void* send_control_packets(void *c)
                         //print debug
                         if (current_packet != last_packet) {
                                 log_msg(RT8900_TRACE, "-\n");
-                                packet_debug(current_packet, &packet_arr);
+                                if (rt8900_verbose >= RT8900_TRACE) {
+                                        packet_debug(current_packet, &packet_arr);
+                                }
                                 last_packet = current_packet;
                                 packets_sent = 0;
                         } else {
@@ -207,16 +231,21 @@ void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum
 }
 
 
-void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr)
+void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *input_packet_arr)
 {
-        if (rt8900_verbose >= RT8900_TRACE) {
-                int i;
-                log_msg(RT8900_TRACE, "\n");
-                log_msg(RT8900_TRACE, "--------------------------\n");
-                log_msg(RT8900_TRACE, "SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
-                for (i = 0; i < sizeof((*packet_arr).as_array); i++) {
-                        print_char((*packet_arr).as_array[i].raw);
-                }
-                log_msg(RT8900_TRACE, "--------------------------\n");
+        //Create a array to examine the packet if one was not supplied
+        CONTROL_PACKET_INDEXED *packet_array = input_packet_arr;
+        if (packet_array == NULL) {
+                CONTROL_PACKET_INDEXED new_array = {.as_struct = *packet};
+                packet_array = &new_array;
         }
+
+        int i;
+        printf("\n");
+        printf("--------------------------\n");
+        printf("SERIAL CONTROL THREAD\nNew pointer address: %p \nNow sending:\n", packet);
+        for (i = 0; i < sizeof((*packet_array).as_array); i++) {
+                print_char((*packet_array).as_array[i].raw);
+        }
+        printf("--------------------------\n");
 }

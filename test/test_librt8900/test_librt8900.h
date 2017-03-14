@@ -24,3 +24,5 @@ protected:
 };
 
 class TestKeypadButtons : public ::testing::Test {};
+
+class TestAPISetters : public ::testing::Test{};
