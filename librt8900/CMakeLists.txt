@@ -4,7 +4,7 @@ set(librt8900_SRCS
         serial.c serial.h
         control_packet.h control_packet.c
         packet.h packet.c
-        rt8900_log.h)
+        log.h display_packet.c display_packet.h)
 
 # Declare the library
 add_library(librt8900 STATIC
