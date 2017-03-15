@@ -22,20 +22,20 @@ TEST(ControlPacketTest, CONTROL_PACKET)
         //place our struct into a union that lets us get it as an array
         CONTROL_PACKET_INDEXED packet_arr = {.as_struct = test_packet};
 
-        signed char packet_expected_output[13] = {
-                (signed char) 0x80, //encoder_right
-                (signed char) 0x00, //encoder_left
-                (signed char) 0x7f, //ptt
-                (signed char) 0x00, //squelch_right
-                (signed char) 0x1f, //volume_control_right
-                (signed char) 0x7f, //keypad_input_row
-                (signed char) 0x1f, //volume_control_left
-                (signed char) 0x00, //squelch_left
-                (signed char) 0x7f, //keypad_input_column
-                (signed char) 0x7f, //panel_buttons_right
-                (signed char) 0x7f, //panel_buttons_left
-                (signed char) 0x00, //menu_buttons
-                (signed char) 0x00  //hyper_mem_buttons
+        unsigned char packet_expected_output[13] = {
+                (unsigned char) 0x80, //encoder_right
+                (unsigned char) 0x00, //encoder_left
+                (unsigned char) 0x7f, //ptt
+                (unsigned char) 0x00, //squelch_right
+                (unsigned char) 0x1f, //volume_control_right
+                (unsigned char) 0x7f, //keypad_input_row
+                (unsigned char) 0x1f, //volume_control_left
+                (unsigned char) 0x00, //squelch_left
+                (unsigned char) 0x7f, //keypad_input_column
+                (unsigned char) 0x7f, //panel_buttons_right
+                (unsigned char) 0x7f, //panel_buttons_left
+                (unsigned char) 0x00, //menu_buttons
+                (unsigned char) 0x00  //hyper_mem_buttons
         };
 
         //test to see we have the same array size

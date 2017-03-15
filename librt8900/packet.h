@@ -28,7 +28,7 @@ typedef struct {
 
 typedef union {
     FT8900BYTE section;
-    signed char raw;
+    unsigned char raw;
 } PACKET_BYTE;
 #pragma pack() //undo this once we are done (IF THIS LINE IS REMOVED LIBS WILL STOP WORKING FOR YOU SUDDENLY)
 
