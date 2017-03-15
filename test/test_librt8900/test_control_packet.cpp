@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "test_librt8900.h"
+#include "test_control_packet.h"
 #include "control_packet.c"
 
 TEST(ControlPacketTest, PACKET_BYTE)

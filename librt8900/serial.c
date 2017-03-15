@@ -9,7 +9,8 @@
 #endif
 
 #include "serial.h"
-#include "rt8900_log.h"
+#include "display_packet.h"
+#include "log.c"
 
 /// Set our serial port attributes. Radio expects these constants
 void set_serial_attributes(int fd)
@@ -36,15 +37,18 @@ void set_serial_attributes(int fd)
         tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
         tty.c_cflag &= ~CRTSCTS;    /* no hardware flow control */
 
-//        TODO VERIFY that these settings will not be needed for reading
-//        /* setup for non-canonical mode */
-//        tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+
+        /* setup for non-canonical mode */
+        tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
 //        tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-//        tty.c_oflag &= ~OPOST;
-//
-//        /* fetch bytes as they become available */
-//        tty.c_cc[VMIN] = 1;
-//        tty.c_cc[VTIME] = 1;
+        tty.c_oflag &= ~OPOST;
+
+
+        // block read calls until we read a whole packet fetch of bytes until they become available
+        tty.c_lflag &= ~(ICANON | ECHO | ECHOE |ISIG);
+        tty.c_cc[VMIN] = DISPLAY_PACKET_SIZE;
+        tty.c_cc[VTIME] = 1;
+        fcntl(fd, F_SETFL, 0);
 
         //write our new settings
         if (tcsetattr(fd, TCSANOW, &tty) != 0) {

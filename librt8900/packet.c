@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "rt8900_log.h"
+#include "log.h"
 
 void print_char(char byte)
 {
