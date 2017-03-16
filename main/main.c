@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <argp.h>
 #include <pthread.h>
 #include <signal.h>
@@ -87,6 +88,135 @@ void init_graceful_shutdown(SERIAL_CFG *c)
         signal(SIGINT, graceful_shutdown);
 }
 
+#define PROMPT_BUFFER_SIZE 32
+
+
+char *read_prompt_line(void)
+{
+        // inspired by https://github.com/brenns10/lsh/blob/407938170e8b40d231781576e05282a41634848c/src/main.c
+        int buffer_size = PROMPT_BUFFER_SIZE;
+        char *buffer = malloc(sizeof(char) * buffer_size);
+        if (!buffer) {
+                log_msg(RT8900_ERROR, "Failed to allocate buffer");
+                exit(EXIT_FAILURE);
+        }
+
+        int i;
+        for (i = 0; ; i++) {
+
+                if (i >= buffer_size) {
+                        buffer_size = buffer_size * 2;
+                        buffer = realloc(buffer, buffer_size);
+                        if (!buffer) {
+                                log_msg(RT8900_ERROR, "Failed to increase buffer size");
+                                exit(EXIT_FAILURE);
+                        }
+                }
+
+                int ch = getchar();
+
+                if (ch == EOF || ch == '\n') {
+                        buffer[i] = '\0';
+                        return buffer;
+                } else {
+                        buffer[i] = ch;
+                }
+        }
+}
+
+
+/// Split string into arg array
+char **split_line_args(char *line)
+{
+        // inspired by https://github.com/brenns10/lsh/blob/407938170e8b40d231781576e05282a41634848c/src/main.c
+        int buffer_size = PROMPT_BUFFER_SIZE * 2;
+        char **args = malloc(buffer_size * sizeof(char*));
+        char *token;
+        int i;
+
+        token = strtok(line, " ");
+        for (i = 0; (token != NULL || i < buffer_size) ; i++) {
+                args[i] = token;
+                token = strtok(NULL, " ");
+        }
+        args[i] = NULL;
+        return args;
+}
+
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
+void print_invalid_command()
+{
+        printf("%s%s%s\n", ANSI_COLOR_YELLOW, "Invalid command", ANSI_COLOR_RESET);
+}
+
+int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        int num_args = 0;
+        for (num_args = 0; cmd[num_args] != NULL; num_args++);
+
+        int left_op;
+        int right_op;
+
+        switch (num_args){
+        case 0:
+                print_invalid_command();
+                return 1;
+        case 1:
+                if (strcmp(cmd[0], "exit") == 0) {
+                        printf("%sExiting%s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                        return 0;
+                } else {
+                        print_invalid_command();
+                }
+                return 1;
+        case 2:
+                if (strcmp(cmd[0], "f") == 0){
+                        left_op = (int)strtoimax(cmd[1], NULL, 10);
+                        printf("%s Setting frequency -> %d %s\n", ANSI_COLOR_GREEN, left_op, ANSI_COLOR_RESET);
+                        set_frequency(config, base_packet, left_op);
+                } else {
+                        print_invalid_command();
+                }
+                return 1;
+        case 3:
+                left_op = (int)strtoimax(cmd[1], NULL, 10);
+                right_op = (int)strtoimax(cmd[2], NULL, 10);
+                if (strcmp(cmd[0], "v") == 0) {
+                        printf("%s Setting volume -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
+                        set_volume(base_packet, left_op, right_op);
+
+                } else if (strcmp(cmd[0], "s") == 0){
+                        printf("%s Setting squelsh -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
+                        set_squelch(base_packet, left_op, right_op);
+                } else {
+                        print_invalid_command();
+                }
+        default:
+                return 1;
+        }
+}
+
+void user_prompt(SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        char *line;
+        char **command_arr;
+        int keep_alive = 1;
+
+        while (keep_alive) {
+                printf("> ");
+                line  = read_prompt_line();;
+                command_arr = split_line_args(line);
+
+                keep_alive = run_command(command_arr, config, base_packet);
+
+                free(line);
+                free(command_arr);
+        }
+}
+
 int main(int argc, char **argv)
 {
         //Create our config
@@ -108,17 +238,14 @@ int main(int argc, char **argv)
         maloc_control_packet(start_packet)
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
 
-
-        set_squelch(start_packet, 127, 127);
-        set_volume(start_packet, 20, 20);
-
         send_new_packet(&c, start_packet, PACKET_SEND_ONLY);
 
-        sleep(5);
+        //todo block until display packets are revived
+        //todo add a block until radio is able to revived commands (boot time)
 
-        set_frequency(&c, start_packet, 145501);
+        user_prompt(&c, start_packet);
 
-//        c.keep_alive = false;
+        c.keep_alive = false;
         pthread_barrier_destroy(&wait_for_init);
         pthread_join(packet_send_thread, NULL);
         return 0;
