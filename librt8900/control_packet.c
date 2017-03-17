@@ -116,8 +116,8 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
                 maloc_control_packet(dialnum)
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_button(dialnum, button_from_int(digits[i] - '0'));
-                send_new_packet(cfg, dialnum, PACKET_SEND_THEN_FREE);
-                send_new_packet(cfg, base_packet, PACKET_SEND_ONLY);
+                send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
+                send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
         }
         return 0;
 }
@@ -187,7 +187,7 @@ void* send_control_packets(void *c)
                         if (current_node->nodes.tqe_next != NULL) { //pop if there is more to send
                                 log_msg(RT8900_TRACE, "removed after %d packets sent\n", packets_sent);
                                 TAILQ_REMOVE(conf->queue, current_node, nodes);
-                                if (current_node->free_packet == PACKET_SEND_THEN_FREE) {
+                                if (current_node->free_packet == PACKET_FREE_AFTER_SEND) {
                                         free(current_packet);
                                 }
                                 current_packet = NULL;

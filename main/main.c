@@ -238,7 +238,7 @@ int main(int argc, char **argv)
         maloc_control_packet(start_packet)
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
 
-        send_new_packet(&c, start_packet, PACKET_SEND_ONLY);
+        send_new_packet(&c, start_packet, PACKET_ONLY_SEND);
 
         //todo block until display packets are revived
         //todo add a block until radio is able to revived commands (boot time)

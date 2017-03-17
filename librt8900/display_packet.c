@@ -36,7 +36,7 @@ void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[]
         }
 }
 
-void read_packet(SERIAL_CFG *config, struct display_packet *packet)
+void update_display_packet(SERIAL_CFG *config, struct display_packet *packet)
 {
         unsigned char buffer[DISPLAY_PACKET_SIZE];
 

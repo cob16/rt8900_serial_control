@@ -15,8 +15,8 @@
 
 
 enum pop_queue_behaviour {
-    PACKET_SEND_THEN_FREE = 0,
-    PACKET_SEND_ONLY = 1,
+    PACKET_FREE_AFTER_SEND = 0,
+    PACKET_ONLY_SEND = 1,
 };
 
 struct control_packet_q_node{
