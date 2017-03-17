@@ -21,6 +21,16 @@ void set_button(struct control_packet *packet, const struct button_transmit_valu
         packet->keypad_input_column.section.data = button->column;
 }
 
+const struct button_transmit_value * button_from_int(int i)
+{
+        if (-1 < i && i < 10) {
+                return number_buttons[i];
+        } else {
+                log_msg(RT8900_WARNING, "WARNING: Invalid range given to button_from_int was: %d (must be 0-10) ", i);
+                return &BUTTON_NONE;
+        }
+}
+
 ///returns null if the number will not fit into the packet (7 bits)
 signed char safe_int_char(int number)
 {

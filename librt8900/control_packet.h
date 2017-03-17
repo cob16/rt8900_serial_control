@@ -10,6 +10,7 @@
 
 #include "packet.h"
 #include "serial.h"
+#include "log.h"
 
 //the observed standard packet gap with
 #define MILLISECONDS_BETWEEN_PACKETS_STANDARD 3
@@ -20,7 +21,7 @@
 
 #define maloc_control_packet(pointer_name) struct control_packet *(pointer_name) = (struct control_packet*) malloc(sizeof(*(pointer_name)));
 
-enum misc_menu_buttons { //TODO This assumes that a 1 bit is the pressed position WARNING: check this assumption
+enum misc_menu_buttons {
     NOT_PRESSED      = 0x00,
     WIRES_BUTTON     = 0x08,
     SET_BUTTON       = 0x10,
@@ -121,16 +122,6 @@ DEFINE_BUTTON(BUTTON_P4, VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_4)
 const struct button_transmit_value *number_buttons[10] = { &BUTTON_0, &BUTTON_1, &BUTTON_2, &BUTTON_3, &BUTTON_4,
                                                            &BUTTON_5, &BUTTON_6, &BUTTON_7, &BUTTON_8, &BUTTON_9};
 
-const struct button_transmit_value * button_from_int(int i)
-{
-        if (-1 < i && i < 10) {
-                return number_buttons[i];
-        } else {
-                //"WARNING: Invalid range given to button_from_int was: %d (must be 0-10) ",i); todo: log this
-                return &BUTTON_NONE;
-        }
-}
-
 /// recommended defaults for the control packet
 const struct control_packet control_packet_defaults = {
         /*There are manny defaults that are 0 so we leave them as "{}"
@@ -141,10 +132,10 @@ const struct control_packet control_packet_defaults = {
         {.section = {.data= DATA_MAX_NUM}},         // ptt                  | set to high (off)
         {},                                         //squelch_right         | 0%
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_right | set to 25% volume
-        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_row     | no buttons being pressed TODO: verify if 0 or 127 is standard behavior
+        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_row     | no buttons being pressed
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_left  | set to 25% volume
         {},                                         // squelch_left         | 0%
-        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_column  | full is no buttons being pressed TODO: verify if 0 or 127 is standard behavior
+        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_column  | full is no buttons being pressed
         {.section = {.data = DATA_MAX_NUM}},        // panel_buttons_right  | full is no buttons being pressed
         {.section = {.data = DATA_MAX_NUM}},        // panel_buttons_left   | full is no buttons being pressed
         {.section = {.data = NOT_PRESSED}},         // menu_buttons         |
