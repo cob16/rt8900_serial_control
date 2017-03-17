@@ -14,6 +14,7 @@
 #include <serial.h>
 
 #include "control_packet.c"
+#include "display_packet.c"
 
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
@@ -203,14 +204,13 @@ void user_prompt(SERIAL_CFG *config, struct control_packet *base_packet)
 {
         char *line;
         char **command_arr;
-        int keep_alive = 1;
 
-        while (keep_alive) {
+        while (config->keep_alive) {
                 printf("> ");
                 line  = read_prompt_line();;
                 command_arr = split_line_args(line);
 
-                keep_alive = run_command(command_arr, config, base_packet);
+                config->keep_alive = run_command(command_arr, config, base_packet);
 
                 free(line);
                 free(command_arr);
@@ -225,19 +225,26 @@ int main(int argc, char **argv)
         };
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
-        pthread_t packet_send_thread;
-
+        //Create a thread to send oud control packets
+        pthread_t packet_sender_thread;
         pthread_barrier_t wait_for_init;
+
         pthread_barrier_init(&wait_for_init, NULL, 2);
         c.initialised = &wait_for_init;
-        //cast our pointer pointer to void pointer for thread creation
-        pthread_create(&packet_send_thread, NULL, send_control_packets, &c);
+
+        pthread_create(&packet_sender_thread, NULL, send_control_packets, &c);
         pthread_barrier_wait(&wait_for_init); //wait for thread to be ready
         init_graceful_shutdown(&c);
 
+        //read out the current state of the hardware
+        struct display_packet *current_state = malloc(sizeof(struct display_packet));
+        update_display_packet(&c, current_state);
+
+        //todo check if any existing state needs to be transferred to our starting packet
+
+        //Setup our initial packet that will be sent
         maloc_control_packet(start_packet)
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
-
         send_new_packet(&c, start_packet, PACKET_ONLY_SEND);
 
         //todo block until display packets are revived
@@ -245,8 +252,8 @@ int main(int argc, char **argv)
 
         user_prompt(&c, start_packet);
 
-        c.keep_alive = false;
+        c.keep_alive = false; //This should be false already, just in case we will make shure
         pthread_barrier_destroy(&wait_for_init);
-        pthread_join(packet_send_thread, NULL);
+        pthread_join(packet_sender_thread, NULL);
         return 0;
 }
