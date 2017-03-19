@@ -2,6 +2,8 @@
 // Created by cormac on 14/03/17.
 //
 #include <unistd.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 
 #include "display_packet.h"
 #include "log.h"
@@ -36,18 +38,27 @@ void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[]
         }
 }
 
-void update_display_packet(SERIAL_CFG *config, struct display_packet *packet)
+int update_display_packet(SERIAL_CFG *config, struct display_packet *packet)
 {
         unsigned char buffer[DISPLAY_PACKET_SIZE];
 
-        //todo check that there is a buffer so that we do not block forever
+        //Check that there is a buffer so that we do not block forever
+        int current_buffer_bytes;
+        ioctl(config->serial_fd, FIONREAD, &current_buffer_bytes);
+        if (current_buffer_bytes == 0) {
+                log_msg(RT8900_ERROR, "NO BYTES HAVE BEEN RECEIVED!\n");
+                return 1;
+        }
+
+        printf("There are %d bytes available to read in the buffer", current_buffer_bytes);
 
         int recived_bytes = read(config->serial_fd, &buffer, DISPLAY_PACKET_SIZE);
         int start_of_packet_index = find_packet_start(buffer, sizeof(buffer));
 
         if (recived_bytes != DISPLAY_PACKET_SIZE || start_of_packet_index == -1 ) {
                 log_msg(RT8900_ERROR, "PACKET was corrupt / unrecognised!\n");
-                return;
+                return 1;
         }
         insert_shifted_packet(packet, buffer, DISPLAY_PACKET_SIZE, start_of_packet_index);
+        return 0;
 }
