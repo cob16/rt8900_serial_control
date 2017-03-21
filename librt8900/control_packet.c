@@ -14,6 +14,7 @@
 #include "control_packet.h"
 #include "serial.c"
 #include "packet.c"
+#include "serial.h"
 
 void set_button(struct control_packet *packet, const struct button_transmit_value *button)
 {
@@ -142,14 +143,14 @@ void* send_control_packets(void *c)
         //setup queue
         CONTROL_PACKET_Q_HEAD head;
         TAILQ_INIT(&head);
-        conf->queue = &head;
-        conf->keep_alive = true;
+        conf->send.queue = &head;
+        conf->send.keep_alive = true;
 
         useconds_t us_between_packets;
         int repeat_packets;
 
         //sets where to emulate the head of the radio or just send a little as possible (without loss of speed)
-        if (conf->lazy) {
+        if (conf->send.lazy_sending) {
                 us_between_packets = MILLISECONDS_DEBOUNCE_WAIT * 1000;
                 repeat_packets = 1;
         } else {
@@ -162,10 +163,10 @@ void* send_control_packets(void *c)
         struct control_packet *last_packet = NULL;
         int packets_sent = 0;
 
-        pthread_barrier_wait(conf->initialised);
-        while (conf->keep_alive) {
+        pthread_barrier_wait(conf->send.initialised);
+        while (conf->send.keep_alive) {
                 if  (!TAILQ_EMPTY(&head)) {
-                        current_node = TAILQ_FIRST(conf->queue);
+                        current_node = TAILQ_FIRST(conf->send.queue);
                         current_packet = current_node->packet;
                         CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *current_packet};
 
@@ -196,7 +197,7 @@ void* send_control_packets(void *c)
                         //move to the next packet and clean up
                         if (current_node->nodes.tqe_next != NULL) { //pop if there is more to send
                                 log_msg(RT8900_TRACE, "removed after %d packets sent\n", packets_sent);
-                                TAILQ_REMOVE(conf->queue, current_node, nodes);
+                                TAILQ_REMOVE(conf->send.queue, current_node, nodes);
                                 if (current_node->free_packet == PACKET_FREE_AFTER_SEND) {
                                         free(current_packet);
                                 }
@@ -212,15 +213,13 @@ void* send_control_packets(void *c)
         }
 
         //clean out our queue incase of shutdown
-        while (!TAILQ_EMPTY(conf->queue)) {
-                current_node = TAILQ_FIRST(conf->queue);
+        while (!TAILQ_EMPTY(conf->send.queue)) {
+                current_node = TAILQ_FIRST(conf->send.queue);
                 current_packet = current_node->packet;
-                TAILQ_REMOVE(conf->queue, current_node, nodes);
+                TAILQ_REMOVE(conf->send.queue, current_node, nodes);
                 free(current_packet);
                 current_packet = NULL;
         }
-
-        close(conf->serial_fd);
 
         return NULL;
 }
@@ -235,7 +234,7 @@ void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum
                 node->packet = new_packet;
                 node->free_packet = free_choice;
 
-                TAILQ_INSERT_TAIL(config->queue, node, nodes);
+                TAILQ_INSERT_TAIL(config->send.queue, node, nodes);
                 log_msg(RT8900_TRACE, "ADDDED TO QUEUE \n");
         }
 }

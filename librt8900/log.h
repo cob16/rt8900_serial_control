@@ -10,6 +10,7 @@ enum rt8900_logging_level {
     RT8900_ERROR,
     RT8900_WARNING,
     RT8900_INFO,
+    RT8900_DEBUG,
     RT8900_TRACE,
 };
 

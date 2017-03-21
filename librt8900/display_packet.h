@@ -8,6 +8,7 @@
 //number of bytes in a display packet
 #define DISPLAY_PACKET_SIZE 42
 
+#define MS_PACKET_WAIT_TIME 25 //time for a full packet cycle
 
 #include "packet.h"
 

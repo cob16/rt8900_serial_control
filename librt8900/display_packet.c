@@ -10,7 +10,7 @@
 #include "serial.h"
 #include "packet.h"
 
-/// the start of the known packet could be anywhre in the buffer
+/// the start of the known packet could be anywhere in the buffer
 /// this function finds the starting index based of it's bit marker
 int find_packet_start(unsigned char buffer[], size_t length) {
         int i;
@@ -38,19 +38,29 @@ void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[]
         }
 }
 
+///Check that we are reciving from teh radio.
+int check_radio_rx(int fd)
+{
+        int current_buffer_bytes;
+        int read = ioctl(fd, FIONREAD, &current_buffer_bytes);
+        log_msg(RT8900_DEBUG, "There are %d bytes available to read in the buffer\n", current_buffer_bytes);
+        if (current_buffer_bytes < 42 || read == -1) {
+                log_msg(RT8900_ERROR, "NO DATA RECEIVED! \n Please make sure that the radio is connected and/or turned on\n");
+                return 1;
+        }
+        return 0;
+}
+
 int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
 {
-        unsigned char buffer[DISPLAY_PACKET_SIZE];
+        tcflush(config->serial_fd, TCIFLUSH); //flush the buffer to get the latest data
+        usleep(MS_PACKET_WAIT_TIME * 1000); //enough time for at least 1 packet to be sent
 
-        //Check that there is a buffer so that we do not block forever
-        int current_buffer_bytes;
-        ioctl(config->serial_fd, FIONREAD, &current_buffer_bytes);
-        if (current_buffer_bytes == 0) {
-                log_msg(RT8900_ERROR, "NO BYTES HAVE BEEN RECEIVED!\n");
+        if (check_radio_rx(config->serial_fd) != 0) {
                 return 1;
         }
 
-        printf("There are %d bytes available to read in the buffer", current_buffer_bytes);
+        unsigned char buffer[DISPLAY_PACKET_SIZE];
 
         int recived_bytes = read(config->serial_fd, &buffer, DISPLAY_PACKET_SIZE);
         int start_of_packet_index = find_packet_start(buffer, sizeof(buffer));
@@ -63,13 +73,14 @@ int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
         return 0;
 }
 
+///Gets busy state from display_packet
 void read_busy(struct display_packet *packet, struct radio_state *state)
 {
         state->left.busy = (1 & packet->arr[12].raw >> 2);
         state->right.busy = (1 & packet->arr[28].raw >> 2);
 }
 
-///sets the main correct pointer to the correct radio, NULL if nether selected
+///Sets the main correct pointer to the correct radio, NULL if nether selected
 void read_main(struct display_packet *packet, struct radio_state *state)
 {
         if (1 & (packet->arr[36].raw >> 2)) {
@@ -89,8 +100,8 @@ void read_state_from_packet(struct display_packet *packet, struct radio_state *s
 };
 
 int get_state(SERIAL_CFG *config, struct radio_state *state) {
-
         struct display_packet packet;
+        get_display_packet(config, &packet);
         read_state_from_packet(&packet, state);
         return 1;
 }

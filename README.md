@@ -7,7 +7,7 @@ Usage: rt8900c [OPTION...] <serial port path>
 Provides serial control for the YAESU FT-8900R Transceiver.
 
       --hard-emulation       Exactly emulates the radio head head instead of
-                             being lazy (worse performance, no observed
+                             being lazy_sending (worse performance, no observed
                              benefit, only useful for debugging
                              
   -v, --verbose[=LEVEL]      Produce verbose output add a number to select
