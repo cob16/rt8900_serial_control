@@ -38,7 +38,7 @@ void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[]
         }
 }
 
-int update_display_packet(SERIAL_CFG *config, struct display_packet *packet)
+int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
 {
         unsigned char buffer[DISPLAY_PACKET_SIZE];
 
@@ -61,4 +61,36 @@ int update_display_packet(SERIAL_CFG *config, struct display_packet *packet)
         }
         insert_shifted_packet(packet, buffer, DISPLAY_PACKET_SIZE, start_of_packet_index);
         return 0;
+}
+
+void read_busy(struct display_packet *packet, struct radio_state *state)
+{
+        state->left.busy = (1 & packet->arr[12].raw >> 2);
+        state->right.busy = (1 & packet->arr[28].raw >> 2);
+}
+
+///sets the main correct pointer to the correct radio, NULL if nether selected
+void read_main(struct display_packet *packet, struct radio_state *state)
+{
+        if (1 & (packet->arr[36].raw >> 2)) {
+                state->main = &state->left;
+        } else if (1 & packet->arr[32].raw) {
+                state->main = &(state->right);
+        } else {
+                log_msg(RT8900_ERROR, "Could not get selected radio 'main' from PACKET\n");
+                state->main = NULL;
+        }
+}
+
+
+void read_state_from_packet(struct display_packet *packet, struct radio_state *state) {
+
+        read_busy(packet, state);
+};
+
+int get_state(SERIAL_CFG *config, struct radio_state *state) {
+
+        struct display_packet packet;
+        read_state_from_packet(&packet, state);
+        return 1;
 }

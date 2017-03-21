@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 
         //read out the current state of the hardware
         struct display_packet *current_state = malloc(sizeof(struct display_packet));
-        update_display_packet(&c, current_state);
+        get_display_packet(&c, current_state);
 
         //todo check if any existing state needs to be transferred to our starting packet
 
