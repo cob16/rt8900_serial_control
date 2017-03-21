@@ -67,18 +67,3 @@ TEST_F(TestDisplayPacketReaders, test_read_busy)
         EXPECT_EQ(state.left.busy, 1);
         EXPECT_EQ(state.right.busy, 1);
 }
-
-TEST_F(TestDisplayPacketReaders, test_radio_main)
-{
-        struct radio_state state;
-        packet.arr[36].raw |= 1;
-
-        read_main(&packet, &state);
-        EXPECT_EQ(state.main, &(state.left));
-
-        packet.arr[36].raw &= ~(1);
-        packet.arr[32].raw |= 1 << 2;
-
-        read_main(&packet, &state);
-        EXPECT_EQ(state.main, (&(state.right)));
-}
