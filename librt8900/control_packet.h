@@ -153,16 +153,20 @@ typedef union {
     PACKET_BYTE as_array[13];
 } CONTROL_PACKET_INDEXED;
 
+void set_keypad_button(struct control_packet *packet, const struct button_transmit_value *button);
+void set_main_button(struct control_packet *packet, const enum main_menu_buttons button);
+const struct button_transmit_value * button_from_int(int i);
 signed char safe_int_char(int number);
 int set_volume_left(struct control_packet *packet, int number);
 int set_volume_right(struct control_packet *packet, int number);
-int set_volumes(struct control_packet *packet, int left_volume, int right_volume);
-void set_keypad_button(struct control_packet *packet, const struct button_transmit_value *button);
-int dial_number(struct control_packet *base_packet, int number);
+int set_volume(struct control_packet *packet, int left, int right);
+int set_squelch_left(struct control_packet *packet, int number);
+int set_squelch_right(struct control_packet *packet, int number);
+int set_squelch(struct control_packet *packet, int left, int right);
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
 void* send_control_packets(void *c);
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
-void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr);
+void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *input_packet_arr);
 
 
 #endif //RT8900_SERIAL_CONTROL_FOO_H
