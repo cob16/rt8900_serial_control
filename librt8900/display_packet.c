@@ -93,10 +93,16 @@ void read_main(struct display_packet *packet, struct radio_state *state)
         }
 }
 
+int is_main(struct radio_state *radio, struct radio_state_sides *side)
+{
+        return (radio->main == side);
+}
+
 
 void read_state_from_packet(struct display_packet *packet, struct radio_state *state) {
 
         read_busy(packet, state);
+        read_main(packet, state);
 };
 
 int get_state(SERIAL_CFG *config, struct radio_state *state) {

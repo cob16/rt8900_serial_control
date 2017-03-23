@@ -177,14 +177,21 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                         printf("%sExiting%s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
                         return 0;
                 } else if (strcmp(cmd[0], "b") == 0){
-                        struct radio_state current_state;
+                        struct radio_state *current_state = malloc(sizeof(*current_state));
                         struct display_packet packet;
                         if (get_display_packet(config, &packet) == 0) {
-                                read_state_from_packet(&packet, &current_state);
-                                char* lbusy = (current_state.left.busy ? "Busy" : "Not Busy");
-                                char* rbusy = (current_state.right.busy ? "Busy" : "Not Busy");
-                                printf("Left  radio -> %s\nRight radio -> %s\n", lbusy, rbusy);
+                                read_state_from_packet(&packet, current_state);
+
+                                char* lbusy = (current_state->left.busy ? "Busy" : "Not Busy");
+                                char* lmain = (is_main(current_state, &(current_state->left)) ? " - Main" : "");
+
+                                char* rbusy = (current_state->right.busy ? "Busy" : "Not Busy");
+                                char* rmain = (is_main(current_state, &(current_state->right)) ? " - Main" : "");
+
+                                printf("Left  radio -> %s%s\nRight radio -> %s%s\n", lbusy, lmain, rbusy, rmain);
                         }
+                        free(current_state);
+                        current_state = NULL;
                 } else {
                         print_invalid_command();
                 }
