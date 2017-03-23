@@ -32,9 +32,9 @@ TEST(ControlPacketTest, CONTROL_PACKET)
                 (unsigned char) 0x1f, //volume_control_left
                 (unsigned char) 0x00, //squelch_left
                 (unsigned char) 0x7f, //keypad_input_column
-                (unsigned char) 0x7f, //panel_buttons_right
-                (unsigned char) 0x7f, //panel_buttons_left
-                (unsigned char) 0x00, //menu_buttons
+                (unsigned char) 0x7f, //right_buttons
+                (unsigned char) 0x7f, //left_buttons
+                (unsigned char) 0x00, //main_buttons
                 (unsigned char) 0x00  //hyper_mem_buttons
         };
 
@@ -60,7 +60,7 @@ TEST(TestKeypadButtons, test_set_button)
         memcpy(press_a_button, &control_packet_defaults,sizeof(*press_a_button));
 
         //test the function sets correctly
-        set_button(press_a_button, &BUTTON_1);
+        set_keypad_button(press_a_button, &BUTTON_1);
         EXPECT_EQ(press_a_button->keypad_input_row.section.data, BUTTON_1.row);
         EXPECT_EQ(press_a_button->keypad_input_column.section.data, BUTTON_1.column);
 

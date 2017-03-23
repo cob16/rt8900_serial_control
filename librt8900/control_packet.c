@@ -15,11 +15,17 @@
 #include "serial.c"
 #include "packet.c"
 #include "serial.h"
+#include "packet.h"
 
-void set_button(struct control_packet *packet, const struct button_transmit_value *button)
+void set_keypad_button(struct control_packet *packet, const struct button_transmit_value *button)
 {
-        packet->keypad_input_row.section.data    = button->row;
-        packet->keypad_input_column.section.data = button->column;
+        packet->keypad_input_row.section.data    = (unsigned char) button->row;
+        packet->keypad_input_column.section.data = (unsigned char) button->column;
+}
+
+void set_main_button(struct control_packet *packet, const enum main_menu_buttons button)
+{
+        packet->main_buttons.section.data = (unsigned char) button;
 }
 
 const struct button_transmit_value * button_from_int(int i)
@@ -126,11 +132,35 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         for (i=0; i<num_digets; i++){
                 maloc_control_packet(dialnum)
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
-                set_button(dialnum, button_from_int(digits[i] - '0'));
+                set_keypad_button(dialnum, button_from_int(digits[i] - '0'));
                 send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
         }
         return 0;
+}
+
+/// stwitches context to the desired radio,
+/// you must first check you are not already on this mode else you will enter frequency edit mode!
+int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side) {
+        maloc_control_packet(switch_main)
+        memcpy(switch_main, base_packet, sizeof(*switch_main));
+
+        switch (side){
+        case RADIO_LEFT:
+                set_main_button(switch_main, L_ENCODER_BUTTON);
+                break;
+        case RADIO_RIGHT:
+                set_main_button(switch_main, R_ENCODER_BUTTON);
+                break;
+        default:
+                free(switch_main);
+                return -1;
+        }
+
+        send_new_packet(cfg, switch_main, PACKET_FREE_AFTER_SEND);
+        send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+        return 0;
+
 }
 
 ///Starts sending control packets as defined by SERIAL_CFG
