@@ -165,9 +165,7 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
         struct radio_state *current_state = malloc(sizeof(*current_state));
         struct display_packet packet;
 
-        if (get_display_packet(config, &packet) != 0) {
-                return 1;
-        };
+        get_display_packet(config, &packet);
 
         switch (num_args){
         case 0:
@@ -192,6 +190,7 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                 }
                 break;
         case 2:
+                left_op = (int) strtoimax(cmd[1], NULL, 10);
                 if (strcmp(cmd[0], "F") == 0) {
                         left_op = (int) strtoimax(cmd[1], NULL, 10);
                         printf("%s Setting frequency -> %d %s\n", ANSI_COLOR_GREEN, left_op, ANSI_COLOR_RESET);
@@ -212,6 +211,8 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                         } else {
                                 print_invalid_command();
                         }
+                } else if (strcmp(cmd[0], "t") == 0) {
+                        ptt(base_packet, left_op);
                 } else {
                         print_invalid_command();
                 }

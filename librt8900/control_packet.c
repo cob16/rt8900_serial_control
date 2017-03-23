@@ -163,6 +163,20 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
 
 }
 
+/// toggle transmission 2 to start 1 to stop
+void ptt(struct control_packet *base_packet, int ptt){
+        switch (ptt){
+        case 0:
+                log_msg(RT8900_INFO, "stoping transmission\n");
+                base_packet->ptt.section.data = DATA_MAX_NUM;
+                break;
+        case 1:
+                log_msg(RT8900_INFO, "STARTING transmission\n");
+                base_packet->ptt.section.data = DATA_MIN_NUM;
+                break;
+        }
+}
+
 ///Starts sending control packets as defined by SERIAL_CFG
 void* send_control_packets(void *c)
 {
