@@ -3,16 +3,6 @@
 //
 #include "main.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <argp.h>
-#include <pthread.h>
-#include <signal.h>
-#include <unistd.h>
-
-#include "librt8900.h"
-
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
 const char *argp_program_bug_address = "<cormac.brady@hotmai.co.uk>";
@@ -85,9 +75,6 @@ void init_graceful_shutdown(SERIAL_CFG *c)
         signal(SIGINT, graceful_shutdown);
 }
 
-#define PROMPT_BUFFER_SIZE 32
-
-
 char *read_prompt_line(void)
 {
         // inspired by https://github.com/brenns10/lsh/blob/407938170e8b40d231781576e05282a41634848c/src/main.c
@@ -139,10 +126,6 @@ char **split_line_args(char *line)
         args[i] = NULL;
         return args;
 }
-
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
 
 void print_invalid_command()
 {
@@ -290,7 +273,6 @@ int main(int argc, char **argv)
         user_prompt(&c, start_packet);
 
         graceful_shutdown(0);
-         //This should be false already, just in case we will make shure
         pthread_barrier_destroy(&wait_for_init);
         pthread_join(packet_sender_thread, NULL);
         return 0;
