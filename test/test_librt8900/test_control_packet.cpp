@@ -5,7 +5,7 @@
 
 TEST(ControlPacketTest, PACKET_BYTE)
 {
-        PACKET_BYTE test_byte = {.raw = (signed char) 0x84};
+        PACKET_BYTE test_byte = {.raw = (unsigned char) 0x84};
 
         EXPECT_EQ(test_byte.section.check_num, 0x01);
         EXPECT_EQ(test_byte.section.data, 0x04);
