@@ -21,12 +21,17 @@
 
 #define maloc_control_packet(pointer_name) struct control_packet *(pointer_name) = (struct control_packet*) malloc(sizeof(*(pointer_name)));
 
-enum misc_menu_buttons {
-    NOT_PRESSED      = 0x00,
-    WIRES_BUTTON     = 0x08,
-    SET_BUTTON       = 0x10,
-    L_ENCODER_BUTTON = 0x20,
-    R_ENCODER_BUTTON = 0x40,
+enum main_menu_buttons {
+    NOT_PRESSED      = 0,
+    R_ENCODER_BUTTON = 1,
+    L_ENCODER_BUTTON = (1 << 1),
+    SET_BUTTON       = (1 << 2),
+    WIRES_BUTTON     = (1 << 3),
+};
+
+enum radios {
+    RADIO_LEFT,
+    RADIO_RIGHT,
 };
 
 enum left_menu_buttons {
@@ -55,20 +60,20 @@ struct control_packet{
     PACKET_BYTE volume_control_left;
     PACKET_BYTE squelch_left;
     PACKET_BYTE keypad_input_column;
-    PACKET_BYTE panel_buttons_right; // (via voltage divider)
-    PACKET_BYTE panel_buttons_left;  // (via voltage divider)
-    PACKET_BYTE menu_buttons;        // L/R encoder, set, and wires buttons
+    PACKET_BYTE right_buttons; // (via voltage divider)
+    PACKET_BYTE left_buttons;  // (via voltage divider)
+    PACKET_BYTE main_buttons;        // L/R encoder, set, and wires buttons
     PACKET_BYTE hyper_mem_buttons;   //hyper memory buttons
 };
 
 //values in order to select a row
 enum voltage_divider_row_values {
-    VOLTAGE_DEVIDER_INDEX_0 = 0X00,//0
-    VOLTAGE_DEVIDER_INDEX_1 = 0X1A,//26
-    VOLTAGE_DEVIDER_INDEX_2 = 0X32,//50
-    VOLTAGE_DEVIDER_INDEX_3 = 0X4C,//76
-    VOLTAGE_DEVIDER_INDEX_4 = 0X64,//100
-    VOLTAGE_DEVIDER_NONE = 0X7F,   //127
+    VOLTAGE_DEVIDER_INDEX_0 = 0X00, //0
+    VOLTAGE_DEVIDER_INDEX_1 = 0X1A, //26
+    VOLTAGE_DEVIDER_INDEX_2 = 0X32, //50
+    VOLTAGE_DEVIDER_INDEX_3 = 0X4C, //76
+    VOLTAGE_DEVIDER_INDEX_4 = 0X64, //100
+    VOLTAGE_DEVIDER_NONE = 0X7F,    //127
 };
 
 //used to store the required values in order to dial a handset button
@@ -136,9 +141,9 @@ const struct control_packet control_packet_defaults = {
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_left  | set to 25% volume
         {},                                         // squelch_left         | 0%
         {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_column  | full is no buttons being pressed
-        {.section = {.data = DATA_MAX_NUM}},        // panel_buttons_right  | full is no buttons being pressed
-        {.section = {.data = DATA_MAX_NUM}},        // panel_buttons_left   | full is no buttons being pressed
-        {.section = {.data = NOT_PRESSED}},         // menu_buttons         |
+        {.section = {.data = DATA_MAX_NUM}},        // right_buttons  | full is no buttons being pressed
+        {.section = {.data = DATA_MAX_NUM}},        // left_buttons   | full is no buttons being pressed
+        {.section = {.data = NOT_PRESSED}},         // main_buttons         |
         {},                                         // hyper_mem_buttons    |
 };
 
@@ -148,16 +153,20 @@ typedef union {
     PACKET_BYTE as_array[13];
 } CONTROL_PACKET_INDEXED;
 
+void set_keypad_button(struct control_packet *packet, const struct button_transmit_value *button);
+void set_main_button(struct control_packet *packet, const enum main_menu_buttons button);
+const struct button_transmit_value * button_from_int(int i);
 signed char safe_int_char(int number);
 int set_volume_left(struct control_packet *packet, int number);
 int set_volume_right(struct control_packet *packet, int number);
-int set_volumes(struct control_packet *packet, int left_volume, int right_volume);
-void set_button(struct control_packet *packet, const struct button_transmit_value *button);
-int dial_number(struct control_packet *base_packet, int number);
+int set_volume(struct control_packet *packet, int left, int right);
+int set_squelch_left(struct control_packet *packet, int number);
+int set_squelch_right(struct control_packet *packet, int number);
+int set_squelch(struct control_packet *packet, int left, int right);
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
 void* send_control_packets(void *c);
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
-void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *packet_arr);
+void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *input_packet_arr);
 
 
 #endif //RT8900_SERIAL_CONTROL_FOO_H

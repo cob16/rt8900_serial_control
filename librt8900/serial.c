@@ -40,15 +40,14 @@ void set_serial_attributes(int fd)
 
         /* setup for non-canonical mode */
         tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-//        tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
         tty.c_oflag &= ~OPOST;
 
 
         // block read calls until we read a whole packet fetch of bytes until they become available
-        tty.c_lflag &= ~(ICANON | ECHO | ECHOE |ISIG);
+        tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
         tty.c_cc[VMIN] = DISPLAY_PACKET_SIZE;
         tty.c_cc[VTIME] = 1;
-        fcntl(fd, F_SETFL, 0);
+        // fcntl(fd, F_SETFL, 0); this will make reads blocking
 
         //write our new settings
         if (tcsetattr(fd, TCSANOW, &tty) != 0) {
@@ -62,12 +61,13 @@ void set_serial_attributes(int fd)
 void open_serial(SERIAL_CFG *cfg)
 {
         int fd = 0;
-        fd = open(cfg->serial_path, O_RDWR | O_NOCTTY | O_NDELAY );
+        fd = open(cfg->serial_path, O_RDWR | O_NOCTTY ); //| O_NDELAY
         if (fd < 0) {
                 log_msg(RT8900_ERROR, "Error while opening serial_path %s\n", cfg->serial_path); // Just if you want user interface error control
                 exit(EXIT_FAILURE);
         }
 
+        tcflush(cfg->serial_fd, TCIOFLUSH); //flush in/out buffers
         set_serial_attributes(fd);
 
         cfg->serial_fd = fd;

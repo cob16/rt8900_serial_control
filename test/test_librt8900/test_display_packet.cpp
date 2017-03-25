@@ -5,6 +5,7 @@
 #include <packet.h>
 #include "gtest/gtest.h"
 #include "display_packet.c"
+#include "test_display_packet.h"
 
 TEST(TestDisplayPacket, test_find_packet_start)
 {
@@ -41,4 +42,28 @@ TEST(TestDisplayPacket, test_shift_array)
         EXPECT_EQ(ordered_packet.arr[8].raw, messy_packet[3]);
         EXPECT_EQ(ordered_packet.arr[9].raw, messy_packet[4]);
 
+}
+
+void TestDisplayPacketReaders::SetUp()
+{
+        packet.arr[0].section.check_num = 0x01;
+
+        packet.arr[28].raw = 0x00;
+}
+
+TEST_F(TestDisplayPacketReaders, test_read_busy)
+{
+        struct radio_state state;
+        read_busy(&packet, &state);
+
+        EXPECT_EQ(state.left.busy, 0);
+        EXPECT_EQ(state.right.busy, 0);
+
+        //check reverce
+        packet.arr[12].section.data |= 1 << 2; //left buisy
+        packet.arr[28].section.data |= 1 << 2; //right buizy
+        read_busy(&packet, &state);
+
+        EXPECT_EQ(state.left.busy, 1);
+        EXPECT_EQ(state.right.busy, 1);
 }
