@@ -28,25 +28,6 @@ struct control_packet_q_node{
 ///create our packet queue struct
 typedef TAILQ_HEAD(CONTROL_PACKET_Q_HEAD, control_packet_q_node) CONTROL_PACKET_Q_HEAD;
 
-struct sender_config {
-        bool lazy_sending;
-        pthread_barrier_t* initialised;
-        struct CONTROL_PACKET_Q_HEAD *queue;
-        bool keep_alive;
-};
-
-struct receive_config {
-
-};
-
-typedef struct {
-        char *serial_path;
-        int serial_fd;
-        
-        struct sender_config send;
-        struct receive_config receive;
-} SERIAL_CFG;
-
-void open_serial(SERIAL_CFG *cfg);
+void open_serial(int *fd, char * *serial_path);
 
 #endif //RT8900_SERIAL_CONTROLL_SERIAL_H

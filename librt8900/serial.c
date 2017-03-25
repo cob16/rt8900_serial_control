@@ -10,7 +10,7 @@
 
 #include "serial.h"
 #include "display_packet.h"
-#include "log.c"
+#include "log.h"
 
 /// Set our serial port attributes. Radio expects these constants
 void set_serial_attributes(int fd)
@@ -58,17 +58,15 @@ void set_serial_attributes(int fd)
 }
 
 /// Open and configure a serial port for sending and receiving from radio
-void open_serial(SERIAL_CFG *cfg)
+void open_serial(int *fd, char * *serial_path)
 {
-        int fd = 0;
-        fd = open(cfg->serial_path, O_RDWR | O_NOCTTY ); //| O_NDELAY
+        *fd = 0;
+        *fd = open(*serial_path, O_RDWR | O_NOCTTY ); //| O_NDELAY
         if (fd < 0) {
-                log_msg(RT8900_ERROR, "Error while opening serial_path %s\n", cfg->serial_path); // Just if you want user interface error control
+                log_msg(RT8900_ERROR, "Error while opening serial_path %s\n", *serial_path); // Just if you want user interface error control
                 exit(EXIT_FAILURE);
         }
 
-        tcflush(cfg->serial_fd, TCIOFLUSH); //flush in/out buffers
-        set_serial_attributes(fd);
-
-        cfg->serial_fd = fd;
+        tcflush(*fd, TCIOFLUSH); //flush in/out buffers
+        set_serial_attributes(*fd);
 }

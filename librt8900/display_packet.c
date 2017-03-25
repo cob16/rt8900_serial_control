@@ -7,20 +7,6 @@
 
 #include "display_packet.h"
 #include "log.h"
-#include "serial.h"
-#include "packet.h"
-
-/// the start of the known packet could be anywhere in the buffer
-/// this function finds the starting index based of it's bit marker
-int find_packet_start(unsigned char buffer[], size_t length) {
-        int i;
-        for (i = 0; i < length; i++) {
-                if ( (1 & buffer[i] >> 7) ) { //is the 8th bit set to 1
-                        return i;
-                };
-        }
-        return -1;
-}
 
 /// Write to the packet in the correct order.
 /// For example the packet may start at index 10. Assumes buffer array length is DISPLAY_PACKET_SIZE (42)
@@ -48,28 +34,6 @@ int check_radio_rx(int fd)
                 log_msg(RT8900_ERROR, "NO DATA RECEIVED! \n Please make sure that the radio is connected and/or turned on\n");
                 return 1;
         }
-        return 0;
-}
-
-int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
-{
-        tcflush(config->serial_fd, TCIFLUSH); //flush the buffer to get the latest data
-        usleep(MS_PACKET_WAIT_TIME * 1000); //enough time for at least 1 packet to be sent
-
-        if (check_radio_rx(config->serial_fd) != 0) {
-                return 1;
-        }
-
-        unsigned char buffer[DISPLAY_PACKET_SIZE];
-
-        int recived_bytes = read(config->serial_fd, &buffer, DISPLAY_PACKET_SIZE);
-        int start_of_packet_index = find_packet_start(buffer, sizeof(buffer));
-
-        if (recived_bytes != DISPLAY_PACKET_SIZE || start_of_packet_index == -1 ) {
-                log_msg(RT8900_ERROR, "PACKET was corrupt / unrecognised!\n");
-                return 1;
-        }
-        insert_shifted_packet(packet, buffer, DISPLAY_PACKET_SIZE, start_of_packet_index);
         return 0;
 }
 
@@ -104,10 +68,3 @@ void read_state_from_packet(struct display_packet *packet, struct radio_state *s
         read_busy(packet, state);
         read_main(packet, state);
 };
-
-int get_state(SERIAL_CFG *config, struct radio_state *state) {
-        struct display_packet packet;
-        get_display_packet(config, &packet);
-        read_state_from_packet(&packet, state);
-        return 1;
-}

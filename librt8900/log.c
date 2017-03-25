@@ -1,5 +1,7 @@
 #include "log.h"
 
+static enum rt8900_logging_level rt8900_verbose = RT8900_ERROR;
+
 void log_msg(enum rt8900_logging_level level, char const *fmt, ...)
 {
         va_list args;

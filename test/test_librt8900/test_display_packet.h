@@ -5,8 +5,8 @@
 #ifndef RT8900_SERIAL_CONTROL_TEST_DISPLAY_PACKET_H
 #define RT8900_SERIAL_CONTROL_TEST_DISPLAY_PACKET_H
 
-#include <display_packet.h>
-#include <packet.h>
+#include "gtest/gtest.h"
+#include "librt8900.h"
 
 class TestDisplayPacket : public ::testing::Test {};
 

@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "librt8900.h"
 
 // The fixture for testing class Foo.
 class ControlPacketTest : public ::testing::Test {

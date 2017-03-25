@@ -9,13 +9,9 @@
 #include <argp.h>
 #include <pthread.h>
 #include <signal.h>
-
 #include <unistd.h>
-#include <serial.h>
-#include <packet.h>
 
-#include "control_packet.c"
-#include "display_packet.c"
+#include "librt8900.h"
 
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
