@@ -14,7 +14,7 @@ enum rt8900_logging_level {
     RT8900_TRACE,
 };
 
-static enum rt8900_logging_level rt8900_verbose;
+static enum rt8900_logging_level rt8900_verbose = RT8900_ERROR;
 
 void log_msg(enum rt8900_logging_level level, char const *fmt, ...);
 

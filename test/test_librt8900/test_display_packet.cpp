@@ -4,7 +4,6 @@
 
 #include "test_display_packet.h"
 
-
 TEST(TestDisplayPacket, test_find_packet_start)
 {
         unsigned char packet[3] = {

@@ -64,23 +64,7 @@ struct control_packet{
     PACKET_BYTE hyper_mem_buttons;   //hyper memory buttons
 };
 
-//values in order to select a row
-enum voltage_divider_row_values {
-    VOLTAGE_DEVIDER_INDEX_0 = 0X00, //0
-    VOLTAGE_DEVIDER_INDEX_1 = 0X1A, //26
-    VOLTAGE_DEVIDER_INDEX_2 = 0X32, //50
-    VOLTAGE_DEVIDER_INDEX_3 = 0X4C, //76
-    VOLTAGE_DEVIDER_INDEX_4 = 0X64, //100
-    VOLTAGE_DEVIDER_NONE = 0X7F,    //127
-};
-
-//used to store the required values in order to dial a handset button
-struct button_transmit_value{
-    signed char row;
-    signed char column;
-};
-
-// table showing the layout of the button grid that is assigned to constants bellow
+// table showing the layout of the button grid that is used to press keypad buttons bellow
 //
 //| row/col | 0    | 1  | 2  | 3  | 4  |
 //|---------|------|----|----|----|----|
@@ -90,44 +74,76 @@ struct button_transmit_value{
 //| 3       |      | x  | 0  | #  | D  |
 //| 4       |      | P1 | P2 | P3 | P4 |
 
-//row first
-#define DEFINE_BUTTON(name, row, columb) const struct button_transmit_value (name) = {(signed char) (row), (signed char) (columb)};
+//voltage divider row_values
+//values used to select a ia row
+#define VD_INDEX_0 0X00 //0
+#define VD_INDEX_1 0X1A //26
+#define VD_INDEX_2 0X32 //50
+#define VD_INDEX_3 0X4C //76
+#define VD_INDEX_4 0X64 //100
+#define VD_NONE 0X7F    //127
+//};
 
+//used to store the required values in order to dial a handset button
+struct button_transmit_value{
+    signed char row;
+    signed char column;
+};
 
-#define BUTTON_NONE_VALUE {VOLTAGE_DEVIDER_NONE, VOLTAGE_DEVIDER_NONE}
+//row first then columb
+#define BUTTON_NONE_VALUE {VD_NONE, VD_NONE}
 
-#define BUTTON_1_VALUE {VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_1}
-#define BUTTON_2_VALUE {VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_2}
-#define BUTTON_3_VALUE {VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_3}
-#define BUTTON_A_VALUE {VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_4}
+//row 0
+#define BUTTON_1_VALUE {VD_INDEX_0, VD_INDEX_1}
+#define BUTTON_2_VALUE {VD_INDEX_0, VD_INDEX_2}
+#define BUTTON_3_VALUE {VD_INDEX_0, VD_INDEX_3}
+#define BUTTON_A_VALUE {VD_INDEX_0, VD_INDEX_4}
 
-#define BUTTON_UP_VALUE {VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_0}
-#define BUTTON_4_VALUE {VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_1}
-#define BUTTON_5_VALUE {VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_2}
-#define BUTTON_6_VALUE {VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_3}
-#define BUTTON_B_VALUE {VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_4}
+//row 1
+#define BUTTON_UP_VALUE {VD_INDEX_1, VD_INDEX_0}
+#define BUTTON_4_VALUE {VD_INDEX_1, VD_INDEX_1}
+#define BUTTON_5_VALUE {VD_INDEX_1, VD_INDEX_2}
+#define BUTTON_6_VALUE {VD_INDEX_1, VD_INDEX_3}
+#define BUTTON_B_VALUE {VD_INDEX_1, VD_INDEX_4}
 
-#define BUTTON_DOWN_VALUE {VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_0}
-#define BUTTON_7_VALUE {VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_1}
-#define BUTTON_8_VALUE {VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_2}
-#define BUTTON_9_VALUE {VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_3}
-#define BUTTON_C_VALUE {VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_4}
+//row 2
+#define BUTTON_DOWN_VALUE {VD_INDEX_2, VD_INDEX_0}
+#define BUTTON_7_VALUE {VD_INDEX_2, VD_INDEX_1}
+#define BUTTON_8_VALUE {VD_INDEX_2, VD_INDEX_2}
+#define BUTTON_9_VALUE {VD_INDEX_2, VD_INDEX_3}
+#define BUTTON_C_VALUE {VD_INDEX_2, VD_INDEX_4}
 
-#define BUTTON_X_VALUE {VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_1}
-#define BUTTON_0_VALUE {VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_2}
-#define BUTTON_HASH_VALUE {VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_3}
-#define BUTTON_D_VALUE {VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_4}
+//row 3
+#define BUTTON_X_VALUE {VD_INDEX_3, VD_INDEX_1}
+#define BUTTON_0_VALUE {VD_INDEX_3, VD_INDEX_2}
+#define BUTTON_HASH_VALUE {VD_INDEX_3, VD_INDEX_3}
+#define BUTTON_D_VALUE {VD_INDEX_3, VD_INDEX_4}
 
-#define BUTTON_P1_VALUE {VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_1}
-#define BUTTON_P2_VALUE {VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_2}
-#define BUTTON_P3_VALUE {VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_3}
-#define BUTTON_P4_VALUE {VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_4}
+//row 4
+#define BUTTON_P1_VALUE {VD_INDEX_4, VD_INDEX_1}
+#define BUTTON_P2_VALUE {VD_INDEX_4, VD_INDEX_2}
+#define BUTTON_P3_VALUE {VD_INDEX_4, VD_INDEX_3}
+#define BUTTON_P4_VALUE {VD_INDEX_4, VD_INDEX_4}
 
-const struct button_transmit_value KEYPAD_BUTTON_NONE;
-const struct button_transmit_value KEYPAD_NUMBER_BUTTONS[10];
+extern const struct button_transmit_value KEYPAD_BUTTON_NONE;
+extern const struct button_transmit_value KEYPAD_NUMBER_BUTTONS[10];
+
+extern const struct button_transmit_value KEYPAD_BUTTON_A;
+extern const struct button_transmit_value KEYPAD_BUTTON_B;
+extern const struct button_transmit_value KEYPAD_BUTTON_C;
+extern const struct button_transmit_value KEYPAD_BUTTON_D;
+
+extern const struct button_transmit_value KEYPAD_BUTTON_HASH;
+extern const struct button_transmit_value KEYPAD_BUTTON_X;
+
+extern const struct button_transmit_value KEYPAD_BUTTON_P1;
+extern const struct button_transmit_value KEYPAD_BUTTON_P2;
+extern const struct button_transmit_value KEYPAD_BUTTON_P3;
+extern const struct button_transmit_value KEYPAD_BUTTON_P4;
+
 
 /// recommended defaults for the control packet
-const struct control_packet control_packet_defaults;
+extern const struct control_packet control_packet_defaults;
 
 /// used to get the struct as an array
 typedef union {

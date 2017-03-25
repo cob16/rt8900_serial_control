@@ -21,22 +21,35 @@ const struct button_transmit_value KEYPAD_NUMBER_BUTTONS[10] = {
         BUTTON_9_VALUE
 };
 
-/// recommended defaults for the control packet
+const struct button_transmit_value KEYPAD_BUTTON_A = BUTTON_A_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_B = BUTTON_B_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_C = BUTTON_C_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_D = BUTTON_D_VALUE;
+
+const struct button_transmit_value KEYPAD_BUTTON_HASH = BUTTON_HASH_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_X = BUTTON_X_VALUE;
+
+const struct button_transmit_value KEYPAD_BUTTON_P1 = BUTTON_P1_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_P2 = BUTTON_P2_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_P3 = BUTTON_P3_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_P4 = BUTTON_P4_VALUE;
+
+/// The recommended defaults for the control packet
 const struct control_packet control_packet_defaults = {
         /*There are manny defaults that are 0 so we leave them as "{}"
         The elements are not addressed by name for c++ compatibility so we can test*/
 
-        {.section = {.data = DATA_MIN_NUM, .check_num=SBO}}, //encoder_right | 0 turns
+        {.section = {.data = DATA_MIN_NUM, .check_num=SBO}}, //encoder_right| 0 turns
         {},                                         //encoder_left          | 0 turns
         {.section = {.data= DATA_MAX_NUM}},         // ptt                  | set to high (off)
         {},                                         //squelch_right         | 0%
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_right | set to 25% volume
-        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_row     | no buttons being pressed
+        {.section = {.data = VD_NONE}},// keypad_input_row     | no buttons being pressed
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_left  | set to 25% volume
         {},                                         // squelch_left         | 0%
-        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_column  | full is no buttons being pressed
-        {.section = {.data = DATA_MAX_NUM}},        // right_buttons  | full is no buttons being pressed
-        {.section = {.data = DATA_MAX_NUM}},        // left_buttons   | full is no buttons being pressed
+        {.section = {.data = VD_NONE}},// keypad_input_column  | full is no buttons being pressed
+        {.section = {.data = DATA_MAX_NUM}},        // right_buttons        | full is no buttons being pressed
+        {.section = {.data = DATA_MAX_NUM}},        // left_buttons         | full is no buttons being pressed
         {.section = {.data = NOT_PRESSED}},         // main_buttons         |
         {},                                         // hyper_mem_buttons    |
 };

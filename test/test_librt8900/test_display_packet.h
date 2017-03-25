@@ -6,7 +6,9 @@
 #define RT8900_SERIAL_CONTROL_TEST_DISPLAY_PACKET_H
 
 #include "gtest/gtest.h"
+extern "C" {
 #include "librt8900.h"
+}
 
 class TestDisplayPacket : public ::testing::Test {};
 
