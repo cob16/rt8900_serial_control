@@ -10,12 +10,19 @@
 #include "control_packet.h"
 #include "display_packet.h"
 
+struct control_packet_sender_config {
+    bool lazy_sending;
+    pthread_barrier_t* initialised;
+    struct CONTROL_PACKET_Q_HEAD *queue;
+    bool keep_alive;
+};
+
 typedef struct {
     char *serial_path;
     int serial_fd;
 
-    struct control_packet_config send;
-    struct display_packet_config receive;
+    struct control_packet_sender_config send;
+
 } SERIAL_CFG;
 
 //todo all 'public' functions should be defined here and return int (or perhaps enum)

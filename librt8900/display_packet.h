@@ -37,17 +37,6 @@ struct radio_state {
         struct radio_state_sides right;
 };
 
-struct control_packet_config {
-    bool lazy_sending;
-    pthread_barrier_t* initialised;
-    struct CONTROL_PACKET_Q_HEAD *queue;
-    bool keep_alive;
-};
-
-struct display_packet_config {
-        //todo remove if this is not usefull
-};
-
 void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index);
 int check_radio_rx(int fd);
 void read_busy(struct display_packet *packet, struct radio_state *state);
