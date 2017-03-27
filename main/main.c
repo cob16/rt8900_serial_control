@@ -194,7 +194,7 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                         } else {
                                 print_invalid_command();
                         }
-                } else if (strcmp(cmd[0], "t") == 0) {
+                } else if (strcmp(cmd[0], "T") == 0) {
                         ptt(base_packet, left_op);
                 } else {
                         print_invalid_command();
@@ -203,11 +203,11 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
         case 3:
                 left_op = (int)strtoimax(cmd[1], NULL, 10);
                 right_op = (int)strtoimax(cmd[2], NULL, 10);
-                if (strcmp(cmd[0], "v") == 0) {
+                if (strcmp(cmd[0], "V") == 0) {
                         printf("%s Setting volume -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
                         set_volume(base_packet, left_op, right_op);
 
-                } else if (strcmp(cmd[0], "s") == 0){
+                } else if (strcmp(cmd[0], "S") == 0){
                         printf("%s Setting squelsh -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
                         set_squelch(base_packet, left_op, right_op);
                 } else {
