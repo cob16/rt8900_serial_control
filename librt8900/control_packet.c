@@ -3,19 +3,56 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-
-#include <pthread.h>
-#include <termios.h>
-#include <sys/queue.h>
-#include <unistd.h>
 
 #include "control_packet.h"
-#include "serial.c"
-#include "packet.c"
-#include "serial.h"
-#include "packet.h"
+#include "log.h"
+
+const struct button_transmit_value KEYPAD_BUTTON_NONE = BUTTON_NONE_VALUE;
+const struct button_transmit_value KEYPAD_NUMBER_BUTTONS[10] = {
+        BUTTON_0_VALUE,
+        BUTTON_1_VALUE,
+        BUTTON_2_VALUE,
+        BUTTON_3_VALUE,
+        BUTTON_4_VALUE,
+        BUTTON_5_VALUE,
+        BUTTON_6_VALUE,
+        BUTTON_7_VALUE,
+        BUTTON_8_VALUE,
+        BUTTON_9_VALUE
+};
+
+const struct button_transmit_value KEYPAD_BUTTON_A = BUTTON_A_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_B = BUTTON_B_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_C = BUTTON_C_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_D = BUTTON_D_VALUE;
+
+const struct button_transmit_value KEYPAD_BUTTON_HASH = BUTTON_HASH_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_X = BUTTON_X_VALUE;
+
+const struct button_transmit_value KEYPAD_BUTTON_P1 = BUTTON_P1_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_P2 = BUTTON_P2_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_P3 = BUTTON_P3_VALUE;
+const struct button_transmit_value KEYPAD_BUTTON_P4 = BUTTON_P4_VALUE;
+
+/// The recommended defaults for the control packet
+const struct control_packet control_packet_defaults = {
+        /*There are manny defaults that are 0 so we leave them as "{}"
+        The elements are not addressed by name for c++ compatibility so we can test*/
+
+        {.section = {.data = DATA_MIN_NUM, .check_num=SBO}}, //encoder_right| 0 turns
+        {},                                         //encoder_left          | 0 turns
+        {.section = {.data= DATA_MAX_NUM}},         // ptt                  | set to high (off)
+        {},                                         //squelch_right         | 0%
+        {.section = {.data = DEFAULT_VOLUME}},      // volume_control_right | set to 25% volume
+        {.section = {.data = VD_NONE}},// keypad_input_row     | no buttons being pressed
+        {.section = {.data = DEFAULT_VOLUME}},      // volume_control_left  | set to 25% volume
+        {},                                         // squelch_left         | 0%
+        {.section = {.data = VD_NONE}},// keypad_input_column  | full is no buttons being pressed
+        {.section = {.data = DATA_MAX_NUM}},        // right_buttons        | full is no buttons being pressed
+        {.section = {.data = DATA_MAX_NUM}},        // left_buttons         | full is no buttons being pressed
+        {.section = {.data = NOT_PRESSED}},         // main_buttons         |
+        {},                                         // hyper_mem_buttons    |
+};
 
 void set_keypad_button(struct control_packet *packet, const struct button_transmit_value *button)
 {
@@ -31,10 +68,10 @@ void set_main_button(struct control_packet *packet, const enum main_menu_buttons
 const struct button_transmit_value * button_from_int(int i)
 {
         if (-1 < i && i < 10) {
-                return number_buttons[i];
+                return &KEYPAD_NUMBER_BUTTONS[i];
         } else {
                 log_msg(RT8900_WARNING, "WARNING: Invalid range given to button_from_int was: %d (must be 0-10) ", i);
-                return &BUTTON_NONE;
+                return &KEYPAD_BUTTON_NONE;
         }
 }
 
@@ -111,60 +148,9 @@ int set_squelch(struct control_packet *packet, int left, int right)
         return o;
 }
 
-///Adds the required packets to dial a number. they are then be added to the queue
-int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
-{
-        //get the number of digits
-        int num_digets = snprintf(NULL, 0, "%d", number);
-        if (num_digets > 6){
-                //this number
-                log_msg(RT8900_WARNING, "WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
-                return 1;
-        }
-        log_msg(RT8900_INFO, "dialing %d\n", number);
-
-        //create a char array of the digits
-        char digits[num_digets];
-        snprintf(digits, num_digets + 1, "%d", number);
-
-        //add packets that 'press' the seletced buttons
-        int i;
-        for (i=0; i<num_digets; i++){
-                maloc_control_packet(dialnum)
-                memcpy(dialnum, base_packet, sizeof(*base_packet));
-                set_keypad_button(dialnum, button_from_int(digits[i] - '0'));
-                send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
-                send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
-        }
-        return 0;
-}
-
-/// stwitches context to the desired radio,
-/// you must first check you are not already on this mode else you will enter frequency edit mode!
-int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side) {
-        maloc_control_packet(switch_main)
-        memcpy(switch_main, base_packet, sizeof(*switch_main));
-
-        switch (side){
-        case RADIO_LEFT:
-                set_main_button(switch_main, L_ENCODER_BUTTON);
-                break;
-        case RADIO_RIGHT:
-                set_main_button(switch_main, R_ENCODER_BUTTON);
-                break;
-        default:
-                free(switch_main);
-                return -1;
-        }
-
-        send_new_packet(cfg, switch_main, PACKET_FREE_AFTER_SEND);
-        send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
-        return 0;
-
-}
-
 /// toggle transmission 2 to start 1 to stop
-void ptt(struct control_packet *base_packet, int ptt){
+void ptt(struct control_packet *base_packet, int ptt)
+{
         switch (ptt){
         case 0:
                 log_msg(RT8900_INFO, "stoping transmission\n");
@@ -176,113 +162,6 @@ void ptt(struct control_packet *base_packet, int ptt){
                 break;
         }
 }
-
-///Starts sending control packets as defined by SERIAL_CFG
-void* send_control_packets(void *c)
-{
-        log_msg(RT8900_TRACE, "-- STARTING CONTROL PACKET THREAD\n");
-        SERIAL_CFG *conf = (SERIAL_CFG*) c;
-        open_serial(conf); //setup our serial connection
-
-        //setup queue
-        CONTROL_PACKET_Q_HEAD head;
-        TAILQ_INIT(&head);
-        conf->send.queue = &head;
-        conf->send.keep_alive = true;
-
-        useconds_t us_between_packets;
-        int repeat_packets;
-
-        //sets where to emulate the head of the radio or just send a little as possible (without loss of speed)
-        if (conf->send.lazy_sending) {
-                us_between_packets = MILLISECONDS_DEBOUNCE_WAIT * 1000;
-                repeat_packets = 1;
-        } else {
-                us_between_packets = MILLISECONDS_BETWEEN_PACKETS_STANDARD * 1000;
-                repeat_packets = 8;
-        }
-
-        struct control_packet_q_node *current_node = NULL;
-        struct control_packet *current_packet = NULL;
-        struct control_packet *last_packet = NULL;
-        int packets_sent = 0;
-
-        pthread_barrier_wait(conf->send.initialised);
-        while (conf->send.keep_alive) {
-                if  (!TAILQ_EMPTY(&head)) {
-                        current_node = TAILQ_FIRST(conf->send.queue);
-                        current_packet = current_node->packet;
-                        CONTROL_PACKET_INDEXED packet_arr = {.as_struct = *current_packet};
-
-                        //print debug
-                        if (current_packet != last_packet) {
-                                log_msg(RT8900_TRACE, "-\n");
-                                if (rt8900_verbose >= RT8900_TRACE) {
-                                        packet_debug(current_packet, &packet_arr);
-                                }
-                                last_packet = current_packet;
-                                packets_sent = 0;
-                        } else {
-                                log_msg(RT8900_TRACE, "Sent %d packets\r",packets_sent);
-                        }
-
-                        //SEND THE PACKET
-                        do {
-                                write(conf->serial_fd, packet_arr.as_array, sizeof(packet_arr.as_array));
-                                tcdrain(conf->serial_fd); //wait for the packet to send
-                                packets_sent++;
-                        #ifdef _WIN32
-                                Sleep(us_between_packets);
-                        #else
-                                usleep(us_between_packets);
-                        #endif
-                        } while (packets_sent < repeat_packets);
-
-                        //move to the next packet and clean up
-                        if (current_node->nodes.tqe_next != NULL) { //pop if there is more to send
-                                log_msg(RT8900_TRACE, "removed after %d packets sent\n", packets_sent);
-                                TAILQ_REMOVE(conf->send.queue, current_node, nodes);
-                                if (current_node->free_packet == PACKET_FREE_AFTER_SEND) {
-                                        free(current_packet);
-                                }
-                                current_packet = NULL;
-                                free(current_node);
-                                current_node = NULL;
-                        }
-                } else {
-                        log_msg(RT8900_TRACE, "empty!\n");
-                }
-
-
-        }
-
-        //clean out our queue incase of shutdown
-        while (!TAILQ_EMPTY(conf->send.queue)) {
-                current_node = TAILQ_FIRST(conf->send.queue);
-                current_packet = current_node->packet;
-                TAILQ_REMOVE(conf->send.queue, current_node, nodes);
-                free(current_packet);
-                current_packet = NULL;
-        }
-
-        return NULL;
-}
-
-///adds a control_packet (pointer) to the send queue, should only be called once the queu h
-void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice)
-{
-        if (new_packet == NULL) {
-                log_msg(RT8900_ERROR, "NULL packet attempted to be added to QUEUE\n");
-        } else {
-                struct control_packet_q_node *node = (struct control_packet_q_node*) malloc(sizeof(*(node)));
-                node->packet = new_packet;
-                node->free_packet = free_choice;
-
-                TAILQ_INSERT_TAIL(config->send.queue, node, nodes);
-                log_msg(RT8900_TRACE, "ADDDED TO QUEUE \n");
-        }
-}
-
 
 void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *input_packet_arr)
 {

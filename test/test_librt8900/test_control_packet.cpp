@@ -1,7 +1,4 @@
-#include "gtest/gtest.h"
-
 #include "test_control_packet.h"
-#include "control_packet.c"
 
 TEST(ControlPacketTest, PACKET_BYTE)
 {
@@ -60,26 +57,26 @@ TEST(TestKeypadButtons, test_set_button)
         memcpy(press_a_button, &control_packet_defaults,sizeof(*press_a_button));
 
         //test the function sets correctly
-        set_keypad_button(press_a_button, &BUTTON_1);
-        EXPECT_EQ(press_a_button->keypad_input_row.section.data, BUTTON_1.row);
-        EXPECT_EQ(press_a_button->keypad_input_column.section.data, BUTTON_1.column);
+        set_keypad_button(press_a_button, &KEYPAD_NUMBER_BUTTONS[1]);
+        EXPECT_EQ(press_a_button->keypad_input_row.section.data, KEYPAD_NUMBER_BUTTONS[1].row);
+        EXPECT_EQ(press_a_button->keypad_input_column.section.data, KEYPAD_NUMBER_BUTTONS[1].column);
 
         //make sure we handled the constant right i.e we copied the value
         press_a_button->keypad_input_row.section.data = (signed char) 0X7F;
-        EXPECT_EQ(press_a_button->keypad_input_row.section.data, BUTTON_NONE.row);
-        EXPECT_EQ(BUTTON_1.row, 0x00);
+        EXPECT_EQ(press_a_button->keypad_input_row.section.data, KEYPAD_BUTTON_NONE.row);
+        EXPECT_EQ(KEYPAD_NUMBER_BUTTONS[1].row, 0x00);
 }
 
 TEST(TestKeypadButtons, test_button_from_int)
 {
         //test invalid range
         const struct button_transmit_value *no_press = button_from_int(-1);
-        EXPECT_EQ(no_press->column, BUTTON_NONE.column);
-        EXPECT_EQ(no_press->row, BUTTON_NONE.row);
+        EXPECT_EQ(no_press->column, KEYPAD_BUTTON_NONE.column);
+        EXPECT_EQ(no_press->row, KEYPAD_BUTTON_NONE.row);
 
         no_press = button_from_int(10);
-        EXPECT_EQ(no_press->column, BUTTON_NONE.column);
-        EXPECT_EQ(no_press->row, BUTTON_NONE.row);
+        EXPECT_EQ(no_press->column, KEYPAD_BUTTON_NONE.column);
+        EXPECT_EQ(no_press->row, KEYPAD_BUTTON_NONE.row);
 
         //check the expected output
         const struct button_transmit_value *test_button_5 = button_from_int(5);

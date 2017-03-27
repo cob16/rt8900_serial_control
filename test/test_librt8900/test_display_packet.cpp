@@ -2,9 +2,6 @@
 // Created by cormac on 14/03/17.
 //
 
-#include <packet.h>
-#include "gtest/gtest.h"
-#include "display_packet.c"
 #include "test_display_packet.h"
 
 TEST(TestDisplayPacket, test_find_packet_start)

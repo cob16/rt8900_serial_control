@@ -2,8 +2,8 @@
 // Created by cormac on 20/02/17.
 //
 
-#ifndef RT8900_SERIAL_CONTROL_PACKET_H
-#define RT8900_SERIAL_CONTROL_PACKET_H
+#ifndef RT8900_SERIAL_PACKET_H
+#define RT8900_SERIAL_PACKET_H
 
 #define NUM_DATA_BITS 8
 #define NUM_STOP_BITS 1
@@ -33,5 +33,6 @@ typedef union {
 #pragma pack() //undo this once we are done (IF THIS LINE IS REMOVED LIBS WILL STOP WORKING FOR YOU SUDDENLY)
 
 void print_char(char byte);
+int find_packet_start(unsigned char buffer[], size_t length);
 
-#endif //RT8900_SERIAL_CONTROLL_PACKET_H
+#endif //RT8900_SERIAL_PACKET_H

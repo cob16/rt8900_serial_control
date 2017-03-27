@@ -2,15 +2,13 @@
 // Created by cormac on 17/02/17.
 //
 
-#ifndef RT8900_SERIAL_CONTROL_FOO_H
-#define RT8900_SERIAL_CONTROL_FOO_H
+#ifndef RT8900_SERIAL_CONTROL_PACKET_H
+#define RT8900_SERIAL_CONTROL_PACKET_H
 
 #include <sys/queue.h>
 #include <stdbool.h>
 
 #include "packet.h"
-#include "serial.h"
-#include "log.h"
 
 //the observed standard packet gap with
 #define MILLISECONDS_BETWEEN_PACKETS_STANDARD 3
@@ -66,23 +64,7 @@ struct control_packet{
     PACKET_BYTE hyper_mem_buttons;   //hyper memory buttons
 };
 
-//values in order to select a row
-enum voltage_divider_row_values {
-    VOLTAGE_DEVIDER_INDEX_0 = 0X00, //0
-    VOLTAGE_DEVIDER_INDEX_1 = 0X1A, //26
-    VOLTAGE_DEVIDER_INDEX_2 = 0X32, //50
-    VOLTAGE_DEVIDER_INDEX_3 = 0X4C, //76
-    VOLTAGE_DEVIDER_INDEX_4 = 0X64, //100
-    VOLTAGE_DEVIDER_NONE = 0X7F,    //127
-};
-
-//used to store the required values in order to dial a handset button
-struct button_transmit_value{
-    signed char row;
-    signed char column;
-};
-
-// table showing the layout of the button grid that is assigned to constants bellow
+// table showing the layout of the button grid that is used to press keypad buttons bellow
 //
 //| row/col | 0    | 1  | 2  | 3  | 4  |
 //|---------|------|----|----|----|----|
@@ -92,60 +74,76 @@ struct button_transmit_value{
 //| 3       |      | x  | 0  | #  | D  |
 //| 4       |      | P1 | P2 | P3 | P4 |
 
-//row first
-#define DEFINE_BUTTON(name, row, columb) const struct button_transmit_value (name) = {(signed char) (row), (signed char) (columb)};
+//voltage divider row_values
+//values used to select a ia row
+#define VD_INDEX_0 0X00 //0
+#define VD_INDEX_1 0X1A //26
+#define VD_INDEX_2 0X32 //50
+#define VD_INDEX_3 0X4C //76
+#define VD_INDEX_4 0X64 //100
+#define VD_NONE 0X7F    //127
+//};
 
-DEFINE_BUTTON(BUTTON_NONE, VOLTAGE_DEVIDER_NONE, VOLTAGE_DEVIDER_NONE)
+//used to store the required values in order to dial a handset button
+struct button_transmit_value{
+    signed char row;
+    signed char column;
+};
 
-DEFINE_BUTTON(BUTTON_1, VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_1)
-DEFINE_BUTTON(BUTTON_2, VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_2)
-DEFINE_BUTTON(BUTTON_3, VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_3)
-DEFINE_BUTTON(BUTTON_A, VOLTAGE_DEVIDER_INDEX_0, VOLTAGE_DEVIDER_INDEX_4)
+//row first then columb
+#define BUTTON_NONE_VALUE {VD_NONE, VD_NONE}
 
-DEFINE_BUTTON(BUTTON_UP, VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_0)
-DEFINE_BUTTON(BUTTON_4, VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_1)
-DEFINE_BUTTON(BUTTON_5, VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_2)
-DEFINE_BUTTON(BUTTON_6, VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_3)
-DEFINE_BUTTON(BUTTON_B, VOLTAGE_DEVIDER_INDEX_1, VOLTAGE_DEVIDER_INDEX_4)
+//row 0
+#define BUTTON_1_VALUE {VD_INDEX_0, VD_INDEX_1}
+#define BUTTON_2_VALUE {VD_INDEX_0, VD_INDEX_2}
+#define BUTTON_3_VALUE {VD_INDEX_0, VD_INDEX_3}
+#define BUTTON_A_VALUE {VD_INDEX_0, VD_INDEX_4}
 
-DEFINE_BUTTON(BUTTON_DOWN, VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_0)
-DEFINE_BUTTON(BUTTON_7, VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_1)
-DEFINE_BUTTON(BUTTON_8, VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_2)
-DEFINE_BUTTON(BUTTON_9, VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_3)
-DEFINE_BUTTON(BUTTON_C, VOLTAGE_DEVIDER_INDEX_2, VOLTAGE_DEVIDER_INDEX_4)
+//row 1
+#define BUTTON_UP_VALUE {VD_INDEX_1, VD_INDEX_0}
+#define BUTTON_4_VALUE {VD_INDEX_1, VD_INDEX_1}
+#define BUTTON_5_VALUE {VD_INDEX_1, VD_INDEX_2}
+#define BUTTON_6_VALUE {VD_INDEX_1, VD_INDEX_3}
+#define BUTTON_B_VALUE {VD_INDEX_1, VD_INDEX_4}
 
-DEFINE_BUTTON(BUTTON_X, VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_1)
-DEFINE_BUTTON(BUTTON_0, VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_2)
-DEFINE_BUTTON(BUTTON_HASH, VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_3)
-DEFINE_BUTTON(BUTTON_D, VOLTAGE_DEVIDER_INDEX_3, VOLTAGE_DEVIDER_INDEX_4)
+//row 2
+#define BUTTON_DOWN_VALUE {VD_INDEX_2, VD_INDEX_0}
+#define BUTTON_7_VALUE {VD_INDEX_2, VD_INDEX_1}
+#define BUTTON_8_VALUE {VD_INDEX_2, VD_INDEX_2}
+#define BUTTON_9_VALUE {VD_INDEX_2, VD_INDEX_3}
+#define BUTTON_C_VALUE {VD_INDEX_2, VD_INDEX_4}
 
-DEFINE_BUTTON(BUTTON_P1, VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_1)
-DEFINE_BUTTON(BUTTON_P2, VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_2)
-DEFINE_BUTTON(BUTTON_P3, VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_3)
-DEFINE_BUTTON(BUTTON_P4, VOLTAGE_DEVIDER_INDEX_4, VOLTAGE_DEVIDER_INDEX_4)
+//row 3
+#define BUTTON_X_VALUE {VD_INDEX_3, VD_INDEX_1}
+#define BUTTON_0_VALUE {VD_INDEX_3, VD_INDEX_2}
+#define BUTTON_HASH_VALUE {VD_INDEX_3, VD_INDEX_3}
+#define BUTTON_D_VALUE {VD_INDEX_3, VD_INDEX_4}
 
-const struct button_transmit_value *number_buttons[10] = { &BUTTON_0, &BUTTON_1, &BUTTON_2, &BUTTON_3, &BUTTON_4,
-                                                           &BUTTON_5, &BUTTON_6, &BUTTON_7, &BUTTON_8, &BUTTON_9};
+//row 4
+#define BUTTON_P1_VALUE {VD_INDEX_4, VD_INDEX_1}
+#define BUTTON_P2_VALUE {VD_INDEX_4, VD_INDEX_2}
+#define BUTTON_P3_VALUE {VD_INDEX_4, VD_INDEX_3}
+#define BUTTON_P4_VALUE {VD_INDEX_4, VD_INDEX_4}
+
+extern const struct button_transmit_value KEYPAD_BUTTON_NONE;
+extern const struct button_transmit_value KEYPAD_NUMBER_BUTTONS[10];
+
+extern const struct button_transmit_value KEYPAD_BUTTON_A;
+extern const struct button_transmit_value KEYPAD_BUTTON_B;
+extern const struct button_transmit_value KEYPAD_BUTTON_C;
+extern const struct button_transmit_value KEYPAD_BUTTON_D;
+
+extern const struct button_transmit_value KEYPAD_BUTTON_HASH;
+extern const struct button_transmit_value KEYPAD_BUTTON_X;
+
+extern const struct button_transmit_value KEYPAD_BUTTON_P1;
+extern const struct button_transmit_value KEYPAD_BUTTON_P2;
+extern const struct button_transmit_value KEYPAD_BUTTON_P3;
+extern const struct button_transmit_value KEYPAD_BUTTON_P4;
+
 
 /// recommended defaults for the control packet
-const struct control_packet control_packet_defaults = {
-        /*There are manny defaults that are 0 so we leave them as "{}"
-        The elements are not addressed by name for c++ compatibility so we can test*/
-
-        {.section = {.data = DATA_MIN_NUM, .check_num=SBO}}, //encoder_right | 0 turns
-        {},                                         //encoder_left          | 0 turns
-        {.section = {.data= DATA_MAX_NUM}},         // ptt                  | set to high (off)
-        {},                                         //squelch_right         | 0%
-        {.section = {.data = DEFAULT_VOLUME}},      // volume_control_right | set to 25% volume
-        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_row     | no buttons being pressed
-        {.section = {.data = DEFAULT_VOLUME}},      // volume_control_left  | set to 25% volume
-        {},                                         // squelch_left         | 0%
-        {.section = {.data = VOLTAGE_DEVIDER_NONE}},// keypad_input_column  | full is no buttons being pressed
-        {.section = {.data = DATA_MAX_NUM}},        // right_buttons  | full is no buttons being pressed
-        {.section = {.data = DATA_MAX_NUM}},        // left_buttons   | full is no buttons being pressed
-        {.section = {.data = NOT_PRESSED}},         // main_buttons         |
-        {},                                         // hyper_mem_buttons    |
-};
+extern const struct control_packet control_packet_defaults;
 
 /// used to get the struct as an array
 typedef union {
@@ -163,10 +161,9 @@ int set_volume(struct control_packet *packet, int left, int right);
 int set_squelch_left(struct control_packet *packet, int number);
 int set_squelch_right(struct control_packet *packet, int number);
 int set_squelch(struct control_packet *packet, int left, int right);
-int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
+void ptt(struct control_packet *base_packet, int ptt);
 void* send_control_packets(void *c);
-void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
 void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *input_packet_arr);
 
 
-#endif //RT8900_SERIAL_CONTROL_FOO_H
+#endif //RT8900_SERIAL_CONTROL_PACKET_H
