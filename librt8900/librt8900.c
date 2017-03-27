@@ -7,17 +7,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-void log_msg(enum rt8900_logging_level level, char const *fmt, ...)
-{
-        va_list args;
-        va_start(args, fmt);
-
-        if (rt8900_verbose >= level) {
-                vfprintf(stderr, fmt, args);
-        }
-        va_end(args);
-}
-
 ///adds a control_packet (pointer) to the send queue, should only be called once the queu h
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice)
 {
@@ -73,13 +62,11 @@ void* send_control_packets(void *c)
                         //print debug
                         if (current_packet != last_packet) {
                                 log_msg(RT8900_TRACE, "-\n");
-                                if (rt8900_verbose >= RT8900_TRACE) {
+                                if (rt8900_verbose_level >= RT8900_TRACE) {
                                         packet_debug(current_packet, &packet_arr);
                                 }
                                 last_packet = current_packet;
                                 packets_sent = 0;
-                        } else {
-                                log_msg(RT8900_TRACE, "Sent %d packets\r",packets_sent);
                         }
 
                         //SEND THE PACKET
@@ -101,12 +88,13 @@ void* send_control_packets(void *c)
                                 if (current_node->free_packet == PACKET_FREE_AFTER_SEND) {
                                         free(current_packet);
                                 }
+                                packets_sent = 0;
                                 current_packet = NULL;
                                 free(current_node);
                                 current_node = NULL;
                         }
                 } else {
-                        log_msg(RT8900_TRACE, "empty!\n");
+                        log_msg(RT8900_TRACE, "Send queue is empty!\n");
                 }
 
 
@@ -124,26 +112,85 @@ void* send_control_packets(void *c)
         return NULL;
 }
 
-int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
+void* receive_display_packets(void *c)
 {
-        tcflush(config->serial_fd, TCIFLUSH); //flush the buffer to get the latest data
-        usleep(MS_PACKET_WAIT_TIME * 1000); //enough time for at least 1 packet to be sent
+        SERIAL_CFG *config = (SERIAL_CFG*) c;
+        config->receive.keep_alive = true;
 
-        if (check_radio_rx(config->serial_fd) != 0) {
-                return 1;
+        // allows our mutex to be locked across threads
+        pthread_mutexattr_t shared;
+        pthread_mutexattr_init(&shared);
+        pthread_mutexattr_setpshared(&shared, PTHREAD_PROCESS_SHARED);
+
+        if (pthread_mutex_init(&(config->receive.raw_packet_lock), &shared) != 0)
+        {
+                log_msg(RT8900_ERROR, "mutex init failed\n");
+                exit(EXIT_FAILURE);
         }
 
-        unsigned char buffer[DISPLAY_PACKET_SIZE];
+        //open serial if not already open
+        if (config->serial_fd  < 1) {
+                open_serial(&(config->serial_fd), &(config->serial_path)); //setup our serial connection if not already done
+        }
 
-        int recived_bytes = read(config->serial_fd, &buffer, DISPLAY_PACKET_SIZE);
-        int start_of_packet_index = find_packet_start(buffer, sizeof(buffer));
+        tcflush(config->serial_fd, TCIFLUSH); //flush any existing buffer
 
-        if (recived_bytes != DISPLAY_PACKET_SIZE || start_of_packet_index == -1 ) {
+        while (config->receive.keep_alive) {
+                usleep(MS_PACKET_WAIT_TIME * 1000); //enough time for at least 1 packet to be sent
+
+                // Initialize all the file descriptor sets
+                fd_set read_fds, write_fds, except_fds;
+                FD_ZERO(&read_fds);
+                FD_ZERO(&write_fds);
+                FD_ZERO(&except_fds);
+                FD_SET(config->serial_fd, &read_fds);
+
+                struct timeval timeout;
+                timeout.tv_sec = 1;
+                timeout.tv_usec = 0;
+
+                // Wait for input to become ready or until the time out; the first parameter is
+                // 1 more than the largest file descriptor in any of the sets
+                if (select(config->serial_fd + 1, &read_fds, &write_fds, &except_fds, &timeout) == 1)
+                {
+                        pthread_mutex_lock(&(config->receive.raw_packet_lock));
+                        read(config->serial_fd, &(config->receive.latest_raw_packet), DISPLAY_PACKET_SIZE);
+                        pthread_mutex_unlock(&(config->receive.raw_packet_lock));
+                        config->receive.radio_seen = true;
+                }
+                else
+                {
+                        log_msg(RT8900_WARNING, "NO DATA RECEIVIED FROM RADIO!\n");
+                }
+        }
+
+        pthread_mutex_destroy(&(config->receive.raw_packet_lock));
+
+        return 0;
+}
+
+int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
+{
+        unsigned char temp_buffer[DISPLAY_PACKET_SIZE];
+        pthread_mutex_lock(&(config->receive.raw_packet_lock));
+        memcpy(&temp_buffer, (config->receive.latest_raw_packet) , sizeof(temp_buffer));
+        pthread_mutex_unlock(&(config->receive.raw_packet_lock));
+
+
+        int start_of_packet_index = find_packet_start(temp_buffer, sizeof(temp_buffer));
+        if (start_of_packet_index == -1 ) {
                 log_msg(RT8900_ERROR, "PACKET was corrupt / unrecognised!\n");
                 return 1;
         }
-        insert_shifted_packet(packet, buffer, DISPLAY_PACKET_SIZE, start_of_packet_index);
+        insert_shifted_packet(packet, temp_buffer, DISPLAY_PACKET_SIZE, start_of_packet_index);
         return 0;
+}
+
+
+///Check that we are reciving from teh radio.
+int check_radio_rx(SERIAL_CFG *config)
+{
+        return config->receive.radio_seen;
 }
 
 int get_state(SERIAL_CFG *config, struct radio_state *state) {

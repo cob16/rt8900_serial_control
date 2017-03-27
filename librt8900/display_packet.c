@@ -6,7 +6,6 @@
 #include <sys/ioctl.h>
 
 #include "display_packet.h"
-#include "log.h"
 
 /// Write to the packet in the correct order.
 /// For example the packet may start at index 10. Assumes buffer array length is DISPLAY_PACKET_SIZE (42)
@@ -22,19 +21,6 @@ void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[]
         for (i = 0; i < start_of_packet_index; i++, packet_index++) { ;
                 packet->arr[packet_index].raw = buffer[i];
         }
-}
-
-///Check that we are reciving from teh radio.
-int check_radio_rx(int fd)
-{
-        int current_buffer_bytes;
-        int read = ioctl(fd, FIONREAD, &current_buffer_bytes);
-        log_msg(RT8900_DEBUG, "There are %d bytes available to read in the buffer\n", current_buffer_bytes);
-        if (current_buffer_bytes < 42 || read == -1) {
-                log_msg(RT8900_ERROR, "NO DATA RECEIVED! \n Please make sure that the radio is connected and/or turned on\n");
-                return 1;
-        }
-        return 0;
 }
 
 ///Gets busy state from display_packet

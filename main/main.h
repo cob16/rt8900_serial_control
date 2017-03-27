@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 #include "librt8900.h"
 

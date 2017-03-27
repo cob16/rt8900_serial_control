@@ -3,6 +3,8 @@
 //
 #include "main.h"
 
+#include <pthread.h>
+
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
 const char *argp_program_bug_address = "<cormac.brady@hotmai.co.uk>";
@@ -23,14 +25,15 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         /* Get the input argument from argp_parse, which we
            know is a pointer to our arguments structure. */
         SERIAL_CFG *cfg = state->input;
-
+        int i;
         switch (key)
         {
         case 991:
                 cfg->send.lazy_sending = arg ? true : false;
                 break;
         case 'v':
-                rt8900_verbose = arg ? (enum rt8900_logging_level) atoi (arg) : RT8900_INFO;
+                set_log_level( (enum rt8900_logging_level) atoi(arg));
+                printf("opt was %d", rt8900_verbose_level);
                 break;
         case ARGP_KEY_ARG:
                 if (state->arg_num >= 1)
@@ -61,6 +64,7 @@ void graceful_shutdown(int signal)
         log_msg(RT8900_INFO, "\nShutting down...\n");
         if (g_conf != NULL) {
                 g_conf->send.keep_alive = false;
+                g_conf->receive.keep_alive = false;
                 if (g_conf->serial_fd != 0) {
                         tcflush(g_conf->serial_fd, TCIOFLUSH); //flush in/out buffers
                         close(g_conf->serial_fd);
@@ -245,27 +249,37 @@ int main(int argc, char **argv)
         };
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
+
         //Create a thread to send oud control packets
         pthread_t packet_sender_thread;
-        pthread_barrier_t wait_for_init;
+        pthread_t packet_receive_thread;
+        pthread_barrier_t wait_for_sender;
 
-        pthread_barrier_init(&wait_for_init, NULL, 2);
-        c.send.initialised = &wait_for_init;
+        pthread_barrier_init(&wait_for_sender, NULL, 2);
+        c.send.initialised = &wait_for_sender;
 
-        pthread_create(&packet_sender_thread, NULL, send_control_packets, &c);
-        pthread_barrier_wait(&wait_for_init); //wait for thread to be ready
         init_graceful_shutdown(&c);
 
-        //read out the current state of the hardware
-//        struct display_packet *current_state = malloc(sizeof(struct display_packet));
-//        get_display_packet(&c, current_state);
-
-        //todo check if any existing state needs to be transferred to our starting packet
+        pthread_create(&packet_sender_thread, NULL, send_control_packets, &c);
+        pthread_barrier_wait(&wait_for_sender); //wait send thread to be ready
 
         //Setup our initial packet that will be sent
         maloc_control_packet(start_packet)
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
         send_new_packet(&c, start_packet, PACKET_ONLY_SEND);
+
+        pthread_create(&packet_receive_thread, NULL, receive_display_packets, &c);
+
+        while(check_radio_rx(&c) == 0) {};
+        log_msg(RT8900_INFO, "READY!\n");
+
+
+        //read out the current state of the hardware
+        //struct display_packet *current_state = malloc(sizeof(struct display_packet));
+        //get_display_packet(&c, current_state);
+
+        //todo check if any existing state needs to be transferred to our starting packet
+
 
         //todo block until display packets are revived
         //todo add a block until radio is able to revived commands (boot time)
@@ -273,7 +287,8 @@ int main(int argc, char **argv)
         user_prompt(&c, start_packet);
 
         graceful_shutdown(0);
-        pthread_barrier_destroy(&wait_for_init);
+        pthread_barrier_destroy(&wait_for_sender);
         pthread_join(packet_sender_thread, NULL);
+        pthread_join(packet_receive_thread, NULL);
         return 0;
 }

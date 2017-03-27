@@ -47,7 +47,7 @@ void set_serial_attributes(int fd)
         tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
         tty.c_cc[VMIN] = DISPLAY_PACKET_SIZE;
         tty.c_cc[VTIME] = 1;
-        // fcntl(fd, F_SETFL, 0); this will make reads blocking
+        fcntl(fd, F_SETFL, 0); //this will make reads blocking
 
         //write our new settings
         if (tcsetattr(fd, TCSANOW, &tty) != 0) {

@@ -12,6 +12,7 @@
 
 #include "packet.h"
 #include "serial.h"
+#include "log.h"
 
 struct display_packet {
         PACKET_BYTE arr[42];
@@ -38,7 +39,6 @@ struct radio_state {
 };
 
 void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index);
-int check_radio_rx(int fd);
 void read_busy(struct display_packet *packet, struct radio_state *state);
 void read_main(struct display_packet *packet, struct radio_state *state);
 int is_main(struct radio_state *radio, struct radio_state_sides *side);

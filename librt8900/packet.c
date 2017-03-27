@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "log.h"
 
 void print_char(char byte)
 {
