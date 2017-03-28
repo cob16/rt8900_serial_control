@@ -6,6 +6,7 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/ioctl.h>
 
 ///adds a control_packet (pointer) to the send queue, should only be called once the queu h
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice)
@@ -251,3 +252,12 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         }
         return 0;
 }
+
+int set_power_button(SERIAL_CFG *cfg)
+{
+        int RTS_flag = TIOCM_RTS;
+        ioctl(cfg->serial_fd, TIOCMBIS, &RTS_flag); //Set RTS pin high
+        sleep(1);
+        ioctl(cfg->serial_fd, TIOCMBIC, &RTS_flag); //Set RTS pin low
+        return 1;
+};

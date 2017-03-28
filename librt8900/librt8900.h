@@ -46,6 +46,8 @@ int check_radio_rx(SERIAL_CFG *config);
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
 int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side);
 
+int set_power_button(SERIAL_CFG *cfg);
+
 //getters
 
 #endif //RT8900_SERIAL_CONTROL_API_H

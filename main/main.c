@@ -191,6 +191,9 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                                        set_main_radio(config, base_packet, RADIO_RIGHT);
                                 }
                                 printf("%s Setting Main radio to -> right %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                        }  else if (strcmp(cmd[1], "P") == 0){
+                                printf("%s Pressing power button %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                                set_power_button(config);
                         } else {
                                 print_invalid_command();
                         }
@@ -270,21 +273,30 @@ int main(int argc, char **argv)
 
         pthread_create(&packet_receive_thread, NULL, receive_display_packets, &c);
 
-        while(check_radio_rx(&c) == 0) {};
-        log_msg(RT8900_INFO, "READY!\n");
+        //if the radio is not already on
+        int give_up = TURN_ON_RADIO_TRYS;
+        while(check_radio_rx(&c) == 0) {
+                if (give_up > 3) {
+                        log_msg(RT8900_ERROR, "FAILED TO TURN ON THE RADIO AFTER %d trys\n", give_up);
+                        break;
+                }
+                log_msg(RT8900_INFO, "Trying to turn on the radio\n");
+                set_power_button(&c); //power the radio on
+                sleep(2);
+                give_up++;
+        };
+
+        if (check_radio_rx(&c) == 1) {
+                log_msg(RT8900_INFO, "SUCCESS!\n");
+                user_prompt(&c, start_packet);
+        }
 
 
-        //read out the current state of the hardware
+        //get current state of radio
         //struct display_packet *current_state = malloc(sizeof(struct display_packet));
         //get_display_packet(&c, current_state);
-
         //todo check if any existing state needs to be transferred to our starting packet
 
-
-        //todo block until display packets are revived
-        //todo add a block until radio is able to revived commands (boot time)
-
-        user_prompt(&c, start_packet);
 
         graceful_shutdown(0);
         pthread_barrier_destroy(&wait_for_sender);
