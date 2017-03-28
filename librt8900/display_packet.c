@@ -8,18 +8,6 @@
 #include "log.h"
 #include "serial.h"
 
-/// the start of the known packet could be anywhre in the buffer
-/// this function finds the starting index based of it's bit marker
-int find_packet_start(unsigned char buffer[], size_t length) {
-        int i;
-        for (i = 0; i < length; i++) {
-                if ( (1 & buffer[i] >> 7) ) { //is the 8th bit set to 1
-                        return i;
-                };
-        }
-        return -1;
-}
-
 /// Write to the packet in the correct order.
 /// For example the packet may start at index 10. Assumes buffer array length is DISPLAY_PACKET_SIZE (42)
 void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index)
