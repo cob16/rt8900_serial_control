@@ -12,7 +12,7 @@ void log_msg(enum rt8900_logging_level level, char const *fmt, ...)
         va_start(args, fmt);
 
         if (rt8900_verbose_level >= level) {
-                printf(fmt, args);
+                vprintf(fmt, args);
         }
         va_end(args);
 }
