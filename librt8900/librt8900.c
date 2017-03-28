@@ -255,9 +255,14 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
 
 int set_power_button(SERIAL_CFG *cfg)
 {
-        int RTS_flag = TIOCM_RTS;
-        ioctl(cfg->serial_fd, TIOCMBIS, &RTS_flag); //Set RTS pin high
-        sleep(1);
-        ioctl(cfg->serial_fd, TIOCMBIC, &RTS_flag); //Set RTS pin low
-        return 1;
+        if (cfg->receive.rts_pin_as_on == true) {
+                int RTS_flag = TIOCM_RTS;
+                ioctl(cfg->serial_fd, TIOCMBIS, &RTS_flag); //Set RTS pin high
+                sleep(1);
+                ioctl(cfg->serial_fd, TIOCMBIC, &RTS_flag); //Set RTS pin low
+                return 1;
+        }
+
+        log_msg(RT8900_ERROR, "Power on flag not provided, please see help output to enable");
+        return 0;
 };

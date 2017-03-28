@@ -12,6 +12,8 @@ static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Trans
 static char rt8900_args_doc[] = "<serial port path>";
 
 static struct argp_option rt8900options[] = {
+        {"rts-on", 'r', 0, OPTION_ARG_OPTIONAL,
+                "Use the RTS pin of the serial connection as a power button for the rig. (REQUIRES compatible hardware)"},
         {"verbose", 'v', "LEVEL", OPTION_ARG_OPTIONAL,
                 "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'."},
         {"hard-emulation", 991, 0, OPTION_ARG_OPTIONAL,
@@ -34,6 +36,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         case 'v':
                 set_log_level( (enum rt8900_logging_level) atoi(arg));
                 printf("opt was %d", rt8900_verbose_level);
+                break;
+        case 'r':
+                cfg->receive.rts_pin_as_on = true;
                 break;
         case ARGP_KEY_ARG:
                 if (state->arg_num >= 1)
@@ -248,7 +253,8 @@ int main(int argc, char **argv)
 {
         //Create our config
         SERIAL_CFG c = {
-                .send.lazy_sending = true
+                .send.lazy_sending = true,
+                .receive.rts_pin_as_on = false,
         };
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
@@ -273,18 +279,24 @@ int main(int argc, char **argv)
 
         pthread_create(&packet_receive_thread, NULL, receive_display_packets, &c);
 
-        //if the radio is not already on
-        int give_up = TURN_ON_RADIO_TRYS;
-        while(check_radio_rx(&c) == 0) {
-                if (give_up > 3) {
-                        log_msg(RT8900_ERROR, "FAILED TO TURN ON THE RADIO AFTER %d trys\n", give_up);
-                        break;
-                }
-                log_msg(RT8900_INFO, "Trying to turn on the radio\n");
-                set_power_button(&c); //power the radio on
-                sleep(2);
-                give_up++;
-        };
+        if (c.receive.rts_pin_as_on == true) {
+                //if the radio is not already on
+                int give_up = TURN_ON_RADIO_TRYS;
+                while(check_radio_rx(&c) == 0) {
+                        if (give_up > 3) {
+                                log_msg(RT8900_ERROR, "FAILED TO TURN ON THE RADIO AFTER %d trys\n", give_up);
+                                break;
+                        }
+                        log_msg(RT8900_INFO, "Trying to turn on the radio\n");
+                        set_power_button(&c); //power the radio on
+                        sleep(2);
+                        give_up++;
+                };
+        } else {
+                log_msg(RT8900_INFO, "Waiting for radio to be turned on\n");
+        }
+
+
 
         if (check_radio_rx(&c) == 1) {
                 log_msg(RT8900_INFO, "SUCCESS!\n");

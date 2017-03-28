@@ -18,6 +18,7 @@ struct control_packet_sender_config {
 };
 
 struct display_packet_reciver_config {
+    bool rts_pin_as_on;
     bool keep_alive;
     bool radio_seen;
     pthread_mutex_t raw_packet_lock;
