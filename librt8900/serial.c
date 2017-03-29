@@ -35,7 +35,7 @@ void set_serial_attributes(int fd)
         tty.c_cflag |= CS8;         /* 8-bit characters */
         tty.c_cflag &= ~PARENB;     /* no parity bit */
         tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-        tty.c_cflag &= ~CRTSCTS;    /* no hardware flow control */
+        tty.c_cflag |= CRTSCTS;    /* no hardware flow control */
 
 
         /* setup for non-canonical mode */

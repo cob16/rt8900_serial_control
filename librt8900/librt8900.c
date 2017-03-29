@@ -253,16 +253,29 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         return 0;
 }
 
+///sets the dtr pin low for one second to trigger radio on
 int set_power_button(SERIAL_CFG *cfg)
 {
-        if (cfg->receive.rts_pin_as_on == true) {
-                int RTS_flag = TIOCM_RTS;
-                ioctl(cfg->serial_fd, TIOCMBIS, &RTS_flag); //Set RTS pin high
-                sleep(1);
-                ioctl(cfg->serial_fd, TIOCMBIC, &RTS_flag); //Set RTS pin low
+        if (cfg->receive.rts_pin_as_on == false) {
+                log_msg(RT8900_ERROR, "Power on flag not provided, please see help output to enable");
                 return 1;
         }
 
-        log_msg(RT8900_ERROR, "Power on flag not provided, please see help output to enable");
+        int RTS_flag = TIOCM_DTR;
+        ioctl(cfg->serial_fd, TIOCMGET, &RTS_flag);
+        RTS_flag &= ~TIOCM_DTR;
+        ioctl(cfg->serial_fd, TIOCMSET, &RTS_flag);
+
+        sleep(1);
+
+        ioctl(cfg->serial_fd, TIOCMGET, &RTS_flag);
+        RTS_flag |= TIOCM_DTR;
+        ioctl(cfg->serial_fd, TIOCMSET, &RTS_flag);
+
+        if (check_radio_rx(cfg) != 1) {
+                log_msg(RT8900_ERROR, "Failed to turn on radio\n");
+                return 1;
+        }
+
         return 0;
-};
+}

@@ -35,7 +35,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
                 break;
         case 'v':
                 set_log_level( (enum rt8900_logging_level) atoi(arg));
-                printf("opt was %d", rt8900_verbose_level);
                 break;
         case 'r':
                 cfg->receive.rts_pin_as_on = true;
@@ -279,24 +278,24 @@ int main(int argc, char **argv)
 
         pthread_create(&packet_receive_thread, NULL, receive_display_packets, &c);
 
-        if (c.receive.rts_pin_as_on == true) {
-                //if the radio is not already on
-                int give_up = TURN_ON_RADIO_TRYS;
-                while(check_radio_rx(&c) == 0) {
-                        if (give_up > 3) {
+        //if the radio is not already on try to turn it on
+        if (check_radio_rx(&c) == 0) {
+
+                if (c.receive.rts_pin_as_on == true) {
+                        int give_up = 0;
+                        while (set_power_button(&c) != 0 && c.send.keep_alive) {
+                                give_up++;
                                 log_msg(RT8900_ERROR, "FAILED TO TURN ON THE RADIO AFTER %d trys\n", give_up);
-                                break;
+                                if (give_up >= TURN_ON_RADIO_TRYS) {
+                                        break;
+                                }
+                                sleep(1);
                         }
-                        log_msg(RT8900_INFO, "Trying to turn on the radio\n");
-                        set_power_button(&c); //power the radio on
-                        sleep(2);
-                        give_up++;
-                };
-        } else {
-                log_msg(RT8900_INFO, "Waiting for radio to be turned on\n");
+                } else {
+                        log_msg(RT8900_INFO, "Waiting for radio to be turned on (no time out)\n");
+                        while (check_radio_rx(&c) == 0 && c.send.keep_alive) {};
+                }
         }
-
-
 
         if (check_radio_rx(&c) == 1) {
                 log_msg(RT8900_INFO, "SUCCESS!\n");
