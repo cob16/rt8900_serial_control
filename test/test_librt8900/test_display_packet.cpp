@@ -2,6 +2,7 @@
 // Created by cormac on 14/03/17.
 //
 
+#include <stddef.h>
 #include "test_display_packet.h"
 
 TEST(TestDisplayPacket, test_find_packet_start)
@@ -43,14 +44,17 @@ TEST(TestDisplayPacket, test_shift_array)
 
 void TestDisplayPacketReaders::SetUp()
 {
-        packet.arr[0].section.check_num = 0x01;
-
-        packet.arr[28].raw = 0x00;
+        packet.arr[0].section.check_num |= 1;
+        packet.arr[12].section.data |= 1 << 2; //left buisy
+        packet.arr[28].section.data |= 1 << 2; //right buizy
 }
 
 TEST_F(TestDisplayPacketReaders, test_read_busy)
 {
         struct radio_state state;
+
+        packet.arr[12].section.data &= ~(1 << 2);
+        packet.arr[28].section.data &= ~(1 << 2);
         read_busy(&packet, &state);
 
         EXPECT_EQ(state.left.busy, 0);
@@ -63,4 +67,22 @@ TEST_F(TestDisplayPacketReaders, test_read_busy)
 
         EXPECT_EQ(state.left.busy, 1);
         EXPECT_EQ(state.right.busy, 1);
+
+        EXPECT_EQ(display_packet_read(&packet, LEFT_BUISY), 1);
+        EXPECT_EQ(display_packet_read(&packet, RIGHT_BUISY), 1);
+}
+
+TEST_F(TestDisplayPacketReaders, test_packet_read)
+{
+        EXPECT_EQ(display_packet_read(&packet, LEFT_BUISY), 1);
+        EXPECT_EQ(display_packet_read(&packet, RIGHT_BUISY), 1);
+        EXPECT_EQ(display_packet_read(&packet, 2), 0);
+}
+
+TEST_F(TestDisplayPacketReaders, test_read_14_seg)
+{
+        EXPECT_EQ(decode_14_segment(0x1F97), 0);
+        EXPECT_EQ(decode_14_segment(0x1400), 1);
+
+
 }
