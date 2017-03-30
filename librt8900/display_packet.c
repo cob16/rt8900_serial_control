@@ -45,15 +45,15 @@ void read_main(struct display_packet *packet, struct radio_state *state)
         }
 }
 
-/// Gets the power levels of the radios,
+/// Gets the power levels of the radios only using reads,
 // todo Currently there is no way to know if med1 or med2 is set
-// todo seprate non fussy function will be required to togel 4 times (a circle) and then read the screen
-void read_power(struct display_packet *packet, struct radio_state *state)
+// todo create a seprate non fussy function that will be called to toggel power button 4 times (a circle) and then read the screen
+void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
 {
         if (display_packet_read(packet, LEFT_POWER_LOW)) {
                 state->left.power_level = POWER_LOW;
         } else if (display_packet_read(packet, LEFT_POWER_MEDIUM)) {
-                state->left.power_level = POWER_MEDIUM;
+                state->left.power_level = POWER_MEDIUM_FUZZY;
         } else {
                 state->left.power_level = POWER_HIGH;
         }
@@ -61,7 +61,7 @@ void read_power(struct display_packet *packet, struct radio_state *state)
         if (display_packet_read(packet, RIGHT_POWER_LOW)) {
                 state->right.power_level = POWER_LOW;
         } else if (display_packet_read(packet, RIGHT_POWER_MEDIUM)) {
-                state->right.power_level = POWER_MEDIUM;
+                state->right.power_level = POWER_MEDIUM_FUZZY;
         } else {
                 state->right.power_level = POWER_HIGH;
         }

@@ -173,7 +173,7 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
 
                         printf("Left  radio -> %s%s\nRight radio -> %s%s\n", lbusy, lmain, rbusy, rmain);
                 } else if (strcmp(cmd[0], "p") == 0) {
-                        read_power(&packet, current_state);
+                        read_power_fuzzy(&packet, current_state);
 
                         printf("Left  power -> %d\n", current_state->left.power_level);
                         printf("Right power -> %d\n", current_state->right.power_level);

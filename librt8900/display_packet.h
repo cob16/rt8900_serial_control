@@ -61,10 +61,11 @@ struct display_packet {
 
 enum power_level {
         POWER_UNKNOWEN = 0,
-        POWER_LOW = 1,
-        POWER_MEDIUM = 2,
-        POWER_MEDIUM_HIGH = 3,
-        POWER_HIGH = 4
+        POWER_LOW,
+        POWER_MEDIUM_FUZZY,
+        POWER_MEDIUM_1,
+        POWER_MEDIUM_2,
+        POWER_HIGH,
 };
 
 struct radio_state_sides {
@@ -83,7 +84,7 @@ struct radio_state {
 void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index);
 void read_busy(struct display_packet *packet, struct radio_state *state);
 void read_main(struct display_packet *packet, struct radio_state *state);
-void read_power(struct display_packet *packet, struct radio_state *state);
+void read_power_fuzzy(struct display_packet *packet, struct radio_state *state);
 
 int decode_14_segment(int segment_bitmask);
 int display_packet_read(struct display_packet *packet, int bit_number);
