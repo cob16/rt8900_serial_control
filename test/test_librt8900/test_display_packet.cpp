@@ -76,7 +76,6 @@ TEST_F(TestDisplayPacketReaders, test_packet_read)
 {
         EXPECT_EQ(display_packet_read(&packet, LEFT_BUISY), 1);
         EXPECT_EQ(display_packet_read(&packet, RIGHT_BUISY), 1);
-        EXPECT_EQ(display_packet_read(&packet, 2), 0);
 }
 
 TEST_F(TestDisplayPacketReaders, test_read_14_seg)
