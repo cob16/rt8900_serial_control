@@ -45,6 +45,28 @@ void read_main(struct display_packet *packet, struct radio_state *state)
         }
 }
 
+/// Gets the power levels of the radios,
+// todo Currently there is no way to know if med1 or med2 is set
+// todo seprate non fussy function will be required to togel 4 times (a circle) and then read the screen
+void read_power(struct display_packet *packet, struct radio_state *state)
+{
+        if (display_packet_read(packet, LEFT_POWER_LOW)) {
+                state->left.power_level = POWER_LOW;
+        } else if (display_packet_read(packet, LEFT_POWER_MEDIUM)) {
+                state->left.power_level = POWER_MEDIUM;
+        } else {
+                state->left.power_level = POWER_HIGH;
+        }
+
+        if (display_packet_read(packet, RIGHT_POWER_LOW)) {
+                state->right.power_level = POWER_LOW;
+        } else if (display_packet_read(packet, RIGHT_POWER_MEDIUM)) {
+                state->right.power_level = POWER_MEDIUM;
+        } else {
+                state->right.power_level = POWER_HIGH;
+        }
+}
+
 //todo this
 //truth table for a 14 segment display
 /*      A       B       C       D       E       F       G       H       I       J       K       L       M       hex

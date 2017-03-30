@@ -35,7 +35,7 @@
 #define LEFT_SKIP BIT_LOCATED_AT(37, 2)
 #define LEFT_PMS BIT_LOCATED_AT(37, 1)
 
-#define LEFT_POWER_LOW    BIT_LOCATED_AT(1, 6)
+#define LEFT_POWER_LOW    BIT_LOCATED_AT(1, 5)
 #define LEFT_POWER_MEDIUM BIT_LOCATED_AT(0, 2)
 //#define LEFT_POWER_HIGH todo where is this?
 
@@ -52,8 +52,8 @@
 #define RIGHT_SKIP BIT_LOCATED_AT(33, 0)
 #define RIGHT_PMS BIT_LOCATED_AT(32, 6)
 
-#define RIGHT_POWER_LOW    BIT_LOCATED_AT(17, 6)
-#define RIGHT_POWER_MEDIUM BIT_LOCATED_AT(16, 3)
+#define RIGHT_POWER_LOW    BIT_LOCATED_AT(17, 5)
+#define RIGHT_POWER_MEDIUM BIT_LOCATED_AT(16, 2)
 //#define RIGHT_POWER_HIGH  todo where is this?
 
 
@@ -62,10 +62,11 @@ struct display_packet {
 };
 
 enum power_level {
-        low = 1,
-        medium = 2,
-        medium2 = 3,
-        high = 4
+        POWER_UNKNOWEN = 0,
+        POWER_LOW = 1,
+        POWER_MEDIUM = 2,
+        POWER_MEDIUM_HIGH = 3,
+        POWER_HIGH = 4
 };
 
 struct radio_state_sides {
@@ -84,6 +85,7 @@ struct radio_state {
 void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index);
 void read_busy(struct display_packet *packet, struct radio_state *state);
 void read_main(struct display_packet *packet, struct radio_state *state);
+void read_power(struct display_packet *packet, struct radio_state *state);
 
 int decode_14_segment(int segment_bitmask);
 int display_packet_read(struct display_packet *packet, int bit_number);
