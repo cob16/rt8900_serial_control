@@ -37,7 +37,6 @@
 
 #define LEFT_POWER_LOW    BIT_LOCATED_AT(1, 5)
 #define LEFT_POWER_MEDIUM BIT_LOCATED_AT(0, 2)
-//#define LEFT_POWER_HIGH todo where is this?
 
 //right side
 #define RIGHT_BUISY BIT_LOCATED_AT(28,2)
@@ -54,7 +53,6 @@
 
 #define RIGHT_POWER_LOW    BIT_LOCATED_AT(17, 5)
 #define RIGHT_POWER_MEDIUM BIT_LOCATED_AT(16, 2)
-//#define RIGHT_POWER_HIGH  todo where is this?
 
 
 struct display_packet {
