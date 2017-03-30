@@ -12,6 +12,8 @@ static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Trans
 static char rt8900_args_doc[] = "<serial port path>";
 
 static struct argp_option rt8900options[] = {
+        {"rts-on", 'r', 0, OPTION_ARG_OPTIONAL,
+                "Use the RTS pin of the serial connection as a power button for the rig. (REQUIRES compatible hardware)"},
         {"verbose", 'v', "LEVEL", OPTION_ARG_OPTIONAL,
                 "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'."},
         {"hard-emulation", 991, 0, OPTION_ARG_OPTIONAL,
@@ -33,7 +35,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
                 break;
         case 'v':
                 set_log_level( (enum rt8900_logging_level) atoi(arg));
-                printf("opt was %d", rt8900_verbose_level);
+                break;
+        case 'r':
+                cfg->receive.rts_pin_as_on = true;
                 break;
         case ARGP_KEY_ARG:
                 if (state->arg_num >= 1)
@@ -191,6 +195,9 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                                        set_main_radio(config, base_packet, RADIO_RIGHT);
                                 }
                                 printf("%s Setting Main radio to -> right %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                        }  else if (strcmp(cmd[1], "P") == 0){
+                                printf("%s Pressing power button %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                                set_power_button(config);
                         } else {
                                 print_invalid_command();
                         }
@@ -245,7 +252,8 @@ int main(int argc, char **argv)
 {
         //Create our config
         SERIAL_CFG c = {
-                .send.lazy_sending = true
+                .send.lazy_sending = true,
+                .receive.rts_pin_as_on = false,
         };
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
@@ -270,21 +278,36 @@ int main(int argc, char **argv)
 
         pthread_create(&packet_receive_thread, NULL, receive_display_packets, &c);
 
-        while(check_radio_rx(&c) == 0) {};
-        log_msg(RT8900_INFO, "READY!\n");
+        //if the radio is not already on try to turn it on
+        if (check_radio_rx(&c) == 0) {
+
+                if (c.receive.rts_pin_as_on == true) {
+                        int give_up = 0;
+                        while (set_power_button(&c) != 0 && c.send.keep_alive) {
+                                give_up++;
+                                log_msg(RT8900_ERROR, "FAILED TO TURN ON THE RADIO AFTER %d trys\n", give_up);
+                                if (give_up >= TURN_ON_RADIO_TRYS) {
+                                        break;
+                                }
+                                sleep(1);
+                        }
+                } else {
+                        log_msg(RT8900_INFO, "Waiting for radio to be turned on (no time out)\n");
+                        while (check_radio_rx(&c) == 0 && c.send.keep_alive) {};
+                }
+        }
+
+        if (check_radio_rx(&c) == 1) {
+                log_msg(RT8900_INFO, "SUCCESS!\n");
+                user_prompt(&c, start_packet);
+        }
 
 
-        //read out the current state of the hardware
+        //get current state of radio
         //struct display_packet *current_state = malloc(sizeof(struct display_packet));
         //get_display_packet(&c, current_state);
-
         //todo check if any existing state needs to be transferred to our starting packet
 
-
-        //todo block until display packets are revived
-        //todo add a block until radio is able to revived commands (boot time)
-
-        user_prompt(&c, start_packet);
 
         graceful_shutdown(0);
         pthread_barrier_destroy(&wait_for_sender);

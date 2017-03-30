@@ -18,6 +18,7 @@ struct control_packet_sender_config {
 };
 
 struct display_packet_reciver_config {
+    bool rts_pin_as_on;
     bool keep_alive;
     bool radio_seen;
     pthread_mutex_t raw_packet_lock;
@@ -45,6 +46,7 @@ int check_radio_rx(SERIAL_CFG *config);
 //settters
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
 int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side);
+int set_power_button(SERIAL_CFG *cfg);
 
 //getters
 

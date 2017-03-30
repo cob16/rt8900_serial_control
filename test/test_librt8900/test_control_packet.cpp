@@ -69,7 +69,12 @@ TEST(TestKeypadButtons, test_set_button)
 
 TEST(TestKeypadButtons, test_button_from_int)
 {
-        //test invalid range
+        /* Lower the logging level so as to not show warnings.
+         * For this test a warning is the expected behaviour,
+         * However we test differently and do not what in the stdout */
+        set_log_level(RT8900_ERROR);
+
+        // test invalid range
         const struct button_transmit_value *no_press = button_from_int(-1);
         EXPECT_EQ(no_press->column, KEYPAD_BUTTON_NONE.column);
         EXPECT_EQ(no_press->row, KEYPAD_BUTTON_NONE.row);
@@ -78,10 +83,13 @@ TEST(TestKeypadButtons, test_button_from_int)
         EXPECT_EQ(no_press->column, KEYPAD_BUTTON_NONE.column);
         EXPECT_EQ(no_press->row, KEYPAD_BUTTON_NONE.row);
 
-        //check the expected output
+        // check the expected output
         const struct button_transmit_value *test_button_5 = button_from_int(5);
         EXPECT_EQ(test_button_5->row,    (signed char) 0X1A);
         EXPECT_EQ(test_button_5->column, (signed char) 0X32);
+
+        // set the log level back to the expected output
+        set_log_level(RT8900_WARNING);
 }
 
 TEST(TestAPISetters, test_safe_int_char)
@@ -95,6 +103,7 @@ TEST(TestAPISetters, test_safe_int_char)
         EXPECT_EQ(safe_int_char(2), (signed char) 2);
 }
 
+///Test volume
 TEST(TestAPISetters, test_set_L_R_volume)
 {
         maloc_control_packet(packet)
@@ -121,6 +130,7 @@ TEST(TestAPISetters, test_set_L_R_volume)
         ASSERT_EQ(set_volume_left(NULL, 666), 1);
 }
 
+///Test squelch
 TEST(TestAPISetters, test_set_L_R_squelch)
 {
         maloc_control_packet(packet)
