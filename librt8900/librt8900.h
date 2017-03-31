@@ -36,8 +36,6 @@ typedef struct {
 
 } SERIAL_CFG;
 
-//todo all 'public' functions should be defined here and return int (or perhaps enum)
-
 //internal functions
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
 void* send_control_packets(void *c);

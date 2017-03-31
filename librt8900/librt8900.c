@@ -261,6 +261,8 @@ void wait_to_send(const SERIAL_CFG *cfg)
 ///Adds the required packets to dial a number. they are then be added to the queue
 int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
 {
+        //todo when diget reading is completed this will need to be updated to allow selection of med1 and med1 levels
+
         if (!VALID_POWER_LEVEL(power_level)) {
                 return 1;
         }
@@ -287,9 +289,10 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
         return 0;
 }
 
-
+///press the 'low' button untill the desired power level is set
 int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
 {
+        //todo when diget reading is completed this will need to be updated to allow selection of med1 and med1 levels
 
         if (!VALID_POWER_LEVEL(power_level)) {
                 return 1;
@@ -309,7 +312,11 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
                 wait_to_send(cfg);
 
-                sleep(1); //the radio is very inconstant on change time this is here for some safety
+                /* We do not up now what the packet latency is between sending a cmd and getting a updated screen
+                 * so we will wait a second to garentee the program can se the update */
+                // todo find a way to work around this
+                sleep(1);
+
                 get_display_packet(cfg, &packet);
                 read_power_fuzzy(&packet, &state);
         }

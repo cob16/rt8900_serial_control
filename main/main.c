@@ -322,7 +322,6 @@ int main(int argc, char **argv)
         //get current state of radio
         //struct display_packet *current_state = malloc(sizeof(struct display_packet));
         //get_display_packet(&c, current_state);
-        //todo check if any existing state needs to be transferred to our starting packet
 
 
         graceful_shutdown(0);
