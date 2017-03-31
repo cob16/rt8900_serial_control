@@ -5,6 +5,8 @@
 #ifndef RT8900_SERIAL_CONTROL_API_H
 #define RT8900_SERIAL_CONTROL_API_H
 
+#define VALID_POWER_LEVEL(num) ((num) == POWER_LOW || (num) == POWER_MEDIUM_FUZZY || (num) == POWER_HIGH)
+
 #include "log.h"
 #include "serial.h"
 #include "control_packet.h"
@@ -46,6 +48,8 @@ int check_radio_rx(SERIAL_CFG *config);
 //settters
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number);
 int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side);
+int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level);
+int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level);
 int set_power_button(SERIAL_CFG *cfg);
 
 //getters

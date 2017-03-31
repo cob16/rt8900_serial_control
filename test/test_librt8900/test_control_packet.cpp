@@ -106,7 +106,7 @@ TEST(TestAPISetters, test_safe_int_char)
 ///Test volume
 TEST(TestAPISetters, test_set_L_R_volume)
 {
-        maloc_control_packet(packet)
+        maloc_control_packet(packet);
         memcpy(packet, &control_packet_defaults ,sizeof(*packet));
 
         //set to 50
@@ -133,7 +133,7 @@ TEST(TestAPISetters, test_set_L_R_volume)
 ///Test squelch
 TEST(TestAPISetters, test_set_L_R_squelch)
 {
-        maloc_control_packet(packet)
+        maloc_control_packet(packet);
         memcpy(packet, &control_packet_defaults ,sizeof(*packet));
 
         //set to 50

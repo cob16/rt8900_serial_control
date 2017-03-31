@@ -17,7 +17,7 @@
 
 #define DEFAULT_VOLUME 0x1f //25% volume
 
-#define maloc_control_packet(pointer_name) struct control_packet *(pointer_name) = (struct control_packet*) malloc(sizeof(*(pointer_name)));
+#define maloc_control_packet(pointer_name) struct control_packet *(pointer_name) = (struct control_packet*) malloc(sizeof(*(pointer_name)))
 
 enum main_menu_buttons {
     NOT_PRESSED      = 0,
@@ -32,18 +32,20 @@ enum radios {
     RADIO_RIGHT,
 };
 
-enum left_menu_buttons {
-    LEFT_LOW = 0x00,
-    LEFT_VM  = 0x20,
-    LEFT_HM  = 0x40,
-    LEFT_SCN = 0x60
+enum right_menu_buttons {
+    RIGHT_NONE = DATA_MAX_NUM,
+    RIGHT_LOW = 0x00,
+    RIGHT_VM  = 0x20,
+    RIGHT_HM  = 0x40,
+    RIGHT_SCN = 0x60
 };
 
-enum right_menu_buttons { //the right buttons are mirrored in value from the left
-    RIGHT_LOW = LEFT_SCN,
-    RIGHT_VM  = LEFT_HM,
-    RIGHT_HM  = LEFT_VM,
-    RIGHT_SCN = LEFT_LOW
+enum left_menu_buttons { //the right buttons are mirrored in value from the left
+    LEFT_NONE = DATA_MAX_NUM,
+    LEFT_LOW = RIGHT_SCN,
+    LEFT_VM  = RIGHT_HM,
+    LEFT_HM  = RIGHT_VM,
+    LEFT_SCN = RIGHT_LOW
 };
 
 //To make a new control_packet please use "control_packet mypacket = control_packet_defaults"
@@ -58,8 +60,8 @@ struct control_packet{
     PACKET_BYTE volume_control_left;
     PACKET_BYTE squelch_left;
     PACKET_BYTE keypad_input_column;
-    PACKET_BYTE right_buttons; // (via voltage divider)
-    PACKET_BYTE left_buttons;  // (via voltage divider)
+    PACKET_BYTE left_buttons; // (via voltage divider)
+    PACKET_BYTE right_buttons;  // (via voltage divider)
     PACKET_BYTE main_buttons;        // L/R encoder, set, and wires buttons
     PACKET_BYTE hyper_mem_buttons;   //hyper memory buttons
 };
@@ -153,6 +155,9 @@ typedef union {
 
 void set_keypad_button(struct control_packet *packet, const struct button_transmit_value *button);
 void set_main_button(struct control_packet *packet, const enum main_menu_buttons button);
+void set_left_button(struct control_packet *packet, const enum left_menu_buttons button);
+void set_right_button(struct control_packet *packet, const enum right_menu_buttons button);
+
 const struct button_transmit_value * button_from_int(int i);
 signed char safe_int_char(int number);
 int set_volume_left(struct control_packet *packet, int number);

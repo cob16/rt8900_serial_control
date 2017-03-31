@@ -59,7 +59,7 @@ struct display_packet {
         PACKET_BYTE arr[42];
 };
 
-enum power_level {
+enum rt8900_power_level {
         POWER_UNKNOWEN = 0,
         POWER_LOW,
         POWER_MEDIUM_FUZZY,
@@ -71,7 +71,7 @@ enum power_level {
 struct radio_state_sides {
         int busy;
         int frequency;
-        enum power_level power_level;
+        enum rt8900_power_level power_level;
 };
 
 

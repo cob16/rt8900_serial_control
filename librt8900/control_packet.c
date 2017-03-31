@@ -65,6 +65,17 @@ void set_main_button(struct control_packet *packet, const enum main_menu_buttons
         packet->main_buttons.section.data = (unsigned char) button;
 }
 
+void set_left_button(struct control_packet *packet, const enum left_menu_buttons button)
+{
+        packet->left_buttons.section.data = (unsigned char) button;
+}
+
+void set_right_button(struct control_packet *packet, const enum right_menu_buttons button)
+{
+        packet->right_buttons.section.data = (unsigned char) button;
+}
+
+
 const struct button_transmit_value * button_from_int(int i)
 {
         if (-1 < i && i < 10) {

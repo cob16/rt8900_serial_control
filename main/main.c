@@ -201,9 +201,6 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                                        set_main_radio(config, base_packet, RADIO_RIGHT);
                                 }
                                 printf("%s Setting Main radio to -> right %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
-                        }  else if (strcmp(cmd[1], "P") == 0){
-                                printf("%s Pressing power button %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
-                                set_power_button(config);
                         } else {
                                 print_invalid_command();
                         }
@@ -223,6 +220,19 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                 } else if (strcmp(cmd[0], "S") == 0){
                         printf("%s Setting squelsh -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
                         set_squelch(base_packet, left_op, right_op);
+                } else if (strcmp(cmd[0], "P") == 0){
+
+                        if (set_left_power_level(config, base_packet, (enum rt8900_power_level) left_op)) {
+                                printf("%s INVALID LEFT POWER LEVEL %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
+                        } else {
+                                printf("%s Set left power level %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                        }
+                        if (set_right_power_level(config, base_packet, (enum rt8900_power_level) right_op)) {
+                                printf("%s INVALID RIGHT POWER LEVEL %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
+                        } else {
+                                printf("%s Set right power level %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                        }
+
                 } else {
                         print_invalid_command();
                 }
@@ -278,7 +288,7 @@ int main(int argc, char **argv)
         pthread_barrier_wait(&wait_for_sender); //wait send thread to be ready
 
         //Setup our initial packet that will be sent
-        maloc_control_packet(start_packet)
+        maloc_control_packet(start_packet);
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
         send_new_packet(&c, start_packet, PACKET_ONLY_SEND);
 

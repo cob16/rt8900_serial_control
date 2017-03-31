@@ -3,6 +3,7 @@
 //
 
 #include "librt8900.h"
+#include "serial.h"
 
 #include <unistd.h>
 #include <pthread.h>
@@ -194,17 +195,10 @@ int check_radio_rx(SERIAL_CFG *config)
         return config->receive.radio_seen;
 }
 
-int get_state(SERIAL_CFG *config, struct radio_state *state) {
-        struct display_packet packet;
-        get_display_packet(config, &packet);
-        read_state_from_packet(&packet, state);
-        return 1;
-}
-
 /// stwitches context to the desired radio,
 /// you must first check you are not already on this mode else you will enter frequency edit mode!
 int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side) {
-        maloc_control_packet(switch_main)
+        maloc_control_packet(switch_main);
         memcpy(switch_main, base_packet, sizeof(*switch_main));
 
         switch (side){
@@ -244,12 +238,82 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         //add packets that 'press' the seletced buttons
         int i;
         for (i=0; i<num_digets; i++){
-                maloc_control_packet(dialnum)
+                maloc_control_packet(dialnum);
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_keypad_button(dialnum, button_from_int(digits[i] - '0'));
                 send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
         }
+        return 0;
+}
+
+
+void wait_to_send(const SERIAL_CFG *cfg)
+{
+        if (cfg->send.keep_alive == true && !TAILQ_EMPTY(cfg->send.queue)) {
+                while (cfg->send.queue->tqh_first->nodes.tqe_next != NULL) {
+                        usleep(MILLISECONDS_DEBOUNCE_WAIT * 1000);
+                };
+                usleep(MILLISECONDS_DEBOUNCE_WAIT * 1000);
+        }
+}
+
+///Adds the required packets to dial a number. they are then be added to the queue
+int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
+{
+        if (!VALID_POWER_LEVEL(power_level)) {
+                return 1;
+        }
+
+        struct display_packet packet;
+        get_display_packet(cfg, &packet);
+        struct radio_state state;
+        read_power_fuzzy(&packet, &state);
+
+        while(state.left.power_level != power_level && cfg->send.keep_alive == true) {
+                maloc_control_packet(power_press);
+                memcpy(power_press, base_packet, sizeof(*base_packet));
+                set_left_button(power_press, LEFT_LOW);
+
+                send_new_packet(cfg, power_press, PACKET_FREE_AFTER_SEND);
+                send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+                wait_to_send(cfg);
+
+                sleep(1); //the radio is very inconsitant on change time this is here for some safty
+                get_display_packet(cfg, &packet);
+                read_power_fuzzy(&packet, &state);
+        }
+
+        return 0;
+}
+
+
+int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
+{
+
+        if (!VALID_POWER_LEVEL(power_level)) {
+                return 1;
+        }
+
+        struct display_packet packet;
+        get_display_packet(cfg, &packet);
+        struct radio_state state;
+        read_power_fuzzy(&packet, &state);
+
+        while(state.right.power_level != power_level && cfg->send.keep_alive == true) {
+                maloc_control_packet(power_press);
+                memcpy(power_press, base_packet, sizeof(*base_packet));
+                set_right_button(power_press, RIGHT_LOW);
+
+                send_new_packet(cfg, power_press, PACKET_FREE_AFTER_SEND);
+                send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+                wait_to_send(cfg);
+
+                sleep(1); //the radio is very inconstant on change time this is here for some safety
+                get_display_packet(cfg, &packet);
+                read_power_fuzzy(&packet, &state);
+        }
+
         return 0;
 }
 
