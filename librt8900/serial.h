@@ -28,6 +28,6 @@ struct control_packet_q_node{
 ///create our packet queue struct
 typedef TAILQ_HEAD(CONTROL_PACKET_Q_HEAD, control_packet_q_node) CONTROL_PACKET_Q_HEAD;
 
-void open_serial(int *fd, char * *serial_path);
+void open_serial(int *fd, char **serial_path, bool *dtr_pin_for_on);
 
 #endif //RT8900_SERIAL_CONTROLL_SERIAL_H

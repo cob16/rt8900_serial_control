@@ -29,7 +29,7 @@ void* send_control_packets(void *c)
 {
         log_msg(RT8900_TRACE, "-- STARTING CONTROL PACKET THREAD\n");
         SERIAL_CFG *conf = (SERIAL_CFG*) c;
-        open_serial(&(conf->serial_fd), &(conf->serial_path)); //setup our serial connection
+        open_serial(&(conf->serial_fd), &(conf->serial_path), &(conf->send.dtr_pin_for_on)); //setup our serial connection
 
         //setup queue
         CONTROL_PACKET_Q_HEAD head;
@@ -132,7 +132,8 @@ void* receive_display_packets(void *c)
 
         //open serial if not already open
         if (config->serial_fd  < 1) {
-                open_serial(&(config->serial_fd), &(config->serial_path)); //setup our serial connection if not already done
+                //setup our serial connection if not already done
+                open_serial(&(config->serial_fd), &(config->serial_path), &(config->send.dtr_pin_for_on));
         }
 
         tcflush(config->serial_fd, TCIFLUSH); //flush any existing buffer
@@ -327,7 +328,7 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
 ///sets the dtr pin low for one second to trigger radio on
 int set_power_button(SERIAL_CFG *cfg)
 {
-        if (cfg->receive.rts_pin_as_on == false) {
+        if (cfg->send.dtr_pin_for_on == false) {
                 log_msg(RT8900_ERROR, "Power on flag not provided, please see help output to enable");
                 return 1;
         }

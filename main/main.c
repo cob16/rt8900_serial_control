@@ -12,8 +12,8 @@ static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Trans
 static char rt8900_args_doc[] = "<serial port path>";
 
 static struct argp_option rt8900options[] = {
-        {"rts-on", 'r', 0, OPTION_ARG_OPTIONAL,
-                "Use the RTS pin of the serial connection as a power button for the rig. (REQUIRES compatible hardware)"},
+        {"dtr-on", 'd', 0, OPTION_ARG_OPTIONAL,
+                "Use the DTR pin of the serial connection as a power button for the rig. (REQUIRES compatible hardware)"},
         {"verbose", 'v', "LEVEL", OPTION_ARG_OPTIONAL,
                 "Produce verbose output add a number to select level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR, 5=DEBUG) output default is 'warning'."},
         {"hard-emulation", 991, 0, OPTION_ARG_OPTIONAL,
@@ -36,8 +36,8 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         case 'v':
                 set_log_level( (enum rt8900_logging_level) atoi(arg));
                 break;
-        case 'r':
-                cfg->receive.rts_pin_as_on = true;
+        case 'd':
+                cfg->send.dtr_pin_for_on = true;
                 break;
         case ARGP_KEY_ARG:
                 if (state->arg_num >= 1)
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
         //Create our config
         SERIAL_CFG c = {
                 .send.lazy_sending = true,
-                .receive.rts_pin_as_on = false,
+                .send.dtr_pin_for_on = false,
         };
         argp_parse (&argp, argc, argv, 0, 0, &c); //insert user options to config
 
@@ -297,7 +297,7 @@ int main(int argc, char **argv)
         //if the radio is not already on try to turn it on
         if (check_radio_rx(&c) == 0) {
 
-                if (c.receive.rts_pin_as_on == true) {
+                if (c.send.dtr_pin_for_on == true) {
                         int give_up = 0;
                         while (set_power_button(&c) != 0 && c.send.keep_alive) {
                                 give_up++;

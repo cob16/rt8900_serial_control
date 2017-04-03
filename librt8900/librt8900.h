@@ -14,13 +14,13 @@
 
 struct control_packet_sender_config {
     bool lazy_sending;
+    bool dtr_pin_for_on;
     pthread_barrier_t* initialised;
     struct CONTROL_PACKET_Q_HEAD *queue;
     bool keep_alive;
 };
 
 struct display_packet_reciver_config {
-    bool rts_pin_as_on;
     bool keep_alive;
     bool radio_seen;
     pthread_mutex_t raw_packet_lock;
