@@ -88,7 +88,7 @@ void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
 #define THIRTEEN_SEG_3 0b1110110010000
 #define THIRTEEN_SEG_4 0b1110010000001
 
-///Takes an char of bits (ordered as described bellow) ofa decodes and returns the number
+///Takes an char of bits (ordered as described above) tryes to decode as as a number
 int decode_13_segment(int segment_bitmask)
 {
         switch (segment_bitmask) {
@@ -148,7 +148,12 @@ void read_frequency(struct display_packet *packet, struct radio_state *state)
                 printf("%d " , first_diget[i]);
                 bit_field = (bit_field << 1) | first_diget[i];
         }
-        printf(" -> %d\n", decode_13_segment(bit_field));
+        int diget_1 = decode_13_segment(bit_field);
+        printf(" -> %d\n", diget_1);
+        if (diget_1 == -1) {
+                log_msg(RT8900_ERROR, "UNKNOWN NUMBER\n");
+        }
+
 
         state->left.frequency = decode_13_segment(bit_field) * 100000;
 
@@ -175,7 +180,11 @@ void read_frequency(struct display_packet *packet, struct radio_state *state)
                 printf("%d " , second_diget[i]);
                 bit_field = (bit_field << 1) | second_diget[i];
         }
-        printf(" -> %d\n", decode_13_segment(bit_field));
+        int diget_2 = decode_13_segment(bit_field);
+        printf(" -> %d\n", diget_2);
+        if (diget_2 == -1) {
+                log_msg(RT8900_ERROR, "UNKNOWN NUMBER\n");
+        }
 
         state->left.frequency = state->left.frequency + (decode_13_segment(bit_field) * 10000);
 
