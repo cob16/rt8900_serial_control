@@ -120,7 +120,7 @@ void read_main(struct display_packet *packet, struct radio_state *state);
 void read_power_fuzzy(struct display_packet *packet, struct radio_state *state);
 void read_frequency(struct display_packet *packet, struct radio_state *state);
 
-int decode_14_segment(int segment_bitmask);
+int decode_13_segment(int segment_bitmask);
 int is_main(struct radio_state *radio, struct radio_state_sides *side);
 void read_state_from_packet(struct display_packet *packet, struct radio_state *state);
 

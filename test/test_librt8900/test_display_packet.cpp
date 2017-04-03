@@ -80,8 +80,8 @@ TEST_F(TestDisplayPacketReaders, test_packet_read)
 
 TEST_F(TestDisplayPacketReaders, test_read_14_seg)
 {
-        EXPECT_EQ(decode_14_segment(0x1F97), 0);
-        EXPECT_EQ(decode_14_segment(0x1400), 1);
+        EXPECT_EQ(decode_13_segment(0x1F97), 0);
+        EXPECT_EQ(decode_13_segment(0x1400), 1);
 
 
 }

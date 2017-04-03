@@ -68,7 +68,7 @@ void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
 }
 
 //todo this
-//truth table for a 14 segment display
+//truth table for a 13 segment display
 /*      A       B       C       D       E       F       G       H       I       J       K       L       M       hex
  * 0    1	1	1	1	1	1	0	0	1	0	1	1	1       1F97
  * 1    1	0	1	0	0	0	0	0	0	0	0	0	0       1400
@@ -82,26 +82,26 @@ void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
  * 9
  * macros from truth table */
 //todo convert to hex else we are stuck to gcc
-#define FOURTEEN_SEG_0 0b1111110010111
-#define FOURTEEN_SEG_1 0b1010000000000
-#define FOURTEEN_SEG_2 0b0110110010010
-#define FOURTEEN_SEG_3 0b1110110010000
-#define FOURTEEN_SEG_4 0b1110010000001
+#define THIRTEEN_SEG_0 0b1111110010111
+#define THIRTEEN_SEG_1 0b1010000000000
+#define THIRTEEN_SEG_2 0b0110110010010
+#define THIRTEEN_SEG_3 0b1110110010000
+#define THIRTEEN_SEG_4 0b1110010000001
 
 ///Takes an char of bits (ordered as described bellow) ofa decodes and returns the number
-int decode_14_segment(int segment_bitmask)
+int decode_13_segment(int segment_bitmask)
 {
         switch (segment_bitmask) {
         case 0: //left digets that are 0 are not showen
-        case FOURTEEN_SEG_0:
+        case THIRTEEN_SEG_0:
                 return 0;
-        case FOURTEEN_SEG_1:
+        case THIRTEEN_SEG_1:
                 return 1;
-        case FOURTEEN_SEG_2:
+        case THIRTEEN_SEG_2:
                 return 2;
-        case FOURTEEN_SEG_3:
+        case THIRTEEN_SEG_3:
                 return 3;
-        case FOURTEEN_SEG_4:
+        case THIRTEEN_SEG_4:
                 return 4;
         default:
                 return -1;
@@ -148,9 +148,9 @@ void read_frequency(struct display_packet *packet, struct radio_state *state)
                 printf("%d " , first_diget[i]);
                 bit_field = (bit_field << 1) | first_diget[i];
         }
-        printf(" -> %d\n", decode_14_segment(bit_field));
+        printf(" -> %d\n", decode_13_segment(bit_field));
 
-        state->left.frequency = decode_14_segment(bit_field) * 100000;
+        state->left.frequency = decode_13_segment(bit_field) * 100000;
 
         int second_diget[13] = {
                 display_packet_read(packet, LEFT_FREQ_2_A),
@@ -175,9 +175,9 @@ void read_frequency(struct display_packet *packet, struct radio_state *state)
                 printf("%d " , second_diget[i]);
                 bit_field = (bit_field << 1) | second_diget[i];
         }
-        printf(" -> %d\n", decode_14_segment(bit_field));
+        printf(" -> %d\n", decode_13_segment(bit_field));
 
-        state->left.frequency = state->left.frequency + (decode_14_segment(bit_field) * 10000);
+        state->left.frequency = state->left.frequency + (decode_13_segment(bit_field) * 10000);
 
         state->right.frequency = 000000;
 }
