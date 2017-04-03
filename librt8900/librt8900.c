@@ -236,8 +236,17 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         char digits[num_digets];
         snprintf(digits, num_digets + 1, "%d", number);
 
-        //add packets that 'press' the seletced buttons
+        //We assume smaller numbers are missing front 0's so we dial them here
         int i;
+        for (i=0; i<(6 - num_digets); i++) {
+                maloc_control_packet(dialnum);
+                memcpy(dialnum, base_packet, sizeof(*base_packet));
+                set_keypad_button(dialnum, button_from_int(0));
+                send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
+                send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+        }
+
+        //dial the seletced buttons
         for (i=0; i<num_digets; i++){
                 maloc_control_packet(dialnum);
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
