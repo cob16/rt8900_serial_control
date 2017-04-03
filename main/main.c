@@ -172,7 +172,13 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                         char* rmain = (is_main(current_state, &(current_state->right)) ? " - Main" : "");
 
                         printf("Left  radio -> %s%s\nRight radio -> %s%s\n", lbusy, lmain, rbusy, rmain);
-                } else if (strcmp(cmd[0], "p") == 0) {
+                } else if (strcmp(cmd[0], "f") == 0){
+                        read_frequency(&packet, current_state);
+
+                        printf("Left  Frequency -> %d\n", current_state->left.frequency);
+                        printf("Right Frequency -> %d\n", current_state->right.frequency);
+
+                }else if (strcmp(cmd[0], "p") == 0) {
                         read_power_fuzzy(&packet, current_state);
 
                         printf("Left  power -> %d\n", current_state->left.power_level);

@@ -73,8 +73,8 @@ void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
  * 0    1	1	1	1	1	1	0	0	1	0	1	1	1       1F97
  * 1    1	0	1	0	0	0	0	0	0	0	0	0	0       1400
  * 2    0	1	1	0	1	1	0	0	1	0	0	1	0       D92
- * 3
- * 4
+ * 3    1       1       1       0       1       1       0       0       1       0       0       0       0
+ * 4    1       1       1       0       0       1       0       0       0       0       0       0       1
  * 5
  * 6
  * 7
@@ -84,26 +84,36 @@ void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
 //todo convert to hex else we are stuck to gcc
 #define FOURTEEN_SEG_0 0b1111110010111
 #define FOURTEEN_SEG_1 0b1010000000000
+#define FOURTEEN_SEG_2 0b0110110010010
+#define FOURTEEN_SEG_3 0b1110110010000
+#define FOURTEEN_SEG_4 0b1110010000001
 
 ///Takes an char of bits (ordered as described bellow) ofa decodes and returns the number
 int decode_14_segment(int segment_bitmask)
 {
         switch (segment_bitmask) {
+        case 0: //left digets that are 0 are not showen
         case FOURTEEN_SEG_0:
                 return 0;
         case FOURTEEN_SEG_1:
                 return 1;
+        case FOURTEEN_SEG_2:
+                return 2;
+        case FOURTEEN_SEG_3:
+                return 3;
+        case FOURTEEN_SEG_4:
+                return 4;
         default:
                 return -1;
         }
 }
 
-void contanate_bit(int *result, char bit)
+void create_bit_field(int *result, char bit)
 {
         *result = (*result << 1) | bit;
 }
 
-int display_packet_read(struct display_packet *packet, int bit_number)
+int display_packet_read(struct display_packet *packet, const enum display_packet_bitmasks bit_number)
 {
         int bit = bit_number % 8;
         int byte = bit_number / 8;
@@ -111,16 +121,65 @@ int display_packet_read(struct display_packet *packet, int bit_number)
         return (packet->arr[byte].raw >> bit) & 0x80 != 0;
 };
 
-void read_left_frequency(struct display_packet *packet, struct radio_state *state)
+void read_frequency(struct display_packet *packet, struct radio_state *state)
 {
-        if (1 & (packet->arr[36].raw >> 2)) {
-                state->main = &state->left;
-        } else if (1 & packet->arr[32].raw) {
-                state->main = &(state->right);
-        } else {
-                log_msg(RT8900_ERROR, "Could not get selected radio 'main' from PACKET\n");
-                state->main = NULL;
+
+        state->left.frequency = 0;
+
+        int first_diget[13] = {
+                display_packet_read(packet, LEFT_FREQ_1_A),
+                display_packet_read(packet, LEFT_FREQ_1_B),
+                display_packet_read(packet, LEFT_FREQ_1_C),
+                display_packet_read(packet, LEFT_FREQ_1_D),
+                display_packet_read(packet, LEFT_FREQ_1_E),
+                display_packet_read(packet, LEFT_FREQ_1_F),
+                display_packet_read(packet, LEFT_FREQ_1_G),
+                display_packet_read(packet, LEFT_FREQ_1_H),
+                display_packet_read(packet, LEFT_FREQ_1_I),
+                display_packet_read(packet, LEFT_FREQ_1_J),
+                display_packet_read(packet, LEFT_FREQ_1_K),
+                display_packet_read(packet, LEFT_FREQ_1_L),
+                display_packet_read(packet, LEFT_FREQ_1_M)
+        };
+
+        int bit_field = 0;
+        int i;
+        for (i=0; i<13; i++) {
+                printf("%d " , first_diget[i]);
+                bit_field = (bit_field << 1) | first_diget[i];
         }
+        printf(" -> %d\n", decode_14_segment(bit_field));
+
+        state->left.frequency = decode_14_segment(bit_field) * 100000;
+
+        int second_diget[13] = {
+                display_packet_read(packet, LEFT_FREQ_2_A),
+                display_packet_read(packet, LEFT_FREQ_2_B),
+                display_packet_read(packet, LEFT_FREQ_2_C),
+                display_packet_read(packet, LEFT_FREQ_2_D),
+                display_packet_read(packet, LEFT_FREQ_2_E),
+                display_packet_read(packet, LEFT_FREQ_2_F),
+                display_packet_read(packet, LEFT_FREQ_2_G),
+                display_packet_read(packet, LEFT_FREQ_2_H),
+                display_packet_read(packet, LEFT_FREQ_2_I),
+                display_packet_read(packet, LEFT_FREQ_2_J),
+                display_packet_read(packet, LEFT_FREQ_2_K),
+                display_packet_read(packet, LEFT_FREQ_2_L),
+                display_packet_read(packet, LEFT_FREQ_2_M)
+        };
+
+
+        bit_field = 0;
+        i = 0;
+        for (i=0; i<13; i++) {
+                printf("%d " , second_diget[i]);
+                bit_field = (bit_field << 1) | second_diget[i];
+        }
+        printf(" -> %d\n", decode_14_segment(bit_field));
+
+        state->left.frequency = state->left.frequency + (decode_14_segment(bit_field) * 10000);
+
+        state->right.frequency = 000000;
 }
 
 int is_main(struct radio_state *radio, struct radio_state_sides *side)
