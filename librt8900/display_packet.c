@@ -164,124 +164,117 @@ int display_packet_read(struct display_packet *packet, const enum display_packet
         return (packet->arr[byte].raw >> bit) & 0x80 != 0;
 };
 
-void read_frequency(struct display_packet *packet, struct radio_state *state)
+
+int read_frequency(struct display_packet *packet, struct radio_state *state)
 {
+        //get and decode all the bits
+        int digits[6] = {
+                decode_13_segment(display_packet_read(packet, LEFT_FREQ_1_A),
+                                  display_packet_read(packet, LEFT_FREQ_1_B),
+                                  display_packet_read(packet, LEFT_FREQ_1_C),
+                                  display_packet_read(packet, LEFT_FREQ_1_D),
+                                  display_packet_read(packet, LEFT_FREQ_1_E),
+                                  display_packet_read(packet, LEFT_FREQ_1_F),
+                                  display_packet_read(packet, LEFT_FREQ_1_G),
+                                  display_packet_read(packet, LEFT_FREQ_1_H),
+                                  display_packet_read(packet, LEFT_FREQ_1_I),
+                                  display_packet_read(packet, LEFT_FREQ_1_J),
+                                  display_packet_read(packet, LEFT_FREQ_1_K),
+                                  display_packet_read(packet, LEFT_FREQ_1_L),
+                                  display_packet_read(packet, LEFT_FREQ_1_M)
+                ),
+                decode_13_segment(display_packet_read(packet, LEFT_FREQ_2_A),
+                                  display_packet_read(packet, LEFT_FREQ_2_B),
+                                  display_packet_read(packet, LEFT_FREQ_2_C),
+                                  display_packet_read(packet, LEFT_FREQ_2_D),
+                                  display_packet_read(packet, LEFT_FREQ_2_E),
+                                  display_packet_read(packet, LEFT_FREQ_2_F),
+                                  display_packet_read(packet, LEFT_FREQ_2_G),
+                                  display_packet_read(packet, LEFT_FREQ_2_H),
+                                  display_packet_read(packet, LEFT_FREQ_2_I),
+                                  display_packet_read(packet, LEFT_FREQ_2_J),
+                                  display_packet_read(packet, LEFT_FREQ_2_K),
+                                  display_packet_read(packet, LEFT_FREQ_2_L),
+                                  display_packet_read(packet, LEFT_FREQ_2_M)
+                ),
+                decode_13_segment(display_packet_read(packet, LEFT_FREQ_3_A),
+                                  display_packet_read(packet, LEFT_FREQ_3_B),
+                                  display_packet_read(packet, LEFT_FREQ_3_C),
+                                  display_packet_read(packet, LEFT_FREQ_3_D),
+                                  display_packet_read(packet, LEFT_FREQ_3_E),
+                                  display_packet_read(packet, LEFT_FREQ_3_F),
+                                  display_packet_read(packet, LEFT_FREQ_3_G),
+                                  display_packet_read(packet, LEFT_FREQ_3_H),
+                                  display_packet_read(packet, LEFT_FREQ_3_I),
+                                  display_packet_read(packet, LEFT_FREQ_3_J),
+                                  display_packet_read(packet, LEFT_FREQ_3_K),
+                                  display_packet_read(packet, LEFT_FREQ_3_L),
+                                  display_packet_read(packet, LEFT_FREQ_3_M)
+                ),
+                decode_13_segment(display_packet_read(packet, LEFT_FREQ_4_A),
+                                  display_packet_read(packet, LEFT_FREQ_4_B),
+                                  display_packet_read(packet, LEFT_FREQ_4_C),
+                                  display_packet_read(packet, LEFT_FREQ_4_D),
+                                  display_packet_read(packet, LEFT_FREQ_4_E),
+                                  display_packet_read(packet, LEFT_FREQ_4_F),
+                                  display_packet_read(packet, LEFT_FREQ_4_G),
+                                  display_packet_read(packet, LEFT_FREQ_4_H),
+                                  display_packet_read(packet, LEFT_FREQ_4_I),
+                                  display_packet_read(packet, LEFT_FREQ_4_J),
+                                  display_packet_read(packet, LEFT_FREQ_4_K),
+                                  display_packet_read(packet, LEFT_FREQ_4_L),
+                                  display_packet_read(packet, LEFT_FREQ_4_M)
+                ),
+                decode_13_segment(display_packet_read(packet, LEFT_FREQ_5_A),
+                                  display_packet_read(packet, LEFT_FREQ_5_B),
+                                  display_packet_read(packet, LEFT_FREQ_5_C),
+                                  display_packet_read(packet, LEFT_FREQ_5_D),
+                                  display_packet_read(packet, LEFT_FREQ_5_E),
+                                  display_packet_read(packet, LEFT_FREQ_5_F),
+                                  display_packet_read(packet, LEFT_FREQ_5_G),
+                                  display_packet_read(packet, LEFT_FREQ_5_H),
+                                  display_packet_read(packet, LEFT_FREQ_5_I),
+                                  display_packet_read(packet, LEFT_FREQ_5_J),
+                                  display_packet_read(packet, LEFT_FREQ_5_K),
+                                  display_packet_read(packet, LEFT_FREQ_5_L),
+                                  display_packet_read(packet, LEFT_FREQ_5_M)
+                ),
+                decode_13_segment(display_packet_read(packet, LEFT_FREQ_6_A),
+                                  display_packet_read(packet, LEFT_FREQ_6_B),
+                                  display_packet_read(packet, LEFT_FREQ_6_C),
+                                  display_packet_read(packet, LEFT_FREQ_6_D),
+                                  display_packet_read(packet, LEFT_FREQ_6_E),
+                                  display_packet_read(packet, LEFT_FREQ_6_F),
+                                  display_packet_read(packet, LEFT_FREQ_6_G),
+                                  display_packet_read(packet, LEFT_FREQ_6_H),
+                                  display_packet_read(packet, LEFT_FREQ_6_I),
+                                  display_packet_read(packet, LEFT_FREQ_6_J),
+                                  display_packet_read(packet, LEFT_FREQ_6_K),
+                                  display_packet_read(packet, LEFT_FREQ_6_L),
+                                  display_packet_read(packet, LEFT_FREQ_6_M)
+                )
+        };
 
-        state->left.frequency = 0;
-
-        int diget_1 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_1_A),
-                                        display_packet_read(packet, LEFT_FREQ_1_B),
-                                        display_packet_read(packet, LEFT_FREQ_1_C),
-                                        display_packet_read(packet, LEFT_FREQ_1_D),
-                                        display_packet_read(packet, LEFT_FREQ_1_E),
-                                        display_packet_read(packet, LEFT_FREQ_1_F),
-                                        display_packet_read(packet, LEFT_FREQ_1_G),
-                                        display_packet_read(packet, LEFT_FREQ_1_H),
-                                        display_packet_read(packet, LEFT_FREQ_1_I),
-                                        display_packet_read(packet, LEFT_FREQ_1_J),
-                                        display_packet_read(packet, LEFT_FREQ_1_K),
-                                        display_packet_read(packet, LEFT_FREQ_1_L),
-                                        display_packet_read(packet, LEFT_FREQ_1_M)
-        );
-        if (diget_1 != -1) {
-                state->left.frequency = diget_1 * 1000000;
+        //add the ints together in the correct postion in going up
+        int multiplier  = 10;
+        int total = 0;
+        for (int i = 5; i >= 0; i--) {
+                if (digits[i] == -1) {
+                        //abort if we never decoded the number
+                        return 1;
+                }
+                total += digits[i] * multiplier;
+                multiplier *= 10;
         }
 
-        int diget_2 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_2_A),
-                                        display_packet_read(packet, LEFT_FREQ_2_B),
-                                        display_packet_read(packet, LEFT_FREQ_2_C),
-                                        display_packet_read(packet, LEFT_FREQ_2_D),
-                                        display_packet_read(packet, LEFT_FREQ_2_E),
-                                        display_packet_read(packet, LEFT_FREQ_2_F),
-                                        display_packet_read(packet, LEFT_FREQ_2_G),
-                                        display_packet_read(packet, LEFT_FREQ_2_H),
-                                        display_packet_read(packet, LEFT_FREQ_2_I),
-                                        display_packet_read(packet, LEFT_FREQ_2_J),
-                                        display_packet_read(packet, LEFT_FREQ_2_K),
-                                        display_packet_read(packet, LEFT_FREQ_2_L),
-                                        display_packet_read(packet, LEFT_FREQ_2_M)
-        );
-        if (diget_2 != -1) {
-                state->left.frequency = state->left.frequency + (diget_2 * 100000);
-        }
-
-        int diget_3 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_3_A),
-                                        display_packet_read(packet, LEFT_FREQ_3_B),
-                                        display_packet_read(packet, LEFT_FREQ_3_C),
-                                        display_packet_read(packet, LEFT_FREQ_3_D),
-                                        display_packet_read(packet, LEFT_FREQ_3_E),
-                                        display_packet_read(packet, LEFT_FREQ_3_F),
-                                        display_packet_read(packet, LEFT_FREQ_3_G),
-                                        display_packet_read(packet, LEFT_FREQ_3_H),
-                                        display_packet_read(packet, LEFT_FREQ_3_I),
-                                        display_packet_read(packet, LEFT_FREQ_3_J),
-                                        display_packet_read(packet, LEFT_FREQ_3_K),
-                                        display_packet_read(packet, LEFT_FREQ_3_L),
-                                        display_packet_read(packet, LEFT_FREQ_3_M)
-        );
-        if (diget_3 != -1) {
-                state->left.frequency = state->left.frequency + (diget_3 * 10000);
-        }
-
-        int diget_4 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_4_A),
-                                        display_packet_read(packet, LEFT_FREQ_4_B),
-                                        display_packet_read(packet, LEFT_FREQ_4_C),
-                                        display_packet_read(packet, LEFT_FREQ_4_D),
-                                        display_packet_read(packet, LEFT_FREQ_4_E),
-                                        display_packet_read(packet, LEFT_FREQ_4_F),
-                                        display_packet_read(packet, LEFT_FREQ_4_G),
-                                        display_packet_read(packet, LEFT_FREQ_4_H),
-                                        display_packet_read(packet, LEFT_FREQ_4_I),
-                                        display_packet_read(packet, LEFT_FREQ_4_J),
-                                        display_packet_read(packet, LEFT_FREQ_4_K),
-                                        display_packet_read(packet, LEFT_FREQ_4_L),
-                                        display_packet_read(packet, LEFT_FREQ_4_M)
-        );
-        if (diget_4 != -1) {
-                state->left.frequency = state->left.frequency + (diget_4 * 1000);
-        }
-
-        int diget_5 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_5_A),
-                                        display_packet_read(packet, LEFT_FREQ_5_B),
-                                        display_packet_read(packet, LEFT_FREQ_5_C),
-                                        display_packet_read(packet, LEFT_FREQ_5_D),
-                                        display_packet_read(packet, LEFT_FREQ_5_E),
-                                        display_packet_read(packet, LEFT_FREQ_5_F),
-                                        display_packet_read(packet, LEFT_FREQ_5_G),
-                                        display_packet_read(packet, LEFT_FREQ_5_H),
-                                        display_packet_read(packet, LEFT_FREQ_5_I),
-                                        display_packet_read(packet, LEFT_FREQ_5_J),
-                                        display_packet_read(packet, LEFT_FREQ_5_K),
-                                        display_packet_read(packet, LEFT_FREQ_5_L),
-                                        display_packet_read(packet, LEFT_FREQ_5_M)
-        );
-        if (diget_5 != -1) {
-                state->left.frequency = state->left.frequency + (diget_5 * 100);
-        }
-
-        int diget_6 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_6_A),
-                                        display_packet_read(packet, LEFT_FREQ_6_B),
-                                        display_packet_read(packet, LEFT_FREQ_6_C),
-                                        display_packet_read(packet, LEFT_FREQ_6_D),
-                                        display_packet_read(packet, LEFT_FREQ_6_E),
-                                        display_packet_read(packet, LEFT_FREQ_6_F),
-                                        display_packet_read(packet, LEFT_FREQ_6_G),
-                                        display_packet_read(packet, LEFT_FREQ_6_H),
-                                        display_packet_read(packet, LEFT_FREQ_6_I),
-                                        display_packet_read(packet, LEFT_FREQ_6_J),
-                                        display_packet_read(packet, LEFT_FREQ_6_K),
-                                        display_packet_read(packet, LEFT_FREQ_6_L),
-                                        display_packet_read(packet, LEFT_FREQ_6_M)
-        );
-        if (diget_6 != -1) {
-                state->left.frequency = state->left.frequency + (diget_6 * 10);
-        }
-
+        //the last digit caan only show 0 or 5 so it represented at 1 bit
         if (display_packet_read(packet, LEFT_FREQ_7)) {
-                state->left.frequency = state->left.frequency + 5;
+                total += 5;
         }
 
-        state->right.frequency = 0;
+        state->left.frequency = total;
+
+        return 0;
 }
 
 int is_main(struct radio_state *radio, struct radio_state_sides *side)
@@ -291,7 +284,7 @@ int is_main(struct radio_state *radio, struct radio_state_sides *side)
 
 
 void read_state_from_packet(struct display_packet *packet, struct radio_state *state) {
-
+        read_frequency(packet, state);
         read_busy(packet, state);
         read_main(packet, state);
 };
