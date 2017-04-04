@@ -172,7 +172,7 @@ void* receive_display_packets(void *c)
         return 0;
 }
 
-int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
+int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet)
 {
         unsigned char temp_buffer[DISPLAY_PACKET_SIZE];
         pthread_mutex_lock(&(config->receive.raw_packet_lock));
@@ -279,7 +279,7 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
                 return 1;
         }
 
-        struct display_packet packet;
+        DISPLAY_PACKET packet;
         get_display_packet(cfg, &packet);
         struct radio_state state;
         read_power_fuzzy(&packet, &state);
@@ -310,7 +310,7 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
                 return 1;
         }
 
-        struct display_packet packet;
+        DISPLAY_PACKET packet;
         get_display_packet(cfg, &packet);
         struct radio_state state;
         read_power_fuzzy(&packet, &state);

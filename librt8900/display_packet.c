@@ -5,32 +5,33 @@
 #include <sys/ioctl.h>
 
 #include "display_packet.h"
+#include "packet.h"
 
 /// Write to the packet in the correct order.
 /// For example the packet may start at index 10. Assumes buffer array length is DISPLAY_PACKET_SIZE (42)
-void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index)
+void insert_shifted_packet(DISPLAY_PACKET packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index)
 {
         // Starting from index to the end
         int i = 0;
         int packet_index = 0;
         for (i = start_of_packet_index; i < buffer_length; i++, packet_index++) {
-                packet->arr[packet_index].raw = buffer[i];
+                packet[packet_index].raw = buffer[i];
         }
         //now from the beginning to the index
         for (i = 0; i < start_of_packet_index; i++, packet_index++) { ;
-                packet->arr[packet_index].raw = buffer[i];
+                packet[packet_index].raw = buffer[i];
         }
 }
 
 ///Gets busy state from display_packet
-void read_busy(struct display_packet *packet, struct radio_state *state)
+void read_busy(DISPLAY_PACKET packet, struct radio_state *state)
 {
         state->left.busy  = display_packet_read(packet, LEFT_BUISY);
         state->right.busy = display_packet_read(packet, RIGHT_BUISY);
 }
 
 ///Sets the main correct pointer to the correct radio, NULL if nether selected
-void read_main(struct display_packet *packet, struct radio_state *state)
+void read_main(DISPLAY_PACKET packet, struct radio_state *state)
 {
         int left = display_packet_read(packet, LEFT_MAIN);
         int right = display_packet_read(packet, RIGHT_MAIN);
@@ -48,7 +49,7 @@ void read_main(struct display_packet *packet, struct radio_state *state)
 /// Gets the power levels of the radios only using reads,
 // todo Currently there is no way to know if med1 or med2 is set
 // todo create a seprate non fussy function that will be called to toggel power button 4 times (a circle) and then read the screen
-void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
+void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state)
 {
         if (display_packet_read(packet, LEFT_POWER_LOW)) {
                 state->left.power_level = POWER_LOW;
@@ -136,6 +137,7 @@ int decode_13_segment(int first_segment, ...)
         int segment = first_segment;
         int i;
 
+        //add all the arguments together into a bit field
         for (i = 0; i < 13; i++) {
                 log_msg(RT8900_TRACE, "%d " , segment);
                 bit_field = (bit_field << 1) | segment;
@@ -156,16 +158,15 @@ void create_bit_field(int *result, char bit)
         *result = (*result << 1) | bit;
 }
 
-int display_packet_read(struct display_packet *packet, const enum display_packet_bitmasks bit_number)
+int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmasks bit_number)
 {
         int bit = bit_number % 8;
         int byte = bit_number / 8;
 
-        return (packet->arr[byte].raw >> bit) & 0x80 != 0;
+        return (packet[byte].raw >> bit) & 0x80 != 0;
 };
 
-
-int read_frequency(struct display_packet *packet, struct radio_state *state)
+int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
 {
         //get and decode all the bits
         int digits[6] = {
@@ -283,7 +284,7 @@ int is_main(struct radio_state *radio, struct radio_state_sides *side)
 }
 
 
-void read_state_from_packet(struct display_packet *packet, struct radio_state *state) {
+void read_state_from_packet(DISPLAY_PACKET packet, struct radio_state *state) {
         read_frequency(packet, state);
         read_busy(packet, state);
         read_main(packet, state);

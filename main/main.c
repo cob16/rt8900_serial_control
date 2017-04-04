@@ -150,7 +150,7 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
         int right_op;
 
         struct radio_state *current_state = malloc(sizeof(*current_state));
-        struct display_packet packet;
+        DISPLAY_PACKET packet;
 
         get_display_packet(config, &packet);
 
@@ -326,7 +326,7 @@ int main(int argc, char **argv)
 
 
         //get current state of radio
-        //struct display_packet *current_state = malloc(sizeof(struct display_packet));
+        //DISPLAY_PACKET *current_state = malloc(sizeof(DISPLAY_PACKET));
         //get_display_packet(&c, current_state);
 
 

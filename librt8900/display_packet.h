@@ -146,9 +146,7 @@ enum display_packet_bitmasks {
         RIGHT_POWER_MEDIUM = BIT_LOCATED_AT(16, 2)
 };
 
-struct display_packet {
-        PACKET_BYTE arr[42];
-};
+typedef PACKET_BYTE DISPLAY_PACKET[DISPLAY_PACKET_SIZE];
 
 enum rt8900_power_level {
         POWER_UNKNOWEN = 0,
@@ -165,23 +163,22 @@ struct radio_state_sides {
         enum rt8900_power_level power_level;
 };
 
-
 struct radio_state {
         struct radio_state_sides *main; //the currently selected pointer
         struct radio_state_sides left;
         struct radio_state_sides right;
 };
 
-int display_packet_read(struct display_packet *packet, const enum display_packet_bitmasks bit_number);
-void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index);
+int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmasks bit_number);
+void insert_shifted_packet(DISPLAY_PACKET packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index);
 int segment_to_int(int segment_bitmask);
 
-void read_busy(struct display_packet *packet, struct radio_state *state);
-void read_main(struct display_packet *packet, struct radio_state *state);
-void read_power_fuzzy(struct display_packet *packet, struct radio_state *state);
-int read_frequency(struct display_packet *packet, struct radio_state *state);
+void read_busy(DISPLAY_PACKET packet, struct radio_state *state);
+void read_main(DISPLAY_PACKET packet, struct radio_state *state);
+void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state);
+int read_frequency(DISPLAY_PACKET packet, struct radio_state *state);
 
 int is_main(struct radio_state *radio, struct radio_state_sides *side);
-void read_state_from_packet(struct display_packet *packet, struct radio_state *state);
+void read_state_from_packet(DISPLAY_PACKET packet, struct radio_state *state);
 
 #endif //RT8900_SERIAL_CONTROL_DISPLAY_PACKET_H

@@ -16,7 +16,7 @@ class TestDisplayPacketReaders : public ::testing::Test {
 public:
     virtual void SetUp();
 
-    struct display_packet packet;
+    DISPLAY_PACKET packet;
 };
 
 #endif //RT8900_SERIAL_CONTROL_TEST_DISPLAY_PACKET_H

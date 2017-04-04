@@ -40,7 +40,7 @@ typedef struct {
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
 void* send_control_packets(void *c);
 void* receive_display_packets(void *c);
-int get_display_packet(SERIAL_CFG *config, struct display_packet *packet);
+int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet);
 int check_radio_rx(SERIAL_CFG *config);
 
 //settters
