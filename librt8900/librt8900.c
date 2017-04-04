@@ -244,6 +244,7 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
                 set_keypad_button(dialnum, button_from_int(0));
                 send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+                log_msg(RT8900_DEBUG, "dialing 0\n");
         }
 
         //dial the seletced buttons
@@ -253,6 +254,7 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
                 set_keypad_button(dialnum, button_from_int(digits[i] - '0'));
                 send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+                log_msg(RT8900_DEBUG, "dialing %d\n", digits[i] - '0');
         }
         return 0;
 }

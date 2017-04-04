@@ -82,16 +82,22 @@ void read_power_fuzzy(struct display_packet *packet, struct radio_state *state)
  * 9
  * macros from truth table */
 //todo convert to hex else we are stuck to gcc
-#define THIRTEEN_SEG_0 0b1111110010111
+#define THIRTEEN_SEG_0 0b1011100010111
 #define THIRTEEN_SEG_1 0b1010000000000
 #define THIRTEEN_SEG_2 0b0110110010010
 #define THIRTEEN_SEG_3 0b1110110010000
 #define THIRTEEN_SEG_4 0b1110010000001
+#define THIRTEEN_SEG_5 0b1100110010001
+#define THIRTEEN_SEG_6 0b1100110010011
+#define THIRTEEN_SEG_7 0b1010100000000
+#define THIRTEEN_SEG_8 0b1110110010011
+#define THIRTEEN_SEG_9 0b1110110010001
 
-///Takes an char of bits (ordered as described above) tryes to decode as as a number
-int decode_13_segment(int segment_bitmask)
+///Takes a bitfireld and matches to knowen numbers an char of bits (ordered as described above)
+/// @returns 0-9 and -1 on error
+int segment_to_int(int segment_bitfield)
 {
-        switch (segment_bitmask) {
+        switch (segment_bitfield) {
         case 0: //left digets that are 0 are not showen
         case THIRTEEN_SEG_0:
                 return 0;
@@ -103,9 +109,46 @@ int decode_13_segment(int segment_bitmask)
                 return 3;
         case THIRTEEN_SEG_4:
                 return 4;
+        case THIRTEEN_SEG_5:
+                return 5;
+        case THIRTEEN_SEG_6:
+                return 6;
+        case THIRTEEN_SEG_7:
+                return 7;
+        case THIRTEEN_SEG_8:
+                return 8;
+        case THIRTEEN_SEG_9:
+                return 9;
         default:
                 return -1;
         }
+}
+
+/// Takes a 13 arguments each arument is a bit (as int) that represents each of the 13 segments of a diget.
+/// @returns the diget between 0-9 and -1 on an unreconised diget
+/// A fully blank section will assumed to be 0
+int decode_13_segment(int first_segment, ...)
+{
+        va_list ap;
+        va_start(ap, first_segment);
+
+        int bit_field = 0;
+        int segment = first_segment;
+        int i;
+
+        for (i = 0; i < 13; i++) {
+                log_msg(RT8900_TRACE, "%d " , segment);
+                bit_field = (bit_field << 1) | segment;
+                segment = va_arg(ap, int);
+        }
+        va_end(ap);
+
+        int diget = segment_to_int(bit_field);
+        log_msg(RT8900_TRACE, " -> %d\n", diget);
+        if (diget == -1) {
+                log_msg(RT8900_ERROR, "UNKNOWN NUMBER\n");
+        }
+        return diget;
 }
 
 void create_bit_field(int *result, char bit)
@@ -126,69 +169,119 @@ void read_frequency(struct display_packet *packet, struct radio_state *state)
 
         state->left.frequency = 0;
 
-        int first_diget[13] = {
-                display_packet_read(packet, LEFT_FREQ_1_A),
-                display_packet_read(packet, LEFT_FREQ_1_B),
-                display_packet_read(packet, LEFT_FREQ_1_C),
-                display_packet_read(packet, LEFT_FREQ_1_D),
-                display_packet_read(packet, LEFT_FREQ_1_E),
-                display_packet_read(packet, LEFT_FREQ_1_F),
-                display_packet_read(packet, LEFT_FREQ_1_G),
-                display_packet_read(packet, LEFT_FREQ_1_H),
-                display_packet_read(packet, LEFT_FREQ_1_I),
-                display_packet_read(packet, LEFT_FREQ_1_J),
-                display_packet_read(packet, LEFT_FREQ_1_K),
-                display_packet_read(packet, LEFT_FREQ_1_L),
-                display_packet_read(packet, LEFT_FREQ_1_M)
-        };
-
-        int bit_field = 0;
-        int i;
-        for (i=0; i<13; i++) {
-                printf("%d " , first_diget[i]);
-                bit_field = (bit_field << 1) | first_diget[i];
-        }
-        int diget_1 = decode_13_segment(bit_field);
-        printf(" -> %d\n", diget_1);
-        if (diget_1 == -1) {
-                log_msg(RT8900_ERROR, "UNKNOWN NUMBER\n");
+        int diget_1 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_1_A),
+                                        display_packet_read(packet, LEFT_FREQ_1_B),
+                                        display_packet_read(packet, LEFT_FREQ_1_C),
+                                        display_packet_read(packet, LEFT_FREQ_1_D),
+                                        display_packet_read(packet, LEFT_FREQ_1_E),
+                                        display_packet_read(packet, LEFT_FREQ_1_F),
+                                        display_packet_read(packet, LEFT_FREQ_1_G),
+                                        display_packet_read(packet, LEFT_FREQ_1_H),
+                                        display_packet_read(packet, LEFT_FREQ_1_I),
+                                        display_packet_read(packet, LEFT_FREQ_1_J),
+                                        display_packet_read(packet, LEFT_FREQ_1_K),
+                                        display_packet_read(packet, LEFT_FREQ_1_L),
+                                        display_packet_read(packet, LEFT_FREQ_1_M)
+        );
+        if (diget_1 != -1) {
+                state->left.frequency = diget_1 * 1000000;
         }
 
-
-        state->left.frequency = decode_13_segment(bit_field) * 100000;
-
-        int second_diget[13] = {
-                display_packet_read(packet, LEFT_FREQ_2_A),
-                display_packet_read(packet, LEFT_FREQ_2_B),
-                display_packet_read(packet, LEFT_FREQ_2_C),
-                display_packet_read(packet, LEFT_FREQ_2_D),
-                display_packet_read(packet, LEFT_FREQ_2_E),
-                display_packet_read(packet, LEFT_FREQ_2_F),
-                display_packet_read(packet, LEFT_FREQ_2_G),
-                display_packet_read(packet, LEFT_FREQ_2_H),
-                display_packet_read(packet, LEFT_FREQ_2_I),
-                display_packet_read(packet, LEFT_FREQ_2_J),
-                display_packet_read(packet, LEFT_FREQ_2_K),
-                display_packet_read(packet, LEFT_FREQ_2_L),
-                display_packet_read(packet, LEFT_FREQ_2_M)
-        };
-
-
-        bit_field = 0;
-        i = 0;
-        for (i=0; i<13; i++) {
-                printf("%d " , second_diget[i]);
-                bit_field = (bit_field << 1) | second_diget[i];
-        }
-        int diget_2 = decode_13_segment(bit_field);
-        printf(" -> %d\n", diget_2);
-        if (diget_2 == -1) {
-                log_msg(RT8900_ERROR, "UNKNOWN NUMBER\n");
+        int diget_2 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_2_A),
+                                        display_packet_read(packet, LEFT_FREQ_2_B),
+                                        display_packet_read(packet, LEFT_FREQ_2_C),
+                                        display_packet_read(packet, LEFT_FREQ_2_D),
+                                        display_packet_read(packet, LEFT_FREQ_2_E),
+                                        display_packet_read(packet, LEFT_FREQ_2_F),
+                                        display_packet_read(packet, LEFT_FREQ_2_G),
+                                        display_packet_read(packet, LEFT_FREQ_2_H),
+                                        display_packet_read(packet, LEFT_FREQ_2_I),
+                                        display_packet_read(packet, LEFT_FREQ_2_J),
+                                        display_packet_read(packet, LEFT_FREQ_2_K),
+                                        display_packet_read(packet, LEFT_FREQ_2_L),
+                                        display_packet_read(packet, LEFT_FREQ_2_M)
+        );
+        if (diget_2 != -1) {
+                state->left.frequency = state->left.frequency + (diget_2 * 100000);
         }
 
-        state->left.frequency = state->left.frequency + (decode_13_segment(bit_field) * 10000);
+        int diget_3 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_3_A),
+                                        display_packet_read(packet, LEFT_FREQ_3_B),
+                                        display_packet_read(packet, LEFT_FREQ_3_C),
+                                        display_packet_read(packet, LEFT_FREQ_3_D),
+                                        display_packet_read(packet, LEFT_FREQ_3_E),
+                                        display_packet_read(packet, LEFT_FREQ_3_F),
+                                        display_packet_read(packet, LEFT_FREQ_3_G),
+                                        display_packet_read(packet, LEFT_FREQ_3_H),
+                                        display_packet_read(packet, LEFT_FREQ_3_I),
+                                        display_packet_read(packet, LEFT_FREQ_3_J),
+                                        display_packet_read(packet, LEFT_FREQ_3_K),
+                                        display_packet_read(packet, LEFT_FREQ_3_L),
+                                        display_packet_read(packet, LEFT_FREQ_3_M)
+        );
+        if (diget_3 != -1) {
+                state->left.frequency = state->left.frequency + (diget_3 * 10000);
+        }
 
-        state->right.frequency = 000000;
+        int diget_4 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_4_A),
+                                        display_packet_read(packet, LEFT_FREQ_4_B),
+                                        display_packet_read(packet, LEFT_FREQ_4_C),
+                                        display_packet_read(packet, LEFT_FREQ_4_D),
+                                        display_packet_read(packet, LEFT_FREQ_4_E),
+                                        display_packet_read(packet, LEFT_FREQ_4_F),
+                                        display_packet_read(packet, LEFT_FREQ_4_G),
+                                        display_packet_read(packet, LEFT_FREQ_4_H),
+                                        display_packet_read(packet, LEFT_FREQ_4_I),
+                                        display_packet_read(packet, LEFT_FREQ_4_J),
+                                        display_packet_read(packet, LEFT_FREQ_4_K),
+                                        display_packet_read(packet, LEFT_FREQ_4_L),
+                                        display_packet_read(packet, LEFT_FREQ_4_M)
+        );
+        if (diget_4 != -1) {
+                state->left.frequency = state->left.frequency + (diget_4 * 1000);
+        }
+
+        int diget_5 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_5_A),
+                                        display_packet_read(packet, LEFT_FREQ_5_B),
+                                        display_packet_read(packet, LEFT_FREQ_5_C),
+                                        display_packet_read(packet, LEFT_FREQ_5_D),
+                                        display_packet_read(packet, LEFT_FREQ_5_E),
+                                        display_packet_read(packet, LEFT_FREQ_5_F),
+                                        display_packet_read(packet, LEFT_FREQ_5_G),
+                                        display_packet_read(packet, LEFT_FREQ_5_H),
+                                        display_packet_read(packet, LEFT_FREQ_5_I),
+                                        display_packet_read(packet, LEFT_FREQ_5_J),
+                                        display_packet_read(packet, LEFT_FREQ_5_K),
+                                        display_packet_read(packet, LEFT_FREQ_5_L),
+                                        display_packet_read(packet, LEFT_FREQ_5_M)
+        );
+        if (diget_5 != -1) {
+                state->left.frequency = state->left.frequency + (diget_5 * 100);
+        }
+
+        int diget_6 = decode_13_segment(display_packet_read(packet, LEFT_FREQ_6_A),
+                                        display_packet_read(packet, LEFT_FREQ_6_B),
+                                        display_packet_read(packet, LEFT_FREQ_6_C),
+                                        display_packet_read(packet, LEFT_FREQ_6_D),
+                                        display_packet_read(packet, LEFT_FREQ_6_E),
+                                        display_packet_read(packet, LEFT_FREQ_6_F),
+                                        display_packet_read(packet, LEFT_FREQ_6_G),
+                                        display_packet_read(packet, LEFT_FREQ_6_H),
+                                        display_packet_read(packet, LEFT_FREQ_6_I),
+                                        display_packet_read(packet, LEFT_FREQ_6_J),
+                                        display_packet_read(packet, LEFT_FREQ_6_K),
+                                        display_packet_read(packet, LEFT_FREQ_6_L),
+                                        display_packet_read(packet, LEFT_FREQ_6_M)
+        );
+        if (diget_6 != -1) {
+                state->left.frequency = state->left.frequency + (diget_6 * 10);
+        }
+
+        if (display_packet_read(packet, LEFT_FREQ_7)) {
+                state->left.frequency = state->left.frequency + 5;
+        }
+
+        state->right.frequency = 0;
 }
 
 int is_main(struct radio_state *radio, struct radio_state_sides *side)

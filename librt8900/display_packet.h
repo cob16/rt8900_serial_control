@@ -69,6 +69,66 @@ enum display_packet_bitmasks {
         LEFT_FREQ_2_L = BIT_LOCATED_AT(12, 4),
         LEFT_FREQ_2_M = BIT_LOCATED_AT(12, 5),
 
+        LEFT_FREQ_3_A = BIT_LOCATED_AT(8, 3),
+        LEFT_FREQ_3_B = BIT_LOCATED_AT(8, 4),
+        LEFT_FREQ_3_C = BIT_LOCATED_AT(8, 5),
+        LEFT_FREQ_3_D = BIT_LOCATED_AT(8, 6),
+        LEFT_FREQ_3_E = BIT_LOCATED_AT(9, 0),
+        LEFT_FREQ_3_F = BIT_LOCATED_AT(9, 1),
+        LEFT_FREQ_3_G = BIT_LOCATED_AT(9, 2),
+        LEFT_FREQ_3_H = BIT_LOCATED_AT(9, 4),
+        LEFT_FREQ_3_I = BIT_LOCATED_AT(9, 5),
+        LEFT_FREQ_3_J = BIT_LOCATED_AT(9, 6),
+        LEFT_FREQ_3_K = BIT_LOCATED_AT(10, 1),
+        LEFT_FREQ_3_L = BIT_LOCATED_AT(10, 2),
+        LEFT_FREQ_3_M = BIT_LOCATED_AT(10, 3),
+
+        LEFT_FREQ_4_A = BIT_LOCATED_AT(5, 2),
+        LEFT_FREQ_4_B = BIT_LOCATED_AT(5, 3),
+        LEFT_FREQ_4_C = BIT_LOCATED_AT(5, 4),
+        LEFT_FREQ_4_D = BIT_LOCATED_AT(5, 5),
+        LEFT_FREQ_4_E = BIT_LOCATED_AT(5, 6),
+        LEFT_FREQ_4_F = BIT_LOCATED_AT(6, 0),
+        LEFT_FREQ_4_G = BIT_LOCATED_AT(6, 1),
+        LEFT_FREQ_4_H = BIT_LOCATED_AT(6, 3),
+        LEFT_FREQ_4_I = BIT_LOCATED_AT(6, 4),
+        LEFT_FREQ_4_J = BIT_LOCATED_AT(6, 5),
+        LEFT_FREQ_4_K = BIT_LOCATED_AT(7, 0),
+        LEFT_FREQ_4_L = BIT_LOCATED_AT(7, 1),
+        LEFT_FREQ_4_M = BIT_LOCATED_AT(7, 2),
+
+        LEFT_FREQ_5_A = BIT_LOCATED_AT(3, 0),
+        LEFT_FREQ_5_B = BIT_LOCATED_AT(3, 1),
+        LEFT_FREQ_5_C = BIT_LOCATED_AT(3, 2),
+        LEFT_FREQ_5_D = BIT_LOCATED_AT(3, 3),
+        LEFT_FREQ_5_E = BIT_LOCATED_AT(3, 4),
+        LEFT_FREQ_5_F = BIT_LOCATED_AT(3, 5),
+        LEFT_FREQ_5_G = BIT_LOCATED_AT(3, 6),
+        LEFT_FREQ_5_H = BIT_LOCATED_AT(4, 1),
+        LEFT_FREQ_5_I = BIT_LOCATED_AT(4, 2),
+        LEFT_FREQ_5_J = BIT_LOCATED_AT(4, 3),
+        LEFT_FREQ_5_K = BIT_LOCATED_AT(4, 5),
+        LEFT_FREQ_5_L = BIT_LOCATED_AT(4, 6),
+        LEFT_FREQ_5_M = BIT_LOCATED_AT(5, 0),
+
+        LEFT_FREQ_6_A = BIT_LOCATED_AT(0, 5),
+        LEFT_FREQ_6_B = BIT_LOCATED_AT(0, 6),
+        LEFT_FREQ_6_C = BIT_LOCATED_AT(1, 0),
+        LEFT_FREQ_6_D = BIT_LOCATED_AT(1, 1),
+        LEFT_FREQ_6_E = BIT_LOCATED_AT(1, 2),
+        LEFT_FREQ_6_F = BIT_LOCATED_AT(1, 3),
+        LEFT_FREQ_6_G = BIT_LOCATED_AT(1, 4),
+        LEFT_FREQ_6_H = BIT_LOCATED_AT(1, 6),
+        LEFT_FREQ_6_I = BIT_LOCATED_AT(2, 0),
+        LEFT_FREQ_6_J = BIT_LOCATED_AT(2, 1),
+        LEFT_FREQ_6_K = BIT_LOCATED_AT(2, 3),
+        LEFT_FREQ_6_L = BIT_LOCATED_AT(2, 4),
+        LEFT_FREQ_6_M = BIT_LOCATED_AT(2, 5),
+
+        LEFT_FREQ_7   = 0,
+
+        LEFT_FREQ_PEROID = BIT_LOCATED_AT(0, 3),
+
         //right side
         RIGHT_BUISY = BIT_LOCATED_AT(28,2),
         RIGHT_MAIN  = BIT_LOCATED_AT(32, 0),
@@ -114,13 +174,13 @@ struct radio_state {
 
 int display_packet_read(struct display_packet *packet, const enum display_packet_bitmasks bit_number);
 void insert_shifted_packet(struct display_packet *packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index);
+int segment_to_int(int segment_bitmask);
 
 void read_busy(struct display_packet *packet, struct radio_state *state);
 void read_main(struct display_packet *packet, struct radio_state *state);
 void read_power_fuzzy(struct display_packet *packet, struct radio_state *state);
 void read_frequency(struct display_packet *packet, struct radio_state *state);
 
-int decode_13_segment(int segment_bitmask);
 int is_main(struct radio_state *radio, struct radio_state_sides *side);
 void read_state_from_packet(struct display_packet *packet, struct radio_state *state);
 

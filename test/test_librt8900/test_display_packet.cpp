@@ -81,10 +81,10 @@ TEST_F(TestDisplayPacketReaders, test_packet_read)
 TEST_F(TestDisplayPacketReaders, test_read_14_seg)
 {
         //blank screen section == the number 0 as front 0's are hidden on the screen
-        EXPECT_EQ(decode_13_segment(0), 0);
-        EXPECT_EQ(decode_13_segment(0x1F97), 0);
+        EXPECT_EQ(segment_to_int(0), 0);
+        EXPECT_EQ(segment_to_int(0x1717), 0);
 
-        EXPECT_EQ(decode_13_segment(0x1400), 1);
+        EXPECT_EQ(segment_to_int(0x1400), 1);
 
 
 }
