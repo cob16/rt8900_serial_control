@@ -23,7 +23,8 @@ const struct range_KHz AVAILABLE_RX_BANDS[NUMBER_RX_BANDS] = {
         {false, "70cm",  700000, 985000},
 };
 
-///Returns a struct range_KHz if input is within range. Else returns NULL
+/*! Returns (struct range_KHz) if input is within that range. Else returns NULL
+ * Looks for tx&rx ranges first */
 const struct range_KHz * get_range(int frequency_khz)
 {
         int i;
@@ -37,10 +38,10 @@ const struct range_KHz * get_range(int frequency_khz)
                         return &AVAILABLE_RX_BANDS[i];
                 }
         }
-
         return NULL;
 }
 
+/*! returns 0 if invalid range, * or 1 if only rx allowed, * and 2 for all allowed */
 int out_of_operational_range(int frequency_khz)
 {
         const struct range_KHz *range = get_range(frequency_khz);
@@ -54,7 +55,8 @@ int out_of_operational_range(int frequency_khz)
         return 0;
 }
 
-///adds a control_packet (pointer) to the send queue, should only be called once the queu h
+/*! Adds a control_packet (pointer) to the send queue,
+ * should only be called once the queue has been initialized*/
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice)
 {
         if (new_packet == NULL) {
@@ -68,8 +70,9 @@ void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum
                 log_msg(RT8900_TRACE, "ADDDED TO QUEUE \n");
         }
 }
-
-///Starts sending control packets as defined by SERIAL_CFG
+/*! Starts sending control packets as defined by SERIAL_CFG
+ *
+ *  This function is designed to be started as a thread  */
 void* send_control_packets(void *c)
 {
         log_msg(RT8900_TRACE, "-- STARTING CONTROL PACKET THREAD\n");
@@ -159,6 +162,8 @@ void* send_control_packets(void *c)
         return NULL;
 }
 
+/*! Writes the latest packet to a segment of memory
+ *  This function is designed to be started as a thread  */
 void* receive_display_packets(void *c)
 {
         SERIAL_CFG *config = (SERIAL_CFG*) c;
@@ -197,18 +202,18 @@ void* receive_display_packets(void *c)
                 timeout.tv_sec = 1;
                 timeout.tv_usec = 0;
 
-                // Wait for input to become ready or until the time out; the first parameter is
-                // 1 more than the largest file descriptor in any of the sets
+                // select wil return false if the timeout has been reached
                 if (select(config->serial_fd + 1, &read_fds, &write_fds, &except_fds, &timeout) == 1)
                 {
                         pthread_mutex_lock(&(config->receive.raw_packet_lock));
                         read(config->serial_fd, &(config->receive.latest_raw_packet), DISPLAY_PACKET_SIZE);
                         pthread_mutex_unlock(&(config->receive.raw_packet_lock));
                         config->receive.radio_seen = true;
-                }
-                else
-                {
-                        log_msg(RT8900_WARNING, "NO DATA RECEIVIED FROM RADIO!\n");
+                } else {
+                        //Abort
+                        log_msg(RT8900_FATAL, "NO DATA RECEIVIED FROM RADIO !\n");
+                        config->send.keep_alive = false;
+                        config->receive.keep_alive = false;
                 }
         }
 
@@ -217,6 +222,8 @@ void* receive_display_packets(void *c)
         return 0;
 }
 
+/*! Reads packet from memory.
+ *  makes sure to block until a packet has been fully written */
 int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet)
 {
         unsigned char temp_buffer[DISPLAY_PACKET_SIZE];
@@ -234,15 +241,15 @@ int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet)
         return 0;
 }
 
-
-///Check that we are reciving from teh radio.
+/*! Check that we are received from the radio at lest once.
+ * This will not help you if the radio is disconnected */
 int check_radio_rx(SERIAL_CFG *config)
 {
         return config->receive.radio_seen;
 }
 
-/// stwitches context to the desired radio,
-/// you must first check you are not already on this mode else you will enter frequency edit mode!
+/*! Switches context to the desired radio,
+ * you must first check you are not already on this mode else you will enter frequency edit mode! */
 int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side) {
         maloc_control_packet(switch_main);
         memcpy(switch_main, base_packet, sizeof(*switch_main));
@@ -258,6 +265,7 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
                 free(switch_main);
                 return -1;
         }
+        free(switch_main);
 
         send_new_packet(cfg, switch_main, PACKET_FREE_AFTER_SEND);
         send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
@@ -265,7 +273,8 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
 
 }
 
-///Adds the required packets to dial a number. they are then be added to the queue
+/*! Adds the required packets to dial a number.
+ * They are then be added to the queue */
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
         //get the number of digits
@@ -304,7 +313,19 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         return 0;
 }
 
+/*! This can be used anytime to gracefully stop sending and receiving on serial
+ *  Threads will be able to join after running ths function */
+void shutdown_threads(SERIAL_CFG *cfg)
+{
+        cfg->send.keep_alive = false;
+        cfg->receive.keep_alive = false;
+        if (cfg->serial_fd != 0) {
+                tcflush(cfg->serial_fd, TCIOFLUSH); //flush in/out buffers
+                close(cfg->serial_fd);
+        }
+}
 
+/*! This blocks until there are no new packets to send */
 void wait_to_send(const SERIAL_CFG *cfg)
 {
         if (cfg->send.keep_alive == true && !TAILQ_EMPTY(cfg->send.queue)) {
@@ -315,7 +336,7 @@ void wait_to_send(const SERIAL_CFG *cfg)
         }
 }
 
-///Adds the required packets to dial a number. they are then be added to the queue
+/*! Presses the Low button on the radio until the selected power is set*/
 int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
 {
         //todo when diget reading is completed this will need to be updated to allow selection of med1 and med1 levels

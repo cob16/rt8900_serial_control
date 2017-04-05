@@ -67,14 +67,11 @@ void graceful_shutdown(int signal)
         //use strsignal(signal) to get the name from int if we want to add others latter
         log_msg(RT8900_INFO, "\nShutting down...\n");
         if (g_conf != NULL) {
-                g_conf->send.keep_alive = false;
-                g_conf->receive.keep_alive = false;
-                if (g_conf->serial_fd != 0) {
-                        tcflush(g_conf->serial_fd, TCIOFLUSH); //flush in/out buffers
-                        close(g_conf->serial_fd);
-                }
-                fclose(stdin); //we close std so that user prompt (get_char) will stop blocking
+                shutdown_threads(g_conf);
         }
+        /*  We close std so that our shell user prompt's
+         * get_char() call will stop blocking and return */
+        fclose(stdin);
 }
 
 void init_graceful_shutdown(SERIAL_CFG *c)
