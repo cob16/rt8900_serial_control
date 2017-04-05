@@ -2,13 +2,13 @@
 // Created by cormac on 14/03/17.
 //
 #include <unistd.h>
-#include <sys/ioctl.h>
-
 #include "display_packet.h"
-#include "packet.h"
 
-/// Write to the packet in the correct order.
-/// For example the packet may start at index 10. Assumes buffer array length is DISPLAY_PACKET_SIZE (42)
+/*! Write to the packet in the correct order.
+ * @example
+ * For example the packet may start at index 10.
+ * @warning
+ * This assumes buffer array length is DISPLAY_PACKET_SIZE (42)*/
 void insert_shifted_packet(DISPLAY_PACKET packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index)
 {
         // Starting from index to the end
@@ -23,14 +23,15 @@ void insert_shifted_packet(DISPLAY_PACKET packet, unsigned char buffer[], size_t
         }
 }
 
-///Gets busy state from display_packet
+/// Gets busy state from display_packet
 void read_busy(DISPLAY_PACKET packet, struct radio_state *state)
 {
         state->left.busy  = display_packet_read(packet, LEFT_BUISY);
         state->right.busy = display_packet_read(packet, RIGHT_BUISY);
 }
 
-///Sets the main correct pointer to the correct radio, NULL if nether selected
+/*! Sets the main correct pointer to the correct radio,
+ * @return NULL if nether selected */
 void read_main(DISPLAY_PACKET packet, struct radio_state *state)
 {
         int left = display_packet_read(packet, LEFT_MAIN);
@@ -46,7 +47,7 @@ void read_main(DISPLAY_PACKET packet, struct radio_state *state)
         }
 }
 
-/// Gets the power levels of the radios only using reads,
+/// Gets the power levels of the radios only using reads
 // todo Currently there is no way to know if med1 or med2 is set
 // todo create a seprate non fussy function that will be called to toggel power button 4 times (a circle) and then read the screen
 void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state)
@@ -92,8 +93,8 @@ void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state)
 #define THIRTEEN_SEG_8 0x1d93
 #define THIRTEEN_SEG_9 0x1d91
 
-///Takes a bitfireld and matches to knowen numbers an char of bits (ordered as described above)
-/// @returns 0-9 and -1 on error
+/*! Takes a bitfireld and matches to known numbers an char of bits (ordered as described above)
+ *  @returns 0-9 and -1 on error */
 int segment_to_int(int segment_bitfield)
 {
         switch (segment_bitfield) {
@@ -123,9 +124,9 @@ int segment_to_int(int segment_bitfield)
         }
 }
 
-/// Takes a 13 arguments each arument is a bit (as int) that represents each of the 13 segments of a diget.
-/// @returns the diget between 0-9 and -1 on an unreconised diget
-/// A fully blank section will assumed to be 0
+/*! Takes a 13 arguments each argument is a bit (as int) that represents each of the 13 segments of a digit.
+ * A fully blank section will assumed to be 0.
+ * @returns int between 0-9 and -1 on an unrecognised digit */
 int decode_13_segment(int first_segment, ...)
 {
         va_list ap;
@@ -151,11 +152,6 @@ int decode_13_segment(int first_segment, ...)
         return diget;
 }
 
-void create_bit_field(int *result, char bit)
-{
-        *result = (*result << 1) | bit;
-}
-
 int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmasks bit_number)
 {
         int bit = bit_number % 8;
@@ -164,11 +160,13 @@ int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmask
         return (packet[byte].raw >> bit) & 0x80 != 0;
 };
 
-/// Writes the frequency to the state packet
+/*! Writes the frequency to the state packet.
+ * @return 0 on success and 1 on error.
+ */
 int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
 {
         /* Here we get all the bits that make up the frequency displays and decode them.
-         * I am banking on display_packet_read getting in-lined by the compiler
+         * Hopefully display_packet_read is getting in-lined by the compiler
          * */
         int left_digits[6] = {
                 decode_13_segment(display_packet_read(packet, LEFT_FREQ_1_A),
@@ -373,13 +371,15 @@ int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
         return 0;
 }
 
+/// Simple check if the input radio is the main
 int is_main(struct radio_state *radio, struct radio_state_sides *side)
 {
         return (radio->main == side);
 }
 
-
-void read_state_from_packet(DISPLAY_PACKET packet, struct radio_state *state) {
+/// Calls all packet read fuctions
+void read_packet_state(DISPLAY_PACKET packet, struct radio_state *state) {
+        read_power_fuzzy(packet, state);
         read_frequency(packet, state);
         read_busy(packet, state);
         read_main(packet, state);

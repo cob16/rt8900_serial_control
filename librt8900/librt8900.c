@@ -392,7 +392,7 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
 
                 /* We do not up now what the packet latency is between sending a cmd and getting a updated screen
                  * so we will wait a second to garentee the program can se the update */
-                // todo find a way to work around this
+                // todo this could be reduced
                 sleep(1);
 
                 get_display_packet(cfg, packet);

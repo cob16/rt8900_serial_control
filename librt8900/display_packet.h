@@ -267,6 +267,6 @@ void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state);
 int read_frequency(DISPLAY_PACKET packet, struct radio_state *state);
 
 int is_main(struct radio_state *radio, struct radio_state_sides *side);
-void read_state_from_packet(DISPLAY_PACKET packet, struct radio_state *state);
+void read_packet_state(DISPLAY_PACKET packet, struct radio_state *state);
 
 #endif //RT8900_SERIAL_CONTROL_DISPLAY_PACKET_H
