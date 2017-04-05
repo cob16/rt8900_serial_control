@@ -9,6 +9,51 @@
 #include <pthread.h>
 #include <sys/ioctl.h>
 
+#define NUMBER_TX_BANDS 4
+const struct range_KHz AVALABLE_TX_BANDS[NUMBER_TX_BANDS] = {
+        {true, "10m"    , 28000, 29700},
+        {true, "6m"     , 50000, 54000},
+        {true, "2m Tx l", 144000, 146000},
+        {true, "2m Tx h", 340000, 440000},
+};
+
+#define NUMBER_RX_BANDS 2
+const struct range_KHz AVALABLE_RX_BANDS[NUMBER_RX_BANDS] = {
+        {false, "2m RX", 108000, 18000},
+        {false, "70cm",  700000, 985000},
+};
+
+///Returns a struct range_KHz if input is within range. Else returns NULL
+const struct range_KHz * get_range(int frequency_khz)
+{
+        int i;
+        for (i = 0; i < NUMBER_TX_BANDS; i++){
+                if (AVALABLE_TX_BANDS[i].low <= frequency_khz && frequency_khz <= AVALABLE_TX_BANDS[i].high) {
+                        return &AVALABLE_TX_BANDS[i];
+                }
+        }
+        for (i = 0; i < NUMBER_RX_BANDS; i++){
+                if (AVALABLE_RX_BANDS[i].low <= frequency_khz && frequency_khz <= AVALABLE_RX_BANDS[i].high) {
+                        return &AVALABLE_RX_BANDS[i];
+                }
+        }
+
+        return NULL;
+}
+
+int out_of_oerrational_range(int frequency_khz)
+{
+        const struct range_KHz *range = get_range(frequency_khz);
+        if (range != NULL) {
+                if (range->tx_allowed) {
+                        return 1;
+                } else {
+                        return 2;
+                }
+        }
+        return 0;
+}
+
 ///adds a control_packet (pointer) to the send queue, should only be called once the queu h
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice)
 {
@@ -280,9 +325,9 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
         }
 
         DISPLAY_PACKET packet;
-        get_display_packet(cfg, &packet);
+        get_display_packet(cfg, packet);
         struct radio_state state;
-        read_power_fuzzy(&packet, &state);
+        read_power_fuzzy(packet, &state);
 
         while(state.left.power_level != power_level && cfg->send.keep_alive == true) {
                 maloc_control_packet(power_press);
@@ -294,8 +339,8 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
                 wait_to_send(cfg);
 
                 sleep(1); //the radio is very inconsitant on change time this is here for some safty
-                get_display_packet(cfg, &packet);
-                read_power_fuzzy(&packet, &state);
+                get_display_packet(cfg, packet);
+                read_power_fuzzy(packet, &state);
         }
 
         return 0;
@@ -311,9 +356,9 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
         }
 
         DISPLAY_PACKET packet;
-        get_display_packet(cfg, &packet);
+        get_display_packet(cfg, packet);
         struct radio_state state;
-        read_power_fuzzy(&packet, &state);
+        read_power_fuzzy(packet, &state);
 
         while(state.right.power_level != power_level && cfg->send.keep_alive == true) {
                 maloc_control_packet(power_press);
@@ -329,8 +374,8 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
                 // todo find a way to work around this
                 sleep(1);
 
-                get_display_packet(cfg, &packet);
-                read_power_fuzzy(&packet, &state);
+                get_display_packet(cfg, packet);
+                read_power_fuzzy(packet, &state);
         }
 
         return 0;

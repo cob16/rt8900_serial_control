@@ -169,7 +169,7 @@ int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmask
 int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
 {
         //get and decode all the bits
-        int digits[6] = {
+        int left_digits[6] = {
                 decode_13_segment(display_packet_read(packet, LEFT_FREQ_1_A),
                                   display_packet_read(packet, LEFT_FREQ_1_B),
                                   display_packet_read(packet, LEFT_FREQ_1_C),
@@ -256,24 +256,117 @@ int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
                 )
         };
 
-        //add the ints together in the correct postion in going up
+        int right_digits[6] = {
+                decode_13_segment(display_packet_read(packet, RIGHT_FREQ_1_A),
+                                  display_packet_read(packet, RIGHT_FREQ_1_B),
+                                  display_packet_read(packet, RIGHT_FREQ_1_C),
+                                  display_packet_read(packet, RIGHT_FREQ_1_D),
+                                  display_packet_read(packet, RIGHT_FREQ_1_E),
+                                  display_packet_read(packet, RIGHT_FREQ_1_F),
+                                  display_packet_read(packet, RIGHT_FREQ_1_G),
+                                  display_packet_read(packet, RIGHT_FREQ_1_H),
+                                  display_packet_read(packet, RIGHT_FREQ_1_I),
+                                  display_packet_read(packet, RIGHT_FREQ_1_J),
+                                  display_packet_read(packet, RIGHT_FREQ_1_K),
+                                  display_packet_read(packet, RIGHT_FREQ_1_L),
+                                  display_packet_read(packet, RIGHT_FREQ_1_M)
+                ),
+                decode_13_segment(display_packet_read(packet, RIGHT_FREQ_2_A),
+                                  display_packet_read(packet, RIGHT_FREQ_2_B),
+                                  display_packet_read(packet, RIGHT_FREQ_2_C),
+                                  display_packet_read(packet, RIGHT_FREQ_2_D),
+                                  display_packet_read(packet, RIGHT_FREQ_2_E),
+                                  display_packet_read(packet, RIGHT_FREQ_2_F),
+                                  display_packet_read(packet, RIGHT_FREQ_2_G),
+                                  display_packet_read(packet, RIGHT_FREQ_2_H),
+                                  display_packet_read(packet, RIGHT_FREQ_2_I),
+                                  display_packet_read(packet, RIGHT_FREQ_2_J),
+                                  display_packet_read(packet, RIGHT_FREQ_2_K),
+                                  display_packet_read(packet, RIGHT_FREQ_2_L),
+                                  display_packet_read(packet, RIGHT_FREQ_2_M)
+                ),
+                decode_13_segment(display_packet_read(packet, RIGHT_FREQ_3_A),
+                                  display_packet_read(packet, RIGHT_FREQ_3_B),
+                                  display_packet_read(packet, RIGHT_FREQ_3_C),
+                                  display_packet_read(packet, RIGHT_FREQ_3_D),
+                                  display_packet_read(packet, RIGHT_FREQ_3_E),
+                                  display_packet_read(packet, RIGHT_FREQ_3_F),
+                                  display_packet_read(packet, RIGHT_FREQ_3_G),
+                                  display_packet_read(packet, RIGHT_FREQ_3_H),
+                                  display_packet_read(packet, RIGHT_FREQ_3_I),
+                                  display_packet_read(packet, RIGHT_FREQ_3_J),
+                                  display_packet_read(packet, RIGHT_FREQ_3_K),
+                                  display_packet_read(packet, RIGHT_FREQ_3_L),
+                                  display_packet_read(packet, RIGHT_FREQ_3_M)
+                ),
+                decode_13_segment(display_packet_read(packet, RIGHT_FREQ_4_A),
+                                  display_packet_read(packet, RIGHT_FREQ_4_B),
+                                  display_packet_read(packet, RIGHT_FREQ_4_C),
+                                  display_packet_read(packet, RIGHT_FREQ_4_D),
+                                  display_packet_read(packet, RIGHT_FREQ_4_E),
+                                  display_packet_read(packet, RIGHT_FREQ_4_F),
+                                  display_packet_read(packet, RIGHT_FREQ_4_G),
+                                  display_packet_read(packet, RIGHT_FREQ_4_H),
+                                  display_packet_read(packet, RIGHT_FREQ_4_I),
+                                  display_packet_read(packet, RIGHT_FREQ_4_J),
+                                  display_packet_read(packet, RIGHT_FREQ_4_K),
+                                  display_packet_read(packet, RIGHT_FREQ_4_L),
+                                  display_packet_read(packet, RIGHT_FREQ_4_M)
+                ),
+                decode_13_segment(display_packet_read(packet, RIGHT_FREQ_5_A),
+                                  display_packet_read(packet, RIGHT_FREQ_5_B),
+                                  display_packet_read(packet, RIGHT_FREQ_5_C),
+                                  display_packet_read(packet, RIGHT_FREQ_5_D),
+                                  display_packet_read(packet, RIGHT_FREQ_5_E),
+                                  display_packet_read(packet, RIGHT_FREQ_5_F),
+                                  display_packet_read(packet, RIGHT_FREQ_5_G),
+                                  display_packet_read(packet, RIGHT_FREQ_5_H),
+                                  display_packet_read(packet, RIGHT_FREQ_5_I),
+                                  display_packet_read(packet, RIGHT_FREQ_5_J),
+                                  display_packet_read(packet, RIGHT_FREQ_5_K),
+                                  display_packet_read(packet, RIGHT_FREQ_5_L),
+                                  display_packet_read(packet, RIGHT_FREQ_5_M)
+                ),
+                decode_13_segment(display_packet_read(packet, RIGHT_FREQ_6_A),
+                                  display_packet_read(packet, RIGHT_FREQ_6_B),
+                                  display_packet_read(packet, RIGHT_FREQ_6_C),
+                                  display_packet_read(packet, RIGHT_FREQ_6_D),
+                                  display_packet_read(packet, RIGHT_FREQ_6_E),
+                                  display_packet_read(packet, RIGHT_FREQ_6_F),
+                                  display_packet_read(packet, RIGHT_FREQ_6_G),
+                                  display_packet_read(packet, RIGHT_FREQ_6_H),
+                                  display_packet_read(packet, RIGHT_FREQ_6_I),
+                                  display_packet_read(packet, RIGHT_FREQ_6_J),
+                                  display_packet_read(packet, RIGHT_FREQ_6_K),
+                                  display_packet_read(packet, RIGHT_FREQ_6_L),
+                                  display_packet_read(packet, RIGHT_FREQ_6_M)
+                )
+        };
+
+        //add the ints together in the correct postion going up
         int multiplier  = 10;
-        int total = 0;
+        int left_total = 0;
+        int right_total = 0;
         for (int i = 5; i >= 0; i--) {
-                if (digits[i] == -1) {
+                if (left_digits[i] == -1 || right_digits[i] == -1) {
                         //abort if we never decoded the number
                         return 1;
                 }
-                total += digits[i] * multiplier;
+                left_total += left_digits[i] * multiplier;
+                right_total += right_digits[i] * multiplier;
                 multiplier *= 10;
         }
 
         //the last digit caan only show 0 or 5 so it represented at 1 bit
         if (display_packet_read(packet, LEFT_FREQ_7)) {
-                total += 5;
+                left_total += 5;
+        }
+        if (display_packet_read(packet, RIGHT_FREQ_7)) {
+                right_total += 5;
         }
 
-        state->left.frequency = total;
+        state->left.frequency = left_total;
+        state->right.frequency = right_total;
 
         return 0;
 }

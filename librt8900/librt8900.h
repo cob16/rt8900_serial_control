@@ -5,12 +5,19 @@
 #ifndef RT8900_SERIAL_CONTROL_API_H
 #define RT8900_SERIAL_CONTROL_API_H
 
-#define VALID_POWER_LEVEL(num) ((num) == POWER_LOW || (num) == POWER_MEDIUM_FUZZY || (num) == POWER_HIGH)
-
 #include "log.h"
 #include "serial.h"
 #include "control_packet.h"
 #include "display_packet.h"
+
+#define VALID_POWER_LEVEL(num) ((num) == POWER_LOW || (num) == POWER_MEDIUM_FUZZY || (num) == POWER_HIGH)
+
+struct range_KHz {
+    const bool tx_allowed;
+    const char *name;
+    const int low;
+    const int high;
+};
 
 struct control_packet_sender_config {
     bool lazy_sending;

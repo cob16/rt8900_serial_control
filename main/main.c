@@ -152,7 +152,7 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
         struct radio_state *current_state = malloc(sizeof(*current_state));
         DISPLAY_PACKET packet;
 
-        get_display_packet(config, &packet);
+        get_display_packet(config, packet);
 
         switch (num_args){
         case 0:
@@ -163,7 +163,7 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                         printf("%sExiting%s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
                         return 0;
                 } else if (strcmp(cmd[0], "b") == 0){
-                        read_state_from_packet(&packet, current_state);
+                        read_busy(packet, current_state);
 
                         char* lbusy = (current_state->left.busy ? "Busy" : "Not Busy");
                         char* lmain = (is_main(current_state, &(current_state->left)) ? " - Main" : "");
@@ -173,13 +173,13 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
 
                         printf("Left  radio -> %s%s\nRight radio -> %s%s\n", lbusy, lmain, rbusy, rmain);
                 } else if (strcmp(cmd[0], "f") == 0){
-                        read_frequency(&packet, current_state);
+                        read_frequency(packet, current_state);
 
                         printf("Left  Frequency -> %d\n", current_state->left.frequency);
                         printf("Right Frequency -> %d\n", current_state->right.frequency);
 
                 }else if (strcmp(cmd[0], "p") == 0) {
-                        read_power_fuzzy(&packet, current_state);
+                        read_power_fuzzy(packet, current_state);
 
                         printf("Left  power -> %d\n", current_state->left.power_level);
                         printf("Right power -> %d\n", current_state->right.power_level);
@@ -195,8 +195,8 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                         printf("%s Setting frequency -> %d %s\n", ANSI_COLOR_GREEN, left_op, ANSI_COLOR_RESET);
                         set_frequency(config, base_packet, left_op);
                 } else if (strcmp(cmd[0], "M") == 0) {
+                                read_busy(packet, current_state);
                         if (strcmp(cmd[1], "l") == 0) {
-                                read_state_from_packet(&packet, current_state);
                                 if (!is_main(current_state, &(current_state->left))) {
                                      set_main_radio(config, base_packet, RADIO_LEFT);
                                 }
