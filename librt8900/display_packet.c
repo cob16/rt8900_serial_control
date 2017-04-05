@@ -68,31 +68,29 @@ void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state)
         }
 }
 
-//todo this
 //truth table for a 13 segment display
 /*      A       B       C       D       E       F       G       H       I       J       K       L       M       hex
  * 0    1	1	1	1	1	1	0	0	1	0	1	1	1       1F97
  * 1    1	0	1	0	0	0	0	0	0	0	0	0	0       1400
  * 2    0	1	1	0	1	1	0	0	1	0	0	1	0       D92
- * 3    1       1       1       0       1       1       0       0       1       0       0       0       0
- * 4    1       1       1       0       0       1       0       0       0       0       0       0       1
- * 5
- * 6
- * 7
- * 8
- * 9
- * macros from truth table */
-//todo convert to hex else we are stuck to gcc
-#define THIRTEEN_SEG_0 0b1011100010111
-#define THIRTEEN_SEG_1 0b1010000000000
-#define THIRTEEN_SEG_2 0b0110110010010
-#define THIRTEEN_SEG_3 0b1110110010000
-#define THIRTEEN_SEG_4 0b1110010000001
-#define THIRTEEN_SEG_5 0b1100110010001
-#define THIRTEEN_SEG_6 0b1100110010011
-#define THIRTEEN_SEG_7 0b1010100000000
-#define THIRTEEN_SEG_8 0b1110110010011
-#define THIRTEEN_SEG_9 0b1110110010001
+ * 3    1       1       1       0       1       1       0       0       1       0       0       0       0       1717
+ * 4    1       1       1       0       0       1       0       0       0       0       0       0       1       1C81
+ * 5    1       1       0       0       1       1       0       0       1       0       0       0       1       1991
+ * 6    1       1       0       0       1       1       0       0       1       0       0       1       1
+ * 7    1       0       1       0       1       0       0       0       0       0       0       0       0
+ * 8    1       1       1       0       1       1       0       0       1       0       0       1       1
+ * 9    1       1       1       0       1       1       0       0       1       0       0       0       1
+ * macros derived from truth table */
+#define THIRTEEN_SEG_0 0x1717
+#define THIRTEEN_SEG_1 0x1400
+#define THIRTEEN_SEG_2 0x0d92
+#define THIRTEEN_SEG_3 0x1d90
+#define THIRTEEN_SEG_4 0x1c81
+#define THIRTEEN_SEG_5 0x1991
+#define THIRTEEN_SEG_6 0x1993
+#define THIRTEEN_SEG_7 0x1500
+#define THIRTEEN_SEG_8 0x1d93
+#define THIRTEEN_SEG_9 0x1d91
 
 ///Takes a bitfireld and matches to knowen numbers an char of bits (ordered as described above)
 /// @returns 0-9 and -1 on error
@@ -166,9 +164,12 @@ int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmask
         return (packet[byte].raw >> bit) & 0x80 != 0;
 };
 
+/// Writes the frequency to the state packet
 int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
 {
-        //get and decode all the bits
+        /* Here we get all the bits that make up the frequency displays and decode them.
+         * I am banking on display_packet_read getting in-lined by the compiler
+         * */
         int left_digits[6] = {
                 decode_13_segment(display_packet_read(packet, LEFT_FREQ_1_A),
                                   display_packet_read(packet, LEFT_FREQ_1_B),
@@ -343,7 +344,8 @@ int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
                 )
         };
 
-        //add the ints together in the correct postion going up
+        /* Add all the ints in each array together into one number, in correct position (going up)
+         * we need this so that the number is in the correct place int the integer*/
         int multiplier  = 10;
         int left_total = 0;
         int right_total = 0;
@@ -357,7 +359,7 @@ int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
                 multiplier *= 10;
         }
 
-        //the last digit caan only show 0 or 5 so it represented at 1 bit
+        // The last digit can only show 0 or 5 so is represented as 1 bit
         if (display_packet_read(packet, LEFT_FREQ_7)) {
                 left_total += 5;
         }
