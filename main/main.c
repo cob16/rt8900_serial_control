@@ -271,6 +271,7 @@ int main(int argc, char **argv)
 {
         //Create our config
         SERIAL_CFG c = {
+                .shutdown_on_timeout = true,
                 .send.lazy_sending = true,
                 .send.dtr_pin_for_on = false,
         };

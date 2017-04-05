@@ -37,6 +37,7 @@ struct display_packet_reciver_config {
 typedef struct {
     char *serial_path;
     int serial_fd;
+    bool shutdown_on_timeout;
 
     struct control_packet_sender_config send;
     struct display_packet_reciver_config receive;

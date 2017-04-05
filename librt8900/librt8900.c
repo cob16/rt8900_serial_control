@@ -203,17 +203,18 @@ void* receive_display_packets(void *c)
                 timeout.tv_usec = 0;
 
                 // select wil return false if the timeout has been reached
-                if (select(config->serial_fd + 1, &read_fds, &write_fds, &except_fds, &timeout) == 1)
-                {
+                if (select(config->serial_fd + 1, &read_fds, &write_fds, &except_fds, &timeout) == 1) {
                         pthread_mutex_lock(&(config->receive.raw_packet_lock));
                         read(config->serial_fd, &(config->receive.latest_raw_packet), DISPLAY_PACKET_SIZE);
                         pthread_mutex_unlock(&(config->receive.raw_packet_lock));
                         config->receive.radio_seen = true;
                 } else {
                         //Abort
-                        log_msg(RT8900_FATAL, "NO DATA RECEIVIED FROM RADIO !\n");
-                        config->send.keep_alive = false;
-                        config->receive.keep_alive = false;
+                        log_msg(RT8900_FATAL, "NO DATA RECEIVED FROM RADIO !\n");
+                        if (config->shutdown_on_timeout == true) {
+                                log_msg(RT8900_FATAL, "NO DATA RECEIVED and shutdown_on_timeout is true!\n");
+                                shutdown_threads(config);
+                        }
                 }
         }
 

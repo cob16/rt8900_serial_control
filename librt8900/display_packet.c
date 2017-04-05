@@ -26,8 +26,8 @@ void insert_shifted_packet(DISPLAY_PACKET packet, unsigned char buffer[], size_t
 /// Gets busy state from display_packet
 void read_busy(DISPLAY_PACKET packet, struct radio_state *state)
 {
-        state->left.busy  = display_packet_read(packet, LEFT_BUISY);
-        state->right.busy = display_packet_read(packet, RIGHT_BUISY);
+        state->left.busy  = display_packet_read(packet, LEFT_BUSY);
+        state->right.busy = display_packet_read(packet, RIGHT_BUSY);
 }
 
 /*! Sets the main correct pointer to the correct radio,
@@ -98,7 +98,7 @@ void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state)
 int segment_to_int(int segment_bitfield)
 {
         switch (segment_bitfield) {
-        case 0: //left digets that are 0 are not showen
+        case 0: //left digits that are 0 are not shown
         case THIRTEEN_SEG_0:
                 return 0;
         case THIRTEEN_SEG_1:
@@ -144,12 +144,12 @@ int decode_13_segment(int first_segment, ...)
         }
         va_end(ap);
 
-        int diget = segment_to_int(bit_field);
-        log_msg(RT8900_TRACE, " -> %d\n", diget);
-        if (diget == -1) {
+        int digit = segment_to_int(bit_field);
+        log_msg(RT8900_TRACE, " -> %d\n", digit);
+        if (digit == -1) {
                 log_msg(RT8900_ERROR, "UNKNOWN NUMBER\n");
         }
-        return diget;
+        return digit;
 }
 
 int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmasks bit_number)
@@ -377,7 +377,7 @@ int is_main(struct radio_state *radio, struct radio_state_sides *side)
         return (radio->main == side);
 }
 
-/// Calls all packet read fuctions
+/// Calls all packet read functions
 void read_packet_state(DISPLAY_PACKET packet, struct radio_state *state) {
         read_power_fuzzy(packet, state);
         read_frequency(packet, state);

@@ -127,14 +127,14 @@ TEST_F(TestDisplayPacketReaders, test_read_busy)
         EXPECT_EQ(state.left.busy, 1);
         EXPECT_EQ(state.right.busy, 1);
 
-        EXPECT_EQ(display_packet_read(packet, LEFT_BUISY), 1);
-        EXPECT_EQ(display_packet_read(packet, RIGHT_BUISY), 1);
+        EXPECT_EQ(display_packet_read(packet, LEFT_BUSY), 1);
+        EXPECT_EQ(display_packet_read(packet, RIGHT_BUSY), 1);
 }
 
 TEST_F(TestDisplayPacketReaders, test_packet_read)
 {
-        EXPECT_EQ(display_packet_read(packet, LEFT_BUISY), 1);
-        EXPECT_EQ(display_packet_read(packet, RIGHT_BUISY), 1);
+        EXPECT_EQ(display_packet_read(packet, LEFT_BUSY), 1);
+        EXPECT_EQ(display_packet_read(packet, RIGHT_BUSY), 1);
 }
 
 TEST_F(TestDisplayPacketReaders, test_read_14_seg)

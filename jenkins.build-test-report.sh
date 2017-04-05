@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-##partial credit goes to new-kid on github
+##partial credit goes to new-kid on Github
 
-## requires install of cmake cppcheck build-essentials
+## requires install of cmake Cppcheck build-essentials
 
 cat << EndOfMessage
 ##########################

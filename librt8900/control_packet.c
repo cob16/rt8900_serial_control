@@ -1,5 +1,5 @@
 //
-// Created by cormac on 01/03/17.
+// Created by Cormac on 01/03/17.
 //
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,7 +164,7 @@ void ptt(struct control_packet *base_packet, int ptt)
 {
         switch (ptt){
         case 0:
-                log_msg(RT8900_INFO, "stoping transmission\n");
+                log_msg(RT8900_INFO, "Stopping transmission\n");
                 base_packet->ptt.section.data = DATA_MAX_NUM;
                 break;
         case 1:

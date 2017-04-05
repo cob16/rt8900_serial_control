@@ -25,12 +25,12 @@ enum display_packet_bitmasks {
         BD8600         = BIT_LOCATED_AT(4, 0),
 
         //Left side
-        LEFT_BUISY = BIT_LOCATED_AT(12,2),
+        LEFT_BUSY = BIT_LOCATED_AT(12,2),
         LEFT_MAIN  = BIT_LOCATED_AT(36, 2),
         LEFT_TX    = BIT_LOCATED_AT(36, 3),
 
         LEFT_MINUS = BIT_LOCATED_AT(36, 5),
-        LEFT_PLUSS = BIT_LOCATED_AT(36, 4),
+        LEFT_PLUS = BIT_LOCATED_AT(36, 4),
         LEFT_DCS   = BIT_LOCATED_AT(9, 3),
         LEFT_DEC   = BIT_LOCATED_AT(37, 0),
         LEFT_ENC   = BIT_LOCATED_AT(36, 6),
@@ -127,15 +127,15 @@ enum display_packet_bitmasks {
 
         LEFT_FREQ_7   = 0,
 
-        LEFT_FREQ_PEROID = BIT_LOCATED_AT(0, 3),
+        LEFT_FREQ_PERIOD = BIT_LOCATED_AT(0, 3),
 
         //right side
-        RIGHT_BUISY = BIT_LOCATED_AT(28,2),
+        RIGHT_BUSY = BIT_LOCATED_AT(28,2),
         RIGHT_MAIN  = BIT_LOCATED_AT(32, 0),
         RIGHT_TX    = BIT_LOCATED_AT(32, 1),
 
         RIGHT_MINUS = BIT_LOCATED_AT(32, 3),
-        RIGHT_PLUSS = BIT_LOCATED_AT(32, 2),
+        RIGHT_PLUS = BIT_LOCATED_AT(32, 2),
         RIGHT_DCS   = BIT_LOCATED_AT(22, 2),
         RIGHT_DEC   = BIT_LOCATED_AT(32, 5),
         RIGHT_ENC   = BIT_LOCATED_AT(32, 4),
@@ -231,7 +231,7 @@ enum display_packet_bitmasks {
         RIGHT_FREQ_6_M = BIT_LOCATED_AT(18, 5),
 
         RIGHT_FREQ_7 = BIT_LOCATED_AT(16, 0),
-        RIGHT_FREQ_PEROID = BIT_LOCATED_AT(16, 3),
+        RIGHT_FREQ_PERIOD = BIT_LOCATED_AT(16, 3),
 };
 
 typedef PACKET_BYTE DISPLAY_PACKET[DISPLAY_PACKET_SIZE];
