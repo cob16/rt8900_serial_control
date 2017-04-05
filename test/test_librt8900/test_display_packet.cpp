@@ -49,27 +49,57 @@ TEST(TestDisplayPacket, test_get_range)
 {
         const struct range_KHz *range;
 
+        // out of range
         range = get_range(0);
         EXPECT_TRUE(range == NULL);
 
         range = get_range(9999999);
         EXPECT_TRUE(range == NULL);
 
+        //low edge range
+        range = get_range(145000);
+        ASSERT_FALSE(range == NULL);
+        EXPECT_EQ(range->tx_allowed, true);
+        EXPECT_STREQ(range->name, "2m Tx l");
+
+        //in range
         range = get_range(145555);
         ASSERT_FALSE(range == NULL);
         EXPECT_EQ(range->tx_allowed, true);
         EXPECT_STREQ(range->name, "2m Tx l");
 
-        range = get_range(108001);
+        //high edge range
+        range = get_range(146000);
+        ASSERT_FALSE(range == NULL);
+        EXPECT_EQ(range->tx_allowed, true);
+        EXPECT_STREQ(range->name, "2m Tx l");
+
+        //same for rx only ranges
+        range = get_range(980000);
+        ASSERT_FALSE(range == NULL);
+        EXPECT_EQ(range->tx_allowed, false);
+        EXPECT_STREQ(range->name, "70cm");
+
+        range = get_range(108000);
         ASSERT_FALSE(range == NULL);
         EXPECT_EQ(range->tx_allowed, false);
         EXPECT_STREQ(range->name, "2m RX");
 }
 
-//TEST(TestDisplayPacket, test_shift_array)
-//{
-//        out_of_operational_range(0);
-//}
+TEST(TestDisplayPacket, test_out_of_operational_range)
+{
+        //out of range
+        EXPECT_EQ(out_of_operational_range(0), 0);
+        EXPECT_EQ(out_of_operational_range(9999999), 0);
+
+        //rx only ranges
+        EXPECT_EQ(out_of_operational_range(980000), 1);
+        EXPECT_EQ(out_of_operational_range(108000), 1);
+
+        //tx and rx ranges
+        EXPECT_EQ(out_of_operational_range(145000), 2);
+        EXPECT_EQ(out_of_operational_range(146000), 2);
+}
 
 void TestDisplayPacketReaders::SetUp()
 {

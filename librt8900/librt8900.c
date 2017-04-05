@@ -18,8 +18,8 @@ const struct range_KHz AVALABLE_TX_BANDS[NUMBER_TX_BANDS] = {
 };
 
 #define NUMBER_RX_BANDS 2
-const struct range_KHz AVALABLE_RX_BANDS[NUMBER_RX_BANDS] = {
-        {false, "2m RX", 108000, 18000},
+const struct range_KHz AVAILABLE_RX_BANDS[NUMBER_RX_BANDS] = {
+        {false, "2m RX", 108000, 180000},
         {false, "70cm",  700000, 985000},
 };
 
@@ -33,8 +33,8 @@ const struct range_KHz * get_range(int frequency_khz)
                 }
         }
         for (i = 0; i < NUMBER_RX_BANDS; i++){
-                if (AVALABLE_RX_BANDS[i].low <= frequency_khz && frequency_khz <= AVALABLE_RX_BANDS[i].high) {
-                        return &AVALABLE_RX_BANDS[i];
+                if (AVAILABLE_RX_BANDS[i].low <= frequency_khz && frequency_khz <= AVAILABLE_RX_BANDS[i].high) {
+                        return &AVAILABLE_RX_BANDS[i];
                 }
         }
 
@@ -46,9 +46,9 @@ int out_of_operational_range(int frequency_khz)
         const struct range_KHz *range = get_range(frequency_khz);
         if (range != NULL) {
                 if (range->tx_allowed) {
-                        return 1;
-                } else {
                         return 2;
+                } else {
+                        return 1;
                 }
         }
         return 0;
