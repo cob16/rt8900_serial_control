@@ -41,7 +41,7 @@ const struct range_KHz * get_range(int frequency_khz)
         return NULL;
 }
 
-int out_of_oerrational_range(int frequency_khz)
+int out_of_operational_range(int frequency_khz)
 {
         const struct range_KHz *range = get_range(frequency_khz);
         if (range != NULL) {

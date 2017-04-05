@@ -43,7 +43,9 @@ typedef struct {
 
 } SERIAL_CFG;
 
-//internal functions
+//internal helper functions
+const struct range_KHz * get_range(int frequency_khz);
+int out_of_operational_range(int frequency_khz);
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
 void* send_control_packets(void *c);
 void* receive_display_packets(void *c);

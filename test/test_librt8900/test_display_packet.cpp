@@ -45,6 +45,32 @@ TEST(TestDisplayPacket, test_shift_array)
         EXPECT_EQ(ordered_packet[9].raw, messy_packet[4]);
 }
 
+TEST(TestDisplayPacket, test_get_range)
+{
+        const struct range_KHz *range;
+
+        range = get_range(0);
+        EXPECT_TRUE(range == NULL);
+
+        range = get_range(9999999);
+        EXPECT_TRUE(range == NULL);
+
+        range = get_range(145555);
+        ASSERT_FALSE(range == NULL);
+        EXPECT_EQ(range->tx_allowed, true);
+        EXPECT_STREQ(range->name, "2m Tx l");
+
+        range = get_range(108001);
+        ASSERT_FALSE(range == NULL);
+        EXPECT_EQ(range->tx_allowed, false);
+        EXPECT_STREQ(range->name, "2m RX");
+}
+
+//TEST(TestDisplayPacket, test_shift_array)
+//{
+//        out_of_operational_range(0);
+//}
+
 void TestDisplayPacketReaders::SetUp()
 {
         packet[0].section.check_num |= 1;
