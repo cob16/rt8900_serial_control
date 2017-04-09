@@ -48,11 +48,12 @@ typedef struct {
 void* send_control_packets(void *c);
 void* receive_display_packets(void *c);
 
-// helper functions
+//valid frequency checks
 const struct range_KHz * get_range(int frequency_khz);
-int out_of_operational_range(int frequency_khz);
+int is_operational_range(int frequency_khz);
+
+//helper functions
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
-int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet);
 int check_radio_rx(SERIAL_CFG *config);
 void wait_to_send(const SERIAL_CFG *cfg);
 void shutdown_threads(SERIAL_CFG *cfg);
@@ -63,5 +64,10 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
 int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level);
 int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level);
 int set_power_button(SERIAL_CFG *cfg);
+
+//getters
+int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet);
+
+//check other header files for more functions
 
 #endif //RT8900_SERIAL_CONTROL_API_H

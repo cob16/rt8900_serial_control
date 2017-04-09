@@ -42,13 +42,14 @@ const struct range_KHz * get_range(int frequency_khz)
 }
 
 /*! returns 0 if invalid range, * or 1 if only rx allowed, * and 2 for all allowed */
-int out_of_operational_range(int frequency_khz)
+int is_operational_range(int frequency_khz)
 {
         const struct range_KHz *range = get_range(frequency_khz);
         if (range != NULL) {
                 if (range->tx_allowed) {
                         return 2;
                 } else {
+                        log_msg(RT8900_INFO, "Tx is not allowed on this frequency (%d) ", frequency_khz);
                         return 1;
                 }
         }
@@ -278,22 +279,22 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
  * They are then be added to the queue */
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
-        //get the number of digits
-        int num_digets = snprintf(NULL, 0, "%d", number);
-        if (num_digets > 6){
-                //this number
-                log_msg(RT8900_WARNING, "WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
+        if (!is_operational_range(number)) {
+                log_msg(RT8900_ERROR, "%d is not a frequency that can be set on this radio", number);
                 return 1;
         }
         log_msg(RT8900_INFO, "dialing %d\n", number);
 
+        //get the number of digits
+        int num_digits = snprintf(NULL, 0, "%d", number);
+
         //create a char array of the digits
-        char digits[num_digets];
-        snprintf(digits, num_digets + 1, "%d", number);
+        char digits[num_digits];
+        snprintf(digits, num_digits + 1, "%d", number);
 
         //We assume smaller numbers are missing front 0's so we dial them here
         int i;
-        for (i=0; i<(6 - num_digets); i++) {
+        for (i=0; i<(6 - num_digits); i++) {
                 maloc_control_packet(dialnum);
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_keypad_button(dialnum, button_from_int(0));
@@ -302,8 +303,8 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
                 log_msg(RT8900_DEBUG, "dialing 0\n");
         }
 
-        //dial the seletced buttons
-        for (i=0; i<num_digets; i++){
+        //dial the remaining numbers
+        for (i=0; i<num_digits; i++){
                 maloc_control_packet(dialnum);
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_keypad_button(dialnum, button_from_int(digits[i] - '0'));
