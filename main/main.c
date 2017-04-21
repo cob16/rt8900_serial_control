@@ -189,8 +189,12 @@ int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_pack
                 left_op = (int) strtoimax(cmd[1], NULL, 10);
                 if (strcmp(cmd[0], "F") == 0) {
                         left_op = (int) strtoimax(cmd[1], NULL, 10);
-                        printf("%s Setting frequency -> %d %s\n", ANSI_COLOR_GREEN, left_op, ANSI_COLOR_RESET);
-                        set_frequency(config, base_packet, left_op);
+                        if (is_operational_range(left_op)) {
+                                printf("%s Setting frequency -> %d %s\n", ANSI_COLOR_GREEN, left_op, ANSI_COLOR_RESET);
+                                set_frequency(config, base_packet, left_op);
+                        } else {
+                                printf("%s%d is not a valid frequency!%s\n", ANSI_COLOR_YELLOW, left_op, ANSI_COLOR_RESET);
+                        }
                 } else if (strcmp(cmd[0], "M") == 0) {
                                 read_busy(packet, current_state);
                         if (strcmp(cmd[1], "l") == 0) {
