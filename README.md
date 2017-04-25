@@ -27,7 +27,7 @@ Report bugs to <cormac.brady@hotmai.co.uk>.
 ##Build and Install
 For ubuntu but can be adapted for other distribution's and OS
 ```bash
-sudo apt install cmake git build-essential
+sudo apt install libreadline-dev cmake git build-essential 
 git clone <this repo url> rt8900c
 cd rt8900c
 cmake .

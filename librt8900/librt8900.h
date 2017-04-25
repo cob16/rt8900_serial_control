@@ -60,6 +60,7 @@ int in_freq_range(int frequency_khz);
 
 //helper functions
 int get_frequency(struct radio_side *radio);
+bool current_freq_valid(struct radio_side *radio);
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
 int check_radio_rx(SERIAL_CFG *config);
 void wait_to_send(const SERIAL_CFG *cfg);

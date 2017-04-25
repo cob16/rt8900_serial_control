@@ -5,15 +5,6 @@
 #ifndef RT8900_SERIAL_CONTROL_MAIN_H
 #define RT8900_SERIAL_CONTROL_MAIN_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <argp.h>
-#include <pthread.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/socket.h>
-
 #include "librt8900.h"
 
 #define PROMPT_BUFFER_SIZE 32

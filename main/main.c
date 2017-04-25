@@ -3,12 +3,15 @@
 //
 #include "main.h"
 
+#include <inttypes.h>
+#include <argp.h>
 #include <pthread.h>
-#include <packet.h>
+#include <signal.h>
+#include <unistd.h>
 
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
-const char *argp_program_bug_address = "<cormac.brady@hotmai.co.uk>";
+const char *argp_program_bug_address = "<cormac.brady@hotmail.co.uk>";
 static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Transceiver.";
 static char rt8900_args_doc[] = "<serial port path>";
 
@@ -28,9 +31,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         /* Get the input argument from argp_parse, which we
            know is a pointer to our arguments structure. */
         SERIAL_CFG *cfg = state->input;
-        int i;
-        switch (key)
-        {
+        switch (key) {
         case 991:
                 cfg->send.lazy_sending = arg ? true : false;
                 break;
@@ -70,7 +71,7 @@ void graceful_shutdown(int signal)
         if (g_conf != NULL) {
                 shutdown_threads(g_conf);
         }
-        /*  We close std so that our shell user prompt's
+        /*  We close stdin so that our shell user prompt's
          * get_char() call will stop blocking and return */
         fclose(stdin);
 }
