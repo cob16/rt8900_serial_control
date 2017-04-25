@@ -3,11 +3,15 @@
 //
 #include "main.h"
 
+#include <inttypes.h>
+#include <argp.h>
 #include <pthread.h>
+#include <signal.h>
+#include <unistd.h>
 
 //reference taken from https://www.gnu.org/software/libc/manual/html_node/Argp-Example-3.htmlf
 const char *argp_program_version = "0.0.1";
-const char *argp_program_bug_address = "<cormac.brady@hotmai.co.uk>";
+const char *argp_program_bug_address = "<cormac.brady@hotmail.co.uk>";
 static char rt8900_doc[] = "Provides serial control for the YAESU FT-8900R Transceiver.";
 static char rt8900_args_doc[] = "<serial port path>";
 
@@ -27,9 +31,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
         /* Get the input argument from argp_parse, which we
            know is a pointer to our arguments structure. */
         SERIAL_CFG *cfg = state->input;
-        int i;
-        switch (key)
-        {
+        switch (key) {
         case 991:
                 cfg->send.lazy_sending = arg ? true : false;
                 break;
@@ -67,14 +69,11 @@ void graceful_shutdown(int signal)
         //use strsignal(signal) to get the name from int if we want to add others latter
         log_msg(RT8900_INFO, "\nShutting down...\n");
         if (g_conf != NULL) {
-                g_conf->send.keep_alive = false;
-                g_conf->receive.keep_alive = false;
-                if (g_conf->serial_fd != 0) {
-                        tcflush(g_conf->serial_fd, TCIOFLUSH); //flush in/out buffers
-                        close(g_conf->serial_fd);
-                }
-                fclose(stdin); //we close std so that user prompt (get_char) will stop blocking
+                shutdown_threads(g_conf);
         }
+        /*  We close stdin so that our shell user prompt's
+         * get_char() call will stop blocking and return */
+        fclose(stdin);
 }
 
 void init_graceful_shutdown(SERIAL_CFG *c)
@@ -137,111 +136,293 @@ char **split_line_args(char *line)
 
 void print_invalid_command()
 {
-        printf("%s%s%s\n", ANSI_COLOR_YELLOW, "Invalid command", ANSI_COLOR_RESET);
+        printf("%s%s%s\n", ANSI_COLOR_YELLOW, "Invalid command! type help for a list of valid user_commands", ANSI_COLOR_RESET);
 }
 
-//TODO is ment to be a tempory prompt for devlopment. even so it is a real mess and needs refactor!
-int run_command(char **cmd, SERIAL_CFG *config, struct control_packet *base_packet)
+/* shell implementation inspired by (modified and added to my cormac brady)
+ * https://github.com/brenns10/lsh/blob/407938170e8b40d231781576e05282a41634848c/src/main.c */
+
+struct cmd{
+    //pointer to function wiht this signature
+    int (*cmd_pointer)(char **args, SERIAL_CFG *config, struct control_packet *base_packet);
+    char *keyword;
+    char *discription;
+    char *usage;
+    int num_args;
+};
+ /* first element the keyword to call the functoon
+ * the second is the number of arguments required
+ * */
+
+struct cmd user_commands[] = {
+        {&cmd_help, "help", "Prints this help text", 0, 0},
+        {&cmd_exit, "exit" , "shutdown the application", 0, 0},
+        {&cmd_get_frequency, "f" , "Shows the currently set frequency's", 0, 0},
+        {&cmd_get_power, "p" , "Shows the current power", 0, 0},
+        {&cmd_get_busy, "b" , "Shows if radios are reporting busy", 0, 0},
+        {&cmd_get_main, "m" , "Shows which radio is main", 0, 0},
+        {&cmd_get_ptt, "t" , "Shows if the radio is currently transiting", 0 , 0},
+
+        {&cmd_set_frequency, "F" , "Sets the frequency of the currently main radio", "[kHz]", 1},
+        {&cmd_set_main, "M" , "Sets the given side to be the main radio", "[l or r]", 1},
+        {&cmd_set_ptt, "T" , "Toggles transmit", "[1 to transmit or 0 to stop]", 1},
+        {&cmd_set_power, "P" , "Set transmission power of both radios 1 == low, 2 == medium, 5 = high", "[left power] [right power]", 2},
+        {&cmd_set_volume, "V" , "Set radio speaker volumes", "[left vol] [right vol]", 2},
+        {&cmd_set_squelch, "S" , "Set radio squelch levels volumes between 0 (full) and 127 (no squelch)", "[left sql] [right sql]", 2},
+};
+
+
+struct radio_state *getState(const SERIAL_CFG *config);
+
+int num_of_avalable_commands()
 {
+        return sizeof(user_commands) / sizeof(struct cmd);
+}
+
+void print_invalid_arguments(int given, struct cmd *cmd)
+{
+        printf("%s Invalid number of arguments given (%d). '%s' expects %d arguments %s\n",
+               ANSI_COLOR_YELLOW,
+               given,
+               cmd->keyword,
+               cmd->num_args,
+               ANSI_COLOR_RESET
+        );
+}
+
+int run_cmd(SERIAL_CFG *config, struct control_packet *base_packet, char **args)
+{
+
+        if (args[0] == NULL) { //empty line was entered.
+                return 1;
+        }
+
         int num_args = 0;
-        for (num_args = 0; cmd[num_args] != NULL; num_args++);
+        for (num_args = 0; args[num_args] != NULL; num_args++);
 
-        int left_op;
-        int right_op;
+        int i;
+        for (i = 0; i < num_of_avalable_commands(); i++) {
+                //command matches
+                if (strcmp(args[0], user_commands[i].keyword) == 0) {
+                        //has the right number of args (+1 for the cmd name)
+                        if ((user_commands[i].num_args + 1) == num_args) {
 
+                                return (*(user_commands[i].cmd_pointer))(args, config, base_packet);
+                        } else {
+                                print_invalid_arguments((num_args - 1), &(user_commands[i]));
+                                return 1;
+                        }
+                }
+        }
+
+        print_invalid_command();
+        return 1; //invalid command
+}
+
+int cmd_help(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        puts("The following user_commands are available to use:");
+        int i;
+        for (i = 0; i < num_of_avalable_commands(); i++) {
+                printf("  %s %s -- %s\n\n",
+                       user_commands[i].keyword,
+                       user_commands[i].usage == NULL ?  "" : user_commands[i].usage,
+                       user_commands[i].discription
+                );
+        }
+
+        return 1;
+}
+
+int cmd_exit(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        printf("%sShutting down.. %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+        return 0;
+}
+
+int cmd_get_frequency(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
         struct radio_state *current_state = malloc(sizeof(*current_state));
-        struct display_packet packet;
+        DISPLAY_PACKET display_packet;
+        get_display_packet(config, display_packet);
+        read_frequency(display_packet, current_state);
 
-        get_display_packet(config, &packet);
+        printf("Left  Frequency -> %d\n", current_state->left.frequency);
+        printf("Right Frequency -> %d\n", current_state->right.frequency);
 
-        switch (num_args){
+        free(current_state);
+        return 1;
+};
+
+int cmd_set_frequency(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        int frequency = (int) strtoimax(args[1], NULL, 10);
+
+        if (in_freq_range(frequency) != INVALID_FREQUENCY) {
+                printf("%s Setting frequency -> %d %s\n", ANSI_COLOR_GREEN, frequency, ANSI_COLOR_RESET);
+                set_frequency(config, base_packet, frequency);
+        } else {
+                printf("%s%d is not a valid frequency for this radio.%s\n", ANSI_COLOR_YELLOW, frequency, ANSI_COLOR_RESET);
+        }
+        return 1;
+};
+
+int cmd_get_busy(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        struct radio_state *current_state = malloc(sizeof(*current_state));
+        DISPLAY_PACKET display_packet;
+        get_display_packet(config, display_packet);
+
+        read_busy(display_packet, current_state);
+
+        char* lbusy = (current_state->left.busy ? "Busy" : "Not Busy");
+        char* rbusy = (current_state->right.busy ? "Busy" : "Not Busy");
+
+        printf("Left  radio -> %s\nRight radio -> %s\n", lbusy, rbusy);
+
+        free(current_state);
+        return 1;
+};
+
+int cmd_get_main(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        struct radio_state *current_state = malloc(sizeof(*current_state));
+        DISPLAY_PACKET display_packet;
+        get_display_packet(config, display_packet);
+
+        read_main(display_packet, current_state);
+
+        char* lmain = (is_main(current_state, &(current_state->left)) ? "<- Main" : "");
+        char* rmain = (is_main(current_state, &(current_state->right)) ? "<- Main" : "");
+
+        printf("Left  radio %s\nRight radio %s\n", lmain, rmain);
+
+        free(current_state);
+        return 1;
+};
+
+int cmd_set_main(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        struct radio_state *current_state = malloc(sizeof(*current_state)); //freed by set_main_radio()
+        DISPLAY_PACKET display_packet;
+        get_display_packet(config, display_packet);
+        read_main(display_packet, current_state);
+
+        if (strcmp(args[1], "l") == 0) {
+                if (is_main(current_state, &(current_state->right))) {
+                        set_main_radio(config, base_packet, RADIO_LEFT);
+                }
+                printf("%s Setting Main radio to -> left %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+
+        } else if (strcmp(args[1], "r") == 0){
+                if (is_main(current_state, &(current_state->left))) {
+                        set_main_radio(config, base_packet, RADIO_RIGHT);
+                }
+                printf("%s Main radio set to -> right %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+        } else {
+                printf("%s use 'l' & 'r' to set left or right %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
+        }
+
+        return 1;
+}
+
+int cmd_get_power(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        struct radio_state *current_state = malloc(sizeof(*current_state));
+        DISPLAY_PACKET display_packet;
+        get_display_packet(config, display_packet);
+
+        read_power_fuzzy(display_packet, current_state);
+        printf("Left  power -> %d\n", current_state->left.power_level);
+        printf("Right power -> %d\n", current_state->right.power_level);
+
+        free(current_state);
+        return 1;
+};
+
+int cmd_get_ptt(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        printf("TRANSMITTING -> %s\n", (base_packet->ptt.section.data == 0)? "TRUE" : "FALSE");
+        return 1;
+}
+
+
+int cmd_set_ptt(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        struct radio_state *current_state = malloc(sizeof(*current_state));
+        DISPLAY_PACKET display_packet;
+        get_display_packet(config, display_packet);
+
+        read_main(display_packet, current_state);
+        read_frequency(display_packet, current_state);
+
+        if (current_state->main == NULL) {
+                log_msg(RT8900_ERROR, "Could not determine main radio");
+        }
+
+        int current_frequency = get_frequency(current_state->main);
+
+        if (in_freq_range(current_frequency) == VALID_FREQUENCY) {
+                ptt(base_packet, (int) strtoimax(args[1], NULL, 10));
+        } else {
+                printf("%sThe radio does not permit PTT at ths frequency %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
+        }
+
+        free(current_state);
+
+        return 1;
+}
+
+int cmd_set_power(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        struct radio_state *current_state = malloc(sizeof(*current_state));
+        DISPLAY_PACKET display_packet;
+        get_display_packet(config, display_packet);
+        read_frequency(display_packet, current_state);
+
+        switch (set_left_power_level(config, base_packet, (enum rt8900_power_level) (int) strtoimax(args[1], NULL, 10))) {
         case 0:
-                print_invalid_command();
+                printf("%s Set left power level %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
                 break;
         case 1:
-                if (strcmp(cmd[0], "exit") == 0) {
-                        printf("%sExiting%s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
-                        return 0;
-                } else if (strcmp(cmd[0], "b") == 0){
-                        read_state_from_packet(&packet, current_state);
-
-                        char* lbusy = (current_state->left.busy ? "Busy" : "Not Busy");
-                        char* lmain = (is_main(current_state, &(current_state->left)) ? " - Main" : "");
-
-                        char* rbusy = (current_state->right.busy ? "Busy" : "Not Busy");
-                        char* rmain = (is_main(current_state, &(current_state->right)) ? " - Main" : "");
-
-                        printf("Left  radio -> %s%s\nRight radio -> %s%s\n", lbusy, lmain, rbusy, rmain);
-                } else if (strcmp(cmd[0], "p") == 0) {
-                        read_power_fuzzy(&packet, current_state);
-
-                        printf("Left  power -> %d\n", current_state->left.power_level);
-                        printf("Right power -> %d\n", current_state->right.power_level);
-
-                } else {
-                        print_invalid_command();
-                }
+                printf("%s INVALID LEFT POWER LEVEL %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
                 break;
-        case 2:
-                left_op = (int) strtoimax(cmd[1], NULL, 10);
-                if (strcmp(cmd[0], "F") == 0) {
-                        left_op = (int) strtoimax(cmd[1], NULL, 10);
-                        printf("%s Setting frequency -> %d %s\n", ANSI_COLOR_GREEN, left_op, ANSI_COLOR_RESET);
-                        set_frequency(config, base_packet, left_op);
-                } else if (strcmp(cmd[0], "M") == 0) {
-                        if (strcmp(cmd[1], "l") == 0) {
-                                read_state_from_packet(&packet, current_state);
-                                if (!is_main(current_state, &(current_state->left))) {
-                                     set_main_radio(config, base_packet, RADIO_LEFT);
-                                }
-                                printf("%s Setting Main radio to -> left %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
-
-                        } else if (strcmp(cmd[1], "r") == 0){
-                                if (!is_main(current_state, &(current_state->right))) {
-                                       set_main_radio(config, base_packet, RADIO_RIGHT);
-                                }
-                                printf("%s Setting Main radio to -> right %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
-                        } else {
-                                print_invalid_command();
-                        }
-                } else if (strcmp(cmd[0], "T") == 0) {
-                        ptt(base_packet, left_op);
-                } else {
-                        print_invalid_command();
-                }
-                break;
-        case 3:
-                left_op = (int)strtoimax(cmd[1], NULL, 10);
-                right_op = (int)strtoimax(cmd[2], NULL, 10);
-                if (strcmp(cmd[0], "V") == 0) {
-                        printf("%s Setting volume -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
-                        set_volume(base_packet, left_op, right_op);
-
-                } else if (strcmp(cmd[0], "S") == 0){
-                        printf("%s Setting squelsh -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
-                        set_squelch(base_packet, left_op, right_op);
-                } else if (strcmp(cmd[0], "P") == 0){
-
-                        if (set_left_power_level(config, base_packet, (enum rt8900_power_level) left_op)) {
-                                printf("%s INVALID LEFT POWER LEVEL %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
-                        } else {
-                                printf("%s Set left power level %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
-                        }
-                        if (set_right_power_level(config, base_packet, (enum rt8900_power_level) right_op)) {
-                                printf("%s INVALID RIGHT POWER LEVEL %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
-                        } else {
-                                printf("%s Set right power level %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
-                        }
-
-                } else {
-                        print_invalid_command();
-                }
         default:
                 break;
         }
-        free(current_state);
-        current_state = NULL;
-        return  1;
+
+        switch (set_right_power_level(config, base_packet, (enum rt8900_power_level) (int) strtoimax(args[2], NULL, 10))) {
+        case 0:
+                printf("%s Set right power level %s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                break;
+        case 1:
+                printf("%s INVALID RIGHT POWER LEVEL %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
+                break;
+        default:
+                break;
+        }
+
+        return 1;
+}
+
+int cmd_set_volume(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        int left_op = (int)strtoimax(args[1], NULL, 10);
+        int right_op = (int)strtoimax(args[2], NULL, 10);
+        printf("%s Setting volume -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
+        set_volume(base_packet, left_op, right_op);
+
+        return 1;
+}
+
+int cmd_set_squelch(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        int left_op = (int)strtoimax(args[1], NULL, 10);
+        int right_op = (int)strtoimax(args[2], NULL, 10);
+        printf("%s Setting squelch -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
+        set_squelch(base_packet, left_op, right_op);
+
+        return 1;
 }
 
 void user_prompt(SERIAL_CFG *config, struct control_packet *base_packet)
@@ -254,7 +435,7 @@ void user_prompt(SERIAL_CFG *config, struct control_packet *base_packet)
                 line  = read_prompt_line();;
                 command_arr = split_line_args(line);
 
-                int dont_exit = run_command(command_arr, config, base_packet);
+                int dont_exit = run_cmd(config, base_packet, command_arr);
 
                 free(line);
                 free(command_arr);
@@ -268,6 +449,7 @@ int main(int argc, char **argv)
 {
         //Create our config
         SERIAL_CFG c = {
+                .shutdown_on_timeout = false,//todo make true
                 .send.lazy_sending = true,
                 .send.dtr_pin_for_on = false,
         };
@@ -287,14 +469,14 @@ int main(int argc, char **argv)
         pthread_create(&packet_sender_thread, NULL, send_control_packets, &c);
         pthread_barrier_wait(&wait_for_sender); //wait send thread to be ready
 
-        //Setup our initial packet that will be sent
+        //Setup our initial packet that will be sent (freed in graceful_shutdown)
         maloc_control_packet(start_packet);
         memcpy(start_packet, &control_packet_defaults ,sizeof(*start_packet));
         send_new_packet(&c, start_packet, PACKET_ONLY_SEND);
 
         pthread_create(&packet_receive_thread, NULL, receive_display_packets, &c);
 
-        //if the radio is not already on try to turn it on
+//        if the radio is not already on try to turn it on
         if (check_radio_rx(&c) == 0) {
 
                 if (c.send.dtr_pin_for_on == true) {
@@ -314,13 +496,14 @@ int main(int argc, char **argv)
         }
 
         if (check_radio_rx(&c) == 1) {
-                log_msg(RT8900_INFO, "SUCCESS!\n");
+                log_msg(RT8900_INFO, "Waiting for radio to boot...\n");
+                sleep(3);
                 user_prompt(&c, start_packet);
         }
 
 
         //get current state of radio
-        //struct display_packet *current_state = malloc(sizeof(struct display_packet));
+        //DISPLAY_PACKET *current_state = malloc(sizeof(DISPLAY_PACKET));
         //get_display_packet(&c, current_state);
 
 

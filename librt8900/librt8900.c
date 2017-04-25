@@ -9,7 +9,63 @@
 #include <pthread.h>
 #include <sys/ioctl.h>
 
-///adds a control_packet (pointer) to the send queue, should only be called once the queu h
+#define NUMBER_TX_BANDS 4
+const struct range_KHz AVALABLE_TX_BANDS[NUMBER_TX_BANDS] = {
+        {true, "10m"    , 28000, 29700},
+        {true, "6m"     , 50000, 54000},
+        {true, "2m Tx l", 144000, 146000},
+        {true, "2m Tx h", 340000, 440000},
+};
+
+#define NUMBER_RX_BANDS 2
+const struct range_KHz AVAILABLE_RX_BANDS[NUMBER_RX_BANDS] = {
+        {false, "2m RX", 108000, 180000},
+        {false, "70cm",  700000, 985000},
+};
+
+/// Gets the current frequency of the radio
+int get_frequency(struct radio_side *radio) {
+        /* frequency is represented as is always 7 digits, however the last digit
+         * is not permitted to be entered with the keypad so we do not use it here */
+        return radio->frequency / 10;
+}
+
+
+/*! Returns (struct range_KHz) if input is within that range. Else returns NULL
+ * Looks for tx&rx ranges first */
+const struct range_KHz * get_range(int frequency_khz)
+{
+        int i;
+        for (i = 0; i < NUMBER_TX_BANDS; i++){
+                if (AVALABLE_TX_BANDS[i].low <= frequency_khz && frequency_khz <= AVALABLE_TX_BANDS[i].high) {
+                        return &AVALABLE_TX_BANDS[i];
+                }
+        }
+        for (i = 0; i < NUMBER_RX_BANDS; i++){
+                if (AVAILABLE_RX_BANDS[i].low <= frequency_khz && frequency_khz <= AVAILABLE_RX_BANDS[i].high) {
+                        return &AVAILABLE_RX_BANDS[i];
+                }
+        }
+        return NULL;
+}
+
+/*! returns 0 if invalid range, * or 1 if only rx allowed, * and 2 for all allowed */
+int in_freq_range(int frequency_khz)
+{
+        const struct range_KHz *range = get_range(frequency_khz);
+        if (range != NULL) {
+                if (range->tx_allowed) {
+                        return VALID_FREQUENCY;
+                } else {
+                        log_msg(RT8900_INFO, "Tx is not allowed on this frequency (%d) \n", frequency_khz);
+                        return VALID_FREQUENCY_RX_ONLY;
+                }
+        }
+        return INVALID_FREQUENCY;
+}
+
+/*! Adds a control_packet (pointer) to the send queue,
+ * should only be called once the queue has been initialized*/
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice)
 {
         if (new_packet == NULL) {
@@ -23,8 +79,9 @@ void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum
                 log_msg(RT8900_TRACE, "ADDDED TO QUEUE \n");
         }
 }
-
-///Starts sending control packets as defined by SERIAL_CFG
+/*! Starts sending control packets as defined by SERIAL_CFG
+ *
+ *  This function is designed to be started as a thread  */
 void* send_control_packets(void *c)
 {
         log_msg(RT8900_TRACE, "-- STARTING CONTROL PACKET THREAD\n");
@@ -114,6 +171,8 @@ void* send_control_packets(void *c)
         return NULL;
 }
 
+/*! Writes the latest packet to a segment of memory
+ *  This function is designed to be started as a thread  */
 void* receive_display_packets(void *c)
 {
         SERIAL_CFG *config = (SERIAL_CFG*) c;
@@ -152,18 +211,19 @@ void* receive_display_packets(void *c)
                 timeout.tv_sec = 1;
                 timeout.tv_usec = 0;
 
-                // Wait for input to become ready or until the time out; the first parameter is
-                // 1 more than the largest file descriptor in any of the sets
-                if (select(config->serial_fd + 1, &read_fds, &write_fds, &except_fds, &timeout) == 1)
-                {
+                // select wil return false if the timeout has been reached
+                if (select(config->serial_fd + 1, &read_fds, &write_fds, &except_fds, &timeout) == 1) {
                         pthread_mutex_lock(&(config->receive.raw_packet_lock));
                         read(config->serial_fd, &(config->receive.latest_raw_packet), DISPLAY_PACKET_SIZE);
                         pthread_mutex_unlock(&(config->receive.raw_packet_lock));
                         config->receive.radio_seen = true;
-                }
-                else
-                {
-                        log_msg(RT8900_WARNING, "NO DATA RECEIVIED FROM RADIO!\n");
+                } else {
+                        //Abort
+                        log_msg(RT8900_FATAL, "NO DATA RECEIVED FROM RADIO !\n");
+                        if (config->shutdown_on_timeout == true) {
+                                log_msg(RT8900_FATAL, "NO DATA RECEIVED and shutdown_on_timeout is true!\n");
+                                shutdown_threads(config);
+                        }
                 }
         }
 
@@ -172,7 +232,9 @@ void* receive_display_packets(void *c)
         return 0;
 }
 
-int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
+/*! Reads packet from memory.
+ *  makes sure to block until a packet has been fully written */
+int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet)
 {
         unsigned char temp_buffer[DISPLAY_PACKET_SIZE];
         pthread_mutex_lock(&(config->receive.raw_packet_lock));
@@ -183,21 +245,21 @@ int get_display_packet(SERIAL_CFG *config, struct display_packet *packet)
         int start_of_packet_index = find_packet_start(temp_buffer, sizeof(temp_buffer));
         if (start_of_packet_index == -1 ) {
                 log_msg(RT8900_ERROR, "PACKET was corrupt / unrecognised!\n");
-                return 1;
+                return 0;
         }
         insert_shifted_packet(packet, temp_buffer, DISPLAY_PACKET_SIZE, start_of_packet_index);
-        return 0;
+        return 1;
 }
 
-
-///Check that we are reciving from teh radio.
+/*! Check that we are received from the radio at lest once.
+ * This will not help you if the radio is disconnected */
 int check_radio_rx(SERIAL_CFG *config)
 {
         return config->receive.radio_seen;
 }
 
-/// stwitches context to the desired radio,
-/// you must first check you are not already on this mode else you will enter frequency edit mode!
+/*! Switches context to the desired radio,
+ * you must first check you are not already on this mode else you will enter frequency edit mode! */
 int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side) {
         maloc_control_packet(switch_main);
         memcpy(switch_main, base_packet, sizeof(*switch_main));
@@ -220,35 +282,59 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
 
 }
 
-///Adds the required packets to dial a number. they are then be added to the queue
+/*! Adds the required packets to dial a number.
+ * They are then be added to the queue */
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
-        //get the number of digits
-        int num_digets = snprintf(NULL, 0, "%d", number);
-        if (num_digets > 6){
-                //this number
-                log_msg(RT8900_WARNING, "WARNING!: dialing a %d digit number! (%d) (Only 6 required for frequency inputs)", num_digets, number);
+        if (!in_freq_range(number)) {
+                log_msg(RT8900_ERROR, "%d is not a frequency that can be set on this radio", number);
                 return 1;
         }
         log_msg(RT8900_INFO, "dialing %d\n", number);
 
-        //create a char array of the digits
-        char digits[num_digets];
-        snprintf(digits, num_digets + 1, "%d", number);
+        //get the number of digits
+        int num_digits = snprintf(NULL, 0, "%d", number);
 
-        //add packets that 'press' the seletced buttons
+        //create a char array of the digits
+        char digits[num_digits];
+        snprintf(digits, num_digits + 1, "%d", number);
+
+        //We assume smaller numbers are missing front 0's so we dial them here
         int i;
-        for (i=0; i<num_digets; i++){
+        for (i=0; i<(6 - num_digits); i++) {
+                maloc_control_packet(dialnum);
+                memcpy(dialnum, base_packet, sizeof(*base_packet));
+                set_keypad_button(dialnum, button_from_int(0));
+                send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
+                send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+                log_msg(RT8900_DEBUG, "dialing 0\n");
+        }
+
+        //dial the remaining numbers
+        for (i=0; i<num_digits; i++){
                 maloc_control_packet(dialnum);
                 memcpy(dialnum, base_packet, sizeof(*base_packet));
                 set_keypad_button(dialnum, button_from_int(digits[i] - '0'));
                 send_new_packet(cfg, dialnum, PACKET_FREE_AFTER_SEND);
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
+                log_msg(RT8900_DEBUG, "dialing %d\n", digits[i] - '0');
         }
         return 0;
 }
 
+/*! This can be used anytime to gracefully stop sending and receiving on serial
+ *  Threads will be able to join after running ths function */
+void shutdown_threads(SERIAL_CFG *cfg)
+{
+        cfg->send.keep_alive = false;
+        cfg->receive.keep_alive = false;
+        if (cfg->serial_fd != 0) {
+                tcflush(cfg->serial_fd, TCIOFLUSH); //flush in/out buffers
+                close(cfg->serial_fd);
+        }
+}
 
+/*! This blocks until there are no new packets to send */
 void wait_to_send(const SERIAL_CFG *cfg)
 {
         if (cfg->send.keep_alive == true && !TAILQ_EMPTY(cfg->send.queue)) {
@@ -259,7 +345,12 @@ void wait_to_send(const SERIAL_CFG *cfg)
         }
 }
 
-///Adds the required packets to dial a number. they are then be added to the queue
+bool current_freq_valid(struct radio_side *radio)
+{
+        return (in_freq_range(get_frequency(radio)) == VALID_FREQUENCY);
+}
+
+/*! Presses the Low button on the radio until the selected power is set*/
 int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
 {
         //todo when diget reading is completed this will need to be updated to allow selection of med1 and med1 levels
@@ -268,10 +359,21 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
                 return 1;
         }
 
-        struct display_packet packet;
-        get_display_packet(cfg, &packet);
+        DISPLAY_PACKET packet;
+        if (get_display_packet(cfg, packet) != 1) {
+                log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                return 1;
+        };
+
         struct radio_state state;
-        read_power_fuzzy(&packet, &state);
+        read_power_fuzzy(packet, &state);
+        read_frequency(packet, &state);
+
+        //Power can only be set in the radio if on a frequency that supports Tx
+        if (!(current_freq_valid(&(state.left)))) {
+                log_msg(RT8900_WARNING, "The current left frequency does not permit TX.\nTherefore changing the radio power is also not permitted.\n");
+                return 2;
+        }
 
         while(state.left.power_level != power_level && cfg->send.keep_alive == true) {
                 maloc_control_packet(power_press);
@@ -282,9 +384,12 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
                 wait_to_send(cfg);
 
-                sleep(1); //the radio is very inconsitant on change time this is here for some safty
-                get_display_packet(cfg, &packet);
-                read_power_fuzzy(&packet, &state);
+                sleep(1); //the radio is very inconstant on change time this is here for some safty
+                if (get_display_packet(cfg, packet) != 1) {
+                        log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                        break;
+                };
+                read_power_fuzzy(packet, &state);
         }
 
         return 0;
@@ -299,10 +404,21 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
                 return 1;
         }
 
-        struct display_packet packet;
-        get_display_packet(cfg, &packet);
+        DISPLAY_PACKET packet;
+        if (get_display_packet(cfg, packet) != 1) {
+                log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                return 1;
+        };
+
         struct radio_state state;
-        read_power_fuzzy(&packet, &state);
+        read_power_fuzzy(packet, &state);
+        read_frequency(packet, &state);
+
+        //Power can only be set in the radio if on a frequency that supports Tx
+        if (!(current_freq_valid(&(state.right)))) {
+                log_msg(RT8900_WARNING, "The current right frequency does not permit TX.\nTherefore changing the radio power is also not permitted.\n");
+                return 2;
+        }
 
         while(state.right.power_level != power_level && cfg->send.keep_alive == true) {
                 maloc_control_packet(power_press);
@@ -315,17 +431,20 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
 
                 /* We do not up now what the packet latency is between sending a cmd and getting a updated screen
                  * so we will wait a second to garentee the program can se the update */
-                // todo find a way to work around this
+                // todo this could be reduced
                 sleep(1);
 
-                get_display_packet(cfg, &packet);
-                read_power_fuzzy(&packet, &state);
+                if (get_display_packet(cfg, packet) != 1) {
+                        log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                        return 1;
+                };
+                read_power_fuzzy(packet, &state);
         }
 
         return 0;
 }
 
-///sets the dtr pin low for one second to trigger radio on
+///Experimental! Sets the dtr pin low for one second to trigger radio on
 int set_power_button(SERIAL_CFG *cfg)
 {
         if (cfg->send.dtr_pin_for_on == false) {

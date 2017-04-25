@@ -7,6 +7,7 @@
 
 enum rt8900_logging_level {
     RT8900_NOLOG = 0,
+    RT8900_FATAL,
     RT8900_ERROR,
     RT8900_WARNING,
     RT8900_INFO,

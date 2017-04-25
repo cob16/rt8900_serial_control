@@ -1,5 +1,5 @@
 //
-// Created by cormac on 01/03/17.
+// Created by Cormac on 01/03/17.
 //
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,11 +42,11 @@ const struct control_packet control_packet_defaults = {
         {.section = {.data = DATA_MIN_NUM, .check_num=SBO}}, //encoder_right| 0 turns
         {},                                         //encoder_left          | 0 turns
         {.section = {.data= DATA_MAX_NUM}},         // ptt                  | set to high (off)
-        {},                                         //squelch_right         | 0%
+        {.section = {.data = DATA_MAX_NUM}},        //squelch_right         | no squelch muting
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_right | set to 25% volume
         {.section = {.data = VD_NONE}},// keypad_input_row     | no buttons being pressed
         {.section = {.data = DEFAULT_VOLUME}},      // volume_control_left  | set to 25% volume
-        {},                                         // squelch_left         | 0%
+        {.section = {.data = DATA_MAX_NUM}},        // squelch_left         | no squelch muting
         {.section = {.data = VD_NONE}},// keypad_input_column  | full is no buttons being pressed
         {.section = {.data = DATA_MAX_NUM}},        // right_buttons        | full is no buttons being pressed
         {.section = {.data = DATA_MAX_NUM}},        // left_buttons         | full is no buttons being pressed
@@ -164,13 +164,14 @@ void ptt(struct control_packet *base_packet, int ptt)
 {
         switch (ptt){
         case 0:
-                log_msg(RT8900_INFO, "stoping transmission\n");
+                log_msg(RT8900_INFO, "Stopping transmission\n");
                 base_packet->ptt.section.data = DATA_MAX_NUM;
                 break;
         case 1:
                 log_msg(RT8900_INFO, "STARTING transmission\n");
                 base_packet->ptt.section.data = DATA_MIN_NUM;
                 break;
+        default:break;
         }
 }
 
