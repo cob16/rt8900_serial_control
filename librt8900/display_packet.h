@@ -245,16 +245,16 @@ enum rt8900_power_level {
         POWER_HIGH,
 };
 
-struct radio_state_sides {
+struct radio_side {
         int busy;
         int frequency;
         enum rt8900_power_level power_level;
 };
 
 struct radio_state {
-        struct radio_state_sides *main; //the currently selected pointer
-        struct radio_state_sides left;
-        struct radio_state_sides right;
+        struct radio_side *main; //the currently selected pointer
+        struct radio_side left;
+        struct radio_side right;
 };
 
 int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmasks bit_number);
@@ -266,7 +266,7 @@ void read_main(DISPLAY_PACKET packet, struct radio_state *state);
 void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state);
 int read_frequency(DISPLAY_PACKET packet, struct radio_state *state);
 
-int is_main(struct radio_state *radio, struct radio_state_sides *side);
+int is_main(struct radio_state *radio, struct radio_side *side);
 void read_packet_state(DISPLAY_PACKET packet, struct radio_state *state);
 
 #endif //RT8900_SERIAL_CONTROL_DISPLAY_PACKET_H

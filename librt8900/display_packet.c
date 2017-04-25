@@ -372,8 +372,11 @@ int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
 }
 
 /// Simple check if the input radio is the main
-int is_main(struct radio_state *radio, struct radio_state_sides *side)
+int is_main(struct radio_state *radio, struct radio_side *side)
 {
+        if (radio->main == NULL) {
+                return 0;
+        }
         return (radio->main == side);
 }
 

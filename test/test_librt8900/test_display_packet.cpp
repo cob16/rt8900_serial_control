@@ -89,16 +89,16 @@ TEST(TestDisplayPacket, test_get_range)
 TEST(TestDisplayPacket, test_operational_range)
 {
         //out of range
-        EXPECT_EQ(is_operational_range(0), 0);
-        EXPECT_EQ(is_operational_range(9999999), 0);
+        EXPECT_EQ(in_freq_range(0), 0);
+        EXPECT_EQ(in_freq_range(9999999), 0);
 
         //rx only ranges
-        EXPECT_EQ(is_operational_range(980000), 1);
-        EXPECT_EQ(is_operational_range(108000), 1);
+        EXPECT_EQ(in_freq_range(980000), 1);
+        EXPECT_EQ(in_freq_range(108000), 1);
 
         //tx and rx ranges
-        EXPECT_EQ(is_operational_range(145000), 2);
-        EXPECT_EQ(is_operational_range(146000), 2);
+        EXPECT_EQ(in_freq_range(145000), 2);
+        EXPECT_EQ(in_freq_range(146000), 2);
 }
 
 void TestDisplayPacketReaders::SetUp()

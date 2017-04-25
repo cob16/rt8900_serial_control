@@ -23,11 +23,11 @@ TEST(ControlPacketTest, CONTROL_PACKET)
                 (unsigned char) 0x80, //encoder_right
                 (unsigned char) 0x00, //encoder_left
                 (unsigned char) 0x7f, //ptt
-                (unsigned char) 0x00, //squelch_right
+                (unsigned char) 0x7f, //squelch_right
                 (unsigned char) 0x1f, //volume_control_right
                 (unsigned char) 0x7f, //keypad_input_row
                 (unsigned char) 0x1f, //volume_control_left
-                (unsigned char) 0x00, //squelch_left
+                (unsigned char) 0x7f, //squelch_left
                 (unsigned char) 0x7f, //keypad_input_column
                 (unsigned char) 0x7f, //right_buttons
                 (unsigned char) 0x7f, //left_buttons

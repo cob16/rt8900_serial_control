@@ -23,6 +23,14 @@ const struct range_KHz AVAILABLE_RX_BANDS[NUMBER_RX_BANDS] = {
         {false, "70cm",  700000, 985000},
 };
 
+/// Gets the current frequency of the radio
+int get_frequency(struct radio_side *radio) {
+        /* frequency is represented as is always 7 digits, however the last digit
+         * is not permitted to be entered with the keypad so we do not use it here */
+        return radio->frequency / 10;
+}
+
+
 /*! Returns (struct range_KHz) if input is within that range. Else returns NULL
  * Looks for tx&rx ranges first */
 const struct range_KHz * get_range(int frequency_khz)
@@ -42,18 +50,18 @@ const struct range_KHz * get_range(int frequency_khz)
 }
 
 /*! returns 0 if invalid range, * or 1 if only rx allowed, * and 2 for all allowed */
-int is_operational_range(int frequency_khz)
+int in_freq_range(int frequency_khz)
 {
         const struct range_KHz *range = get_range(frequency_khz);
         if (range != NULL) {
                 if (range->tx_allowed) {
-                        return 2;
+                        return VALID_FREQUENCY;
                 } else {
-                        log_msg(RT8900_INFO, "Tx is not allowed on this frequency (%d) ", frequency_khz);
-                        return 1;
+                        log_msg(RT8900_INFO, "Tx is not allowed on this frequency (%d) \n", frequency_khz);
+                        return VALID_FREQUENCY_RX_ONLY;
                 }
         }
-        return 0;
+        return INVALID_FREQUENCY;
 }
 
 /*! Adds a control_packet (pointer) to the send queue,
@@ -237,10 +245,10 @@ int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet)
         int start_of_packet_index = find_packet_start(temp_buffer, sizeof(temp_buffer));
         if (start_of_packet_index == -1 ) {
                 log_msg(RT8900_ERROR, "PACKET was corrupt / unrecognised!\n");
-                return 1;
+                return 0;
         }
         insert_shifted_packet(packet, temp_buffer, DISPLAY_PACKET_SIZE, start_of_packet_index);
-        return 0;
+        return 1;
 }
 
 /*! Check that we are received from the radio at lest once.
@@ -267,7 +275,6 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
                 free(switch_main);
                 return -1;
         }
-        free(switch_main);
 
         send_new_packet(cfg, switch_main, PACKET_FREE_AFTER_SEND);
         send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
@@ -279,7 +286,7 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
  * They are then be added to the queue */
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
-        if (!is_operational_range(number)) {
+        if (!in_freq_range(number)) {
                 log_msg(RT8900_ERROR, "%d is not a frequency that can be set on this radio", number);
                 return 1;
         }
@@ -338,6 +345,11 @@ void wait_to_send(const SERIAL_CFG *cfg)
         }
 }
 
+bool current_freq_valid(struct radio_side *radio)
+{
+        return (in_freq_range(get_frequency(radio)) == VALID_FREQUENCY);
+}
+
 /*! Presses the Low button on the radio until the selected power is set*/
 int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
 {
@@ -348,9 +360,20 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
         }
 
         DISPLAY_PACKET packet;
-        get_display_packet(cfg, packet);
+        if (get_display_packet(cfg, packet) != 1) {
+                log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                return 1;
+        };
+
         struct radio_state state;
         read_power_fuzzy(packet, &state);
+        read_frequency(packet, &state);
+
+        //Power can only be set in the radio if on a frequency that supports Tx
+        if (!(current_freq_valid(&(state.left)))) {
+                log_msg(RT8900_WARNING, "The current left frequency does not permit TX.\nTherefore changing the radio power is also not permitted.\n");
+                return 2;
+        }
 
         while(state.left.power_level != power_level && cfg->send.keep_alive == true) {
                 maloc_control_packet(power_press);
@@ -361,8 +384,11 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
                 send_new_packet(cfg, base_packet, PACKET_ONLY_SEND);
                 wait_to_send(cfg);
 
-                sleep(1); //the radio is very inconsitant on change time this is here for some safty
-                get_display_packet(cfg, packet);
+                sleep(1); //the radio is very inconstant on change time this is here for some safty
+                if (get_display_packet(cfg, packet) != 1) {
+                        log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                        break;
+                };
                 read_power_fuzzy(packet, &state);
         }
 
@@ -379,9 +405,20 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
         }
 
         DISPLAY_PACKET packet;
-        get_display_packet(cfg, packet);
+        if (get_display_packet(cfg, packet) != 1) {
+                log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                return 1;
+        };
+
         struct radio_state state;
         read_power_fuzzy(packet, &state);
+        read_frequency(packet, &state);
+
+        //Power can only be set in the radio if on a frequency that supports Tx
+        if (!(current_freq_valid(&(state.right)))) {
+                log_msg(RT8900_WARNING, "The current right frequency does not permit TX.\nTherefore changing the radio power is also not permitted.\n");
+                return 2;
+        }
 
         while(state.right.power_level != power_level && cfg->send.keep_alive == true) {
                 maloc_control_packet(power_press);
@@ -397,14 +434,17 @@ int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, e
                 // todo this could be reduced
                 sleep(1);
 
-                get_display_packet(cfg, packet);
+                if (get_display_packet(cfg, packet) != 1) {
+                        log_msg(RT8900_ERROR, "failed to get DISPLAY_PACKET");
+                        return 1;
+                };
                 read_power_fuzzy(packet, &state);
         }
 
         return 0;
 }
 
-///sets the dtr pin low for one second to trigger radio on
+///Experimental! Sets the dtr pin low for one second to trigger radio on
 int set_power_button(SERIAL_CFG *cfg)
 {
         if (cfg->send.dtr_pin_for_on == false) {

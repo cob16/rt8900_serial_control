@@ -12,6 +12,12 @@
 
 #define VALID_POWER_LEVEL(num) ((num) == POWER_LOW || (num) == POWER_MEDIUM_FUZZY || (num) == POWER_HIGH)
 
+enum frequency_permission {
+    INVALID_FREQUENCY = 0,
+    VALID_FREQUENCY_RX_ONLY = 1,
+    VALID_FREQUENCY = 2,
+};
+
 struct range_KHz {
     const bool tx_allowed;
     const char *name;
@@ -50,9 +56,10 @@ void* receive_display_packets(void *c);
 
 //valid frequency checks
 const struct range_KHz * get_range(int frequency_khz);
-int is_operational_range(int frequency_khz);
+int in_freq_range(int frequency_khz);
 
 //helper functions
+int get_frequency(struct radio_side *radio);
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
 int check_radio_rx(SERIAL_CFG *config);
 void wait_to_send(const SERIAL_CFG *cfg);
