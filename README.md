@@ -6,14 +6,15 @@ Provides serial control for the YAESU FT-8900R Transceiver.
 Usage: rt8900c [OPTION...] <serial port path>
 Provides serial control for the YAESU FT-8900R Transceiver.
 
-      --hard-emulation       Exactly emulates the radio head head instead of
-                             being lazy_sending (worse performance, no observed
-                             benefit, only useful for debugging
-                             
+  -d, --dtr-on               Use the DTR pin of the serial connection as a
+                             power button for the rig. (REQUIRES compatible
+                             hardware)
+      --hard-emulation       Exactly emulates the radio head instead of being
+                             lazy_sending (worse performance, no observed
+                             benefit, only useful for debugging)
   -v, --verbose[=LEVEL]      Produce verbose output add a number to select
                              level (1 = ERROR, 2= WARNING, 3=INFO, 4=ERROR,
                              5=DEBUG) output default is 'warning'.
-                             
   -?, --help                 Give this help list
       --usage                Give a short usage message
   -V, --version              Print program version
@@ -21,7 +22,7 @@ Provides serial control for the YAESU FT-8900R Transceiver.
 Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
 
-Report bugs to <cormac.brady@hotmai.co.uk>.
+Report bugs to <cormac.brady@hotmail.co.uk>.
 ```
 
 ##Build and Install
