@@ -1,7 +1,10 @@
-<<<<<<< HEAD
 cmake-build-debug/
 *.cmake
 .idea/
+
+# Documentation
+latex/
+html/
 
 # Prerequisites
 *.d

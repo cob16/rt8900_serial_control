@@ -498,13 +498,8 @@ int main(int argc, char **argv)
         if (check_radio_rx(&c) == true) {
                 log_msg(RT8900_INFO, "Waiting for radio to boot...\n");
                 sleep(3);
-                user_prompt(&c, start_packet);
+                user_prompt(&c, start_packet); //returns on user exit
         }
-
-
-        //get current state of radio
-        //DISPLAY_PACKET *current_state = malloc(sizeof(DISPLAY_PACKET));
-        //get_display_packet(&c, current_state);
 
 
         graceful_shutdown(0);
