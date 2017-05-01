@@ -12,12 +12,14 @@
 
 #define VALID_POWER_LEVEL(num) ((num) == POWER_LOW || (num) == POWER_MEDIUM_FUZZY || (num) == POWER_HIGH)
 
+/// Represents the abilities of the radio for a particular frequency
 enum frequency_permission {
     INVALID_FREQUENCY = 0,
     VALID_FREQUENCY_RX_ONLY = 1,
     VALID_FREQUENCY = 2,
 };
 
+/// Represents one of the capable ranges of the radio
 struct range_KHz {
     const bool tx_allowed;
     const char *name;
@@ -25,6 +27,7 @@ struct range_KHz {
     const int high;
 };
 
+/// Configuration for sending packets
 struct control_packet_sender_config {
     bool lazy_sending;
     bool dtr_pin_for_on;
@@ -33,7 +36,8 @@ struct control_packet_sender_config {
     bool keep_alive;
 };
 
-struct display_packet_reciver_config {
+/// Configuration for receiving packets
+struct display_packet_receiving_config {
     bool keep_alive;
     bool radio_seen;
     pthread_mutex_t raw_packet_lock;
@@ -46,7 +50,7 @@ typedef struct {
     bool shutdown_on_timeout;
 
     struct control_packet_sender_config send;
-    struct display_packet_reciver_config receive;
+    struct display_packet_receiving_config receive;
 
 } SERIAL_CFG;
 
@@ -62,7 +66,7 @@ int in_freq_range(int frequency_khz);
 int get_frequency(struct radio_side *radio);
 bool current_freq_valid(struct radio_side *radio);
 void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum pop_queue_behaviour free_choice);
-int check_radio_rx(SERIAL_CFG *config);
+bool check_radio_rx(SERIAL_CFG *config);
 void wait_to_send(const SERIAL_CFG *cfg);
 void shutdown_threads(SERIAL_CFG *cfg);
 

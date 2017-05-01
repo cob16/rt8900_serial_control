@@ -477,7 +477,7 @@ int main(int argc, char **argv)
         pthread_create(&packet_receive_thread, NULL, receive_display_packets, &c);
 
 //        if the radio is not already on try to turn it on
-        if (check_radio_rx(&c) == 0) {
+        if (check_radio_rx(&c) == false) {
 
                 if (c.send.dtr_pin_for_on == true) {
                         int give_up = 0;
@@ -491,11 +491,11 @@ int main(int argc, char **argv)
                         }
                 } else {
                         log_msg(RT8900_INFO, "Waiting for radio to be turned on (no time out)\n");
-                        while (check_radio_rx(&c) == 0 && c.send.keep_alive) {};
+                        while (check_radio_rx(&c) == false && c.send.keep_alive) {};
                 }
         }
 
-        if (check_radio_rx(&c) == 1) {
+        if (check_radio_rx(&c) == true) {
                 log_msg(RT8900_INFO, "Waiting for radio to boot...\n");
                 sleep(3);
                 user_prompt(&c, start_packet);

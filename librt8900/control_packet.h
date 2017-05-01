@@ -147,7 +147,7 @@ extern const struct button_transmit_value KEYPAD_BUTTON_P4;
 /// recommended defaults for the control packet
 extern const struct control_packet control_packet_defaults;
 
-/// used to get the struct as an array
+/// used to get the packet as an array
 typedef union {
     struct control_packet as_struct;
     PACKET_BYTE as_array[13];

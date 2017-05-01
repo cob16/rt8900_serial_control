@@ -232,8 +232,8 @@ void* receive_display_packets(void *c)
         return 0;
 }
 
-/*! Reads packet from memory.
- *  makes sure to block until a packet has been fully written */
+/*! \brief writes the most recent packet to @param packet.
+ *  Gets the most recent packet. Will block if there is currently a half updated most recent packet */
 int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet)
 {
         unsigned char temp_buffer[DISPLAY_PACKET_SIZE];
@@ -251,15 +251,18 @@ int get_display_packet(SERIAL_CFG *config, DISPLAY_PACKET packet)
         return 1;
 }
 
-/*! Check that we are received from the radio at lest once.
- * This will not help you if the radio is disconnected */
-int check_radio_rx(SERIAL_CFG *config)
+/*! \brief Check that we are received from the radio at lest once.
+ * @warning Will still return True if the radio is disconnected after some time.
+ * @returns true is the radio has been seen else false
+ * */
+bool check_radio_rx(SERIAL_CFG *config)
 {
         return config->receive.radio_seen;
 }
 
-/*! Switches context to the desired radio,
- * you must first check you are not already on this mode else you will enter frequency edit mode! */
+/*! \brief Switches context to the desired radio
+ *
+ * First check you are not already on this mode using is_main() else you will enter frequency edit mode! */
 int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum radios side) {
         maloc_control_packet(switch_main);
         memcpy(switch_main, base_packet, sizeof(*switch_main));
@@ -282,8 +285,10 @@ int set_main_radio(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rad
 
 }
 
-/*! Adds the required packets to dial a number.
- * They are then be added to the queue */
+/*! \brief Adds the required packets to dial a number.
+ *
+ * They are then be added to the queue
+ * @returns 0 on success */
 int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int number)
 {
         if (!in_freq_range(number)) {
@@ -322,7 +327,9 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
         return 0;
 }
 
-/*! This can be used anytime to gracefully stop sending and receiving on serial
+/*! \brief gracefully stops send_control_packets() and receive_display_packets()
+ *
+ *  This can be used anytime to gracefully stop sending and receiving on serial
  *  Threads will be able to join after running ths function */
 void shutdown_threads(SERIAL_CFG *cfg)
 {
@@ -334,7 +341,7 @@ void shutdown_threads(SERIAL_CFG *cfg)
         }
 }
 
-/*! This blocks until there are no new packets to send */
+/*! \brief Blocks until there are no new packets to send */
 void wait_to_send(const SERIAL_CFG *cfg)
 {
         if (cfg->send.keep_alive == true && !TAILQ_EMPTY(cfg->send.queue)) {
@@ -345,12 +352,15 @@ void wait_to_send(const SERIAL_CFG *cfg)
         }
 }
 
+/*! @return True if the radio is currently set to a frequency it can TX on */
 bool current_freq_valid(struct radio_side *radio)
 {
         return (in_freq_range(get_frequency(radio)) == VALID_FREQUENCY);
 }
 
-/*! Presses the Low button on the radio until the selected power is set*/
+/*! \brief sets left power level on radio
+ *
+ * Presses the Low button on the radio until the selected power is set*/
 int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
 {
         //todo when diget reading is completed this will need to be updated to allow selection of med1 and med1 levels
@@ -395,13 +405,18 @@ int set_left_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, en
         return 0;
 }
 
-///press the 'low' button untill the desired power level is set
+/*! \brief sets right power level on radio
+ *
+ * Presses the Low button on the radio until the selected power is set
+ *
+ * @returns 0 on sucess, 1 on internal error and 2 on user error
+ * */
 int set_right_power_level(SERIAL_CFG *cfg, struct control_packet *base_packet, enum rt8900_power_level power_level)
 {
         //todo when diget reading is completed this will need to be updated to allow selection of med1 and med1 levels
 
         if (!VALID_POWER_LEVEL(power_level)) {
-                return 1;
+                return 2;
         }
 
         DISPLAY_PACKET packet;
@@ -463,7 +478,7 @@ int set_power_button(SERIAL_CFG *cfg)
         RTS_flag |= TIOCM_DTR;
         ioctl(cfg->serial_fd, TIOCMSET, &RTS_flag);
 
-        if (check_radio_rx(cfg) != 1) {
+        if (check_radio_rx(cfg) == false) {
                 log_msg(RT8900_ERROR, "Failed to turn on radio\n");
                 return 1;
         }

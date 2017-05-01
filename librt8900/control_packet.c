@@ -86,7 +86,10 @@ const struct button_transmit_value * button_from_int(int i)
         }
 }
 
-///returns null if the number will not fit into the packet (7 bits)
+/// \brief Takes and returns a int if it can fit into a PACKET_BYTE
+///
+/// @returns NULL if the number will not fit into the packet (7 bits)
+/// else will return the provided int
 signed char safe_int_char(int number)
 {
         if(number < DATA_MIN_NUM) {
