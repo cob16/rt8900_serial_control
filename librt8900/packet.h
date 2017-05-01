@@ -1,6 +1,7 @@
-//
-// Created by cormac on 20/02/17.
-//
+/**
+ * @file packet.h
+ * \brief Data representation of a single byte in a packet.
+ */
 
 #ifndef RT8900_SERIAL_PACKET_H
 #define RT8900_SERIAL_PACKET_H

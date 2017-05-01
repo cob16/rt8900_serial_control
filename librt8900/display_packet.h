@@ -1,6 +1,7 @@
-//
-// Created by cormac on 14/03/17.
-//
+/**
+ * @file display_packet.h
+ * Functions to get and sed data from the display_packet
+ */
 
 #ifndef RT8900_SERIAL_CONTROL_DISPLAY_PACKET_H
 #define RT8900_SERIAL_CONTROL_DISPLAY_PACKET_H

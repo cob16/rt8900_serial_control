@@ -1,6 +1,8 @@
-//
-// Created by cormac on 25/03/17.
-//
+/**
+ * @file librt8900.h
+ * \brief The main headder file for the librt8900 libary.
+ * Contains functions that use both the contol_packet and DISPLAY_PACKET
+ */
 
 #ifndef RT8900_SERIAL_CONTROL_API_H
 #define RT8900_SERIAL_CONTROL_API_H

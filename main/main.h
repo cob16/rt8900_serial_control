@@ -1,6 +1,8 @@
-//
-// Created by cormac on 16/02/17.
-//
+/**
+ * @file main.h
+ *
+ * A command line shell for controlling the YAESU FT-8900R Transceiver.
+ */
 
 #ifndef RT8900_SERIAL_CONTROL_MAIN_H
 #define RT8900_SERIAL_CONTROL_MAIN_H

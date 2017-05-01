@@ -1,3 +1,10 @@
+/**
+ * @file log.h
+ * \brief logging wrapper with levels for the librt8900 library.
+ *
+ * Contains functions that use both the control_packet and DISPLAY_PACKET.
+ */
+
 #ifndef RT8900_LOG_H
 #define RT8900_LOG_H
 
@@ -15,6 +22,7 @@ enum rt8900_logging_level {
     RT8900_TRACE,
 };
 
+/// The default logging level for the library
 static enum rt8900_logging_level rt8900_verbose_level = RT8900_WARNING;
 
 void set_log_level(enum rt8900_logging_level i);

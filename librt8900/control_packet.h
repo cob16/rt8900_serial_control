@@ -1,12 +1,14 @@
-//
-// Created by cormac on 17/02/17.
-//
+/**
+ * @file control_packet.h
+ * Functions to manipulate control_packet structs
+ */
 
 #ifndef RT8900_SERIAL_CONTROL_PACKET_H
 #define RT8900_SERIAL_CONTROL_PACKET_H
 
 #include <sys/queue.h>
 #include <stdbool.h>
+#include <sys/queue.h>
 
 #include "packet.h"
 
@@ -143,9 +145,23 @@ extern const struct button_transmit_value KEYPAD_BUTTON_P2;
 extern const struct button_transmit_value KEYPAD_BUTTON_P3;
 extern const struct button_transmit_value KEYPAD_BUTTON_P4;
 
-
-/// recommended defaults for the control packet
 extern const struct control_packet control_packet_defaults;
+
+/// Options on if the packet added to the queue will be freed once sent
+enum pop_queue_behaviour {
+    PACKET_FREE_AFTER_SEND = 0,
+    PACKET_ONLY_SEND = 1,
+};
+
+/// A internal, non intgrated queue struct for the packet queue
+struct control_packet_q_node{
+    struct control_packet *packet;
+    enum pop_queue_behaviour free_packet; //should we free the packet once it is sent (default flase)
+    TAILQ_ENTRY(control_packet_q_node) nodes; //link to next packet (for que)
+};
+
+/// Create our packet queue struct
+typedef TAILQ_HEAD(CONTROL_PACKET_Q_HEAD, control_packet_q_node) CONTROL_PACKET_Q_HEAD;
 
 /// used to get the packet as an array
 typedef union {

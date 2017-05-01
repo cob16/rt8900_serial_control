@@ -1,12 +1,7 @@
-//
-// Created by cormac on 14/03/17.
-//
 #include <unistd.h>
 #include "display_packet.h"
 
 /*! Write to the packet in the correct order.
- * @example
- * For example the packet may start at index 10.
  * @warning
  * This assumes buffer array length is DISPLAY_PACKET_SIZE (42)*/
 void insert_shifted_packet(DISPLAY_PACKET packet, unsigned char buffer[], size_t buffer_length, int start_of_packet_index)
@@ -23,7 +18,7 @@ void insert_shifted_packet(DISPLAY_PACKET packet, unsigned char buffer[], size_t
         }
 }
 
-/// Gets busy state from display_packet
+/// \brief Gets busy state from display_packet
 void read_busy(DISPLAY_PACKET packet, struct radio_state *state)
 {
         state->left.busy  = display_packet_read(packet, LEFT_BUSY);
@@ -47,11 +42,11 @@ void read_main(DISPLAY_PACKET packet, struct radio_state *state)
         }
 }
 
-/// Gets the power levels of the radios only using reads
-// todo Currently there is no way to know if med1 or med2 is set
-// todo create a seprate non fussy function that will be called to toggel power button 4 times (a circle) and then read the screen
+/// \brief Gets the power levels of the radios only using reads
 void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state)
 {
+        // todo Currently there is no way to know if med1 or med2 is set
+        // todo create a seprate non fussy function that will be called to toggel power button 4 times (a circle) and then read the screen
         if (display_packet_read(packet, LEFT_POWER_LOW)) {
                 state->left.power_level = POWER_LOW;
         } else if (display_packet_read(packet, LEFT_POWER_MEDIUM)) {
@@ -93,7 +88,7 @@ void read_power_fuzzy(DISPLAY_PACKET packet, struct radio_state *state)
 #define THIRTEEN_SEG_8 0x1d93
 #define THIRTEEN_SEG_9 0x1d91
 
-/*! Takes a bitfireld and matches to known numbers an char of bits (ordered as described above)
+/*! Takes a bitfield and matches to known numbers an char of bits (ordered as described above)
  *  @returns 0-9 and -1 on error */
 int segment_to_int(int segment_bitfield)
 {
@@ -124,7 +119,7 @@ int segment_to_int(int segment_bitfield)
         }
 }
 
-/*! Takes a 13 arguments each argument is a bit (as int) that represents each of the 13 segments of a digit.
+/*! Takes 13 arguments each argument is a bit (as int) that represents each of the 13 segments of a digit.
  * A fully blank section will assumed to be 0.
  * @returns int between 0-9 and -1 on an unrecognised digit */
 int decode_13_segment(int first_segment, ...)
@@ -160,7 +155,7 @@ int display_packet_read(DISPLAY_PACKET packet, const enum display_packet_bitmask
         return (packet[byte].raw >> bit) & 0x80 != 0;
 };
 
-/*! Writes the frequency to the state packet.
+/*! \brief Writes the frequency to the state packet.
  * @return 0 on success and 1 on error.
  */
 int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
@@ -371,16 +366,18 @@ int read_frequency(DISPLAY_PACKET packet, struct radio_state *state)
         return 0;
 }
 
-/// Simple check if the input radio is the main
+/*! \brief Check if the input radio is the main
+ * @return 0 if radio is not currently main */
 int is_main(struct radio_state *radio, struct radio_side *side)
 {
         if (radio->main == NULL) {
+                log_msg(RT8900_WARNING, "is_main() was called on a uninitialised radio_side");
                 return 0;
         }
         return (radio->main == side);
 }
 
-/// Calls all packet read functions
+/// \brief runs all packet read functions on the given packet
 void read_packet_state(DISPLAY_PACKET packet, struct radio_state *state) {
         read_power_fuzzy(packet, state);
         read_frequency(packet, state);
