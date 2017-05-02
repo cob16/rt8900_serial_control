@@ -23,7 +23,7 @@ enum rt8900_logging_level {
 };
 
 /// The default logging level for the library
-static enum rt8900_logging_level rt8900_verbose_level = RT8900_WARNING;
+static enum rt8900_logging_level rt8900_verbose_level = RT8900_INFO;
 
 void set_log_level(enum rt8900_logging_level i);
 void log_msg(enum rt8900_logging_level level, char const *fmt, ...);
