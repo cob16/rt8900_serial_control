@@ -88,8 +88,6 @@ TEST(TestDisplayPacket, test_get_range)
 
 TEST(TestDisplayPacket, test_operational_range)
 {
-        set_log_level(RT8900_ERROR);
-
         //out of range
         EXPECT_EQ(in_freq_range(0), 0);
         EXPECT_EQ(in_freq_range(9999999), 0);
@@ -101,8 +99,6 @@ TEST(TestDisplayPacket, test_operational_range)
         //tx and rx ranges
         EXPECT_EQ(in_freq_range(145000), 2);
         EXPECT_EQ(in_freq_range(146000), 2);
-
-        set_log_level(RT8900_INFO);
 }
 
 void TestDisplayPacketReaders::SetUp()
