@@ -72,6 +72,11 @@ void send_new_packet(SERIAL_CFG *config, struct control_packet *new_packet, enum
                 log_msg(RT8900_ERROR, "NULL packet attempted to be added to QUEUE\n");
         } else {
                 struct control_packet_q_node *node = (struct control_packet_q_node*) malloc(sizeof(*(node)));
+                if (node == NULL) {
+                        log_msg(RT8900_FATAL, "Failed to allocate memory to add element to queue \n");
+                        shutdown_threads(config);
+                        return;
+                }
                 node->packet = new_packet;
                 node->free_packet = free_choice;
 
@@ -333,11 +338,13 @@ int set_frequency(SERIAL_CFG *cfg, struct control_packet *base_packet, int numbe
  *  Threads will be able to join after running ths function */
 void shutdown_threads(SERIAL_CFG *cfg)
 {
-        cfg->send.keep_alive = false;
-        cfg->receive.keep_alive = false;
-        if (cfg->serial_fd != 0) {
-                tcflush(cfg->serial_fd, TCIOFLUSH); //flush in/out buffers
-                close(cfg->serial_fd);
+        if (cfg != NULL) {
+                cfg->send.keep_alive = false;
+                cfg->receive.keep_alive = false;
+                if (cfg->serial_fd != 0) {
+                        tcflush(cfg->serial_fd, TCIOFLUSH); //flush in/out buffers
+                        close(cfg->serial_fd);
+                }
         }
 }
 

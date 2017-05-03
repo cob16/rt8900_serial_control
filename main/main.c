@@ -87,8 +87,9 @@ char *read_prompt_line(void)
         // inspired by https://github.com/brenns10/lsh/blob/407938170e8b40d231781576e05282a41634848c/src/main.c
         int buffer_size = PROMPT_BUFFER_SIZE;
         char *buffer = malloc(sizeof(char) * buffer_size);
-        if (!buffer) {
-                log_msg(RT8900_ERROR, "Failed to allocate buffer");
+        if (buffer == NULL) {
+                log_msg(RT8900_FATAL, "Failed to allocate buffer");
+                shutdown_threads(g_conf);
                 exit(EXIT_FAILURE);
         }
 
@@ -98,8 +99,9 @@ char *read_prompt_line(void)
                 if (i >= buffer_size) {
                         buffer_size = buffer_size * 2;
                         buffer = realloc(buffer, buffer_size);
-                        if (!buffer) {
+                        if (buffer == NULL) {
                                 log_msg(RT8900_ERROR, "Failed to increase buffer size");
+                                graceful_shutdown(1);
                                 exit(EXIT_FAILURE);
                         }
                 }
@@ -122,6 +124,11 @@ char **split_line_args(char *line)
         // inspired by https://github.com/brenns10/lsh/blob/407938170e8b40d231781576e05282a41634848c/src/main.c
         int buffer_size = PROMPT_BUFFER_SIZE * 2;
         char **args = malloc(buffer_size * sizeof(char*));
+        if (args == NULL) {
+                log_msg(RT8900_FATAL, "Failed to allocate buffer");
+                graceful_shutdown(1);
+                exit(EXIT_FAILURE);
+        }
         char *token;
         int i;
 
@@ -243,6 +250,10 @@ int cmd_exit(char **args, SERIAL_CFG *config, struct control_packet *base_packet
 int cmd_get_frequency(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         struct radio_state *current_state = malloc(sizeof(*current_state));
+        if (current_state == NULL) {
+                log_msg(RT8900_FATAL, "get_frequency failed to allocate new memory");
+                return 0;
+        }
         DISPLAY_PACKET display_packet;
         get_display_packet(config, display_packet);
         read_frequency(display_packet, current_state);
@@ -270,6 +281,10 @@ int cmd_set_frequency(char **args, SERIAL_CFG *config, struct control_packet *ba
 int cmd_get_busy(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         struct radio_state *current_state = malloc(sizeof(*current_state));
+        if (current_state == NULL) {
+                log_msg(RT8900_FATAL, "cmd_get_busy failed to allocate new memory");
+                return 0;
+        }
         DISPLAY_PACKET display_packet;
         get_display_packet(config, display_packet);
 
@@ -287,6 +302,10 @@ int cmd_get_busy(char **args, SERIAL_CFG *config, struct control_packet *base_pa
 int cmd_get_main(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         struct radio_state *current_state = malloc(sizeof(*current_state));
+        if (current_state == NULL) {
+                log_msg(RT8900_FATAL, "cmd_get_main failed to allocate new memory");
+                return 0;
+        }
         DISPLAY_PACKET display_packet;
         get_display_packet(config, display_packet);
 
@@ -304,6 +323,10 @@ int cmd_get_main(char **args, SERIAL_CFG *config, struct control_packet *base_pa
 int cmd_set_main(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         struct radio_state *current_state = malloc(sizeof(*current_state)); //freed by set_main_radio()
+        if (current_state == NULL) {
+                log_msg(RT8900_FATAL, "cmd_set_main failed to allocate new memory");
+                return 0;
+        }
         DISPLAY_PACKET display_packet;
         get_display_packet(config, display_packet);
         read_main(display_packet, current_state);
@@ -329,6 +352,10 @@ int cmd_set_main(char **args, SERIAL_CFG *config, struct control_packet *base_pa
 int cmd_get_power(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         struct radio_state *current_state = malloc(sizeof(*current_state));
+        if (current_state == NULL) {
+                log_msg(RT8900_FATAL, "cmd_get_power failed to allocate new memory");
+                return 0;
+        }
         DISPLAY_PACKET display_packet;
         get_display_packet(config, display_packet);
 
@@ -350,6 +377,10 @@ int cmd_get_ptt(char **args, SERIAL_CFG *config, struct control_packet *base_pac
 int cmd_set_ptt(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         struct radio_state *current_state = malloc(sizeof(*current_state));
+        if (current_state == NULL) {
+                log_msg(RT8900_FATAL, "cmd_set_ptt failed to allocate new memory");
+                return 0;
+        }
         DISPLAY_PACKET display_packet;
         get_display_packet(config, display_packet);
 
@@ -376,6 +407,10 @@ int cmd_set_ptt(char **args, SERIAL_CFG *config, struct control_packet *base_pac
 int cmd_set_power(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         struct radio_state *current_state = malloc(sizeof(*current_state));
+        if (current_state == NULL) {
+                log_msg(RT8900_FATAL, "cmd_set_power failed to allocate new memory");
+                return 0;
+        }
         DISPLAY_PACKET display_packet;
         get_display_packet(config, display_packet);
         read_frequency(display_packet, current_state);
