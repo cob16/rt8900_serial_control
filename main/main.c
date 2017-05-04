@@ -123,7 +123,7 @@ char **split_line_args(char *line)
 {
         // inspired by https://github.com/brenns10/lsh/blob/407938170e8b40d231781576e05282a41634848c/src/main.c
         int buffer_size = PROMPT_BUFFER_SIZE * 2;
-        char **args = malloc(buffer_size * sizeof(char*));
+        char **args = malloc(buffer_size * sizeof(char *));
         if (args == NULL) {
                 log_msg(RT8900_FATAL, "Failed to allocate buffer");
                 graceful_shutdown(1);
@@ -255,11 +255,11 @@ int cmd_get_frequency(char **args, SERIAL_CFG *config, struct control_packet *ba
                 return 0;
         }
         DISPLAY_PACKET display_packet;
-        get_display_packet(config, display_packet);
-        read_frequency(display_packet, current_state);
-
-        printf("Left  Frequency -> %d\n", current_state->left.frequency);
-        printf("Right Frequency -> %d\n", current_state->right.frequency);
+        if (get_display_packet(config, display_packet) == 1) {
+                read_frequency(display_packet, current_state);
+                printf("Left  Frequency -> %d\n", current_state->left.frequency);
+                printf("Right Frequency -> %d\n", current_state->right.frequency);
+        }
 
         free(current_state);
         return 1;
@@ -346,6 +346,7 @@ int cmd_set_main(char **args, SERIAL_CFG *config, struct control_packet *base_pa
                 printf("%s use 'l' & 'r' to set left or right %s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
         }
 
+        free(current_state);
         return 1;
 }
 
@@ -437,6 +438,7 @@ int cmd_set_power(char **args, SERIAL_CFG *config, struct control_packet *base_p
                 break;
         }
 
+        free(current_state);
         return 1;
 }
 
@@ -538,6 +540,7 @@ int main(int argc, char **argv)
 
 
         graceful_shutdown(0);
+
         pthread_barrier_destroy(&wait_for_sender);
         pthread_join(packet_sender_thread, NULL);
         pthread_join(packet_receive_thread, NULL);

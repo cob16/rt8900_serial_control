@@ -151,11 +151,11 @@ void* send_control_packets(void *c)
                                 TAILQ_REMOVE(conf->send.queue, current_node, nodes);
                                 if (current_node->free_packet == PACKET_FREE_AFTER_SEND) {
                                         free(current_packet);
+                                        current_packet = NULL;
                                 }
-                                packets_sent = 0;
-                                current_packet = NULL;
                                 free(current_node);
                                 current_node = NULL;
+                                packets_sent = 0;
                         }
                 } else {
                         log_msg(RT8900_TRACE, "Send queue is empty!\n");
@@ -169,8 +169,8 @@ void* send_control_packets(void *c)
                 current_node = TAILQ_FIRST(conf->send.queue);
                 current_packet = current_node->packet;
                 TAILQ_REMOVE(conf->send.queue, current_node, nodes);
+                free(current_node);
                 free(current_packet);
-                current_packet = NULL;
         }
 
         return NULL;
