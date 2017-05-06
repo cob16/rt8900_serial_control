@@ -59,5 +59,12 @@ Or for verbose output
 ./test/test_librt8900/test_librt8900
 ```
 
+##Doxygen
+```bash
+sudo apt install doxygen
+doxygen Doxyfile
+```
+Current HTML version is also hosted at [cormacbrady.info/rt8900_docs](https://cormacbrady.info/rt8900_docs/)
+
 ##Credits
 - CmakeLists build files taken from [this example](https://github.com/kaizouman/gtest-cmake-example)
