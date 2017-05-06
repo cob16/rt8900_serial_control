@@ -176,12 +176,21 @@ void set_right_button(struct control_packet *packet, const enum right_menu_butto
 
 const struct button_transmit_value * button_from_int(int i);
 signed char safe_int_char(int number);
+
 int set_volume_left(struct control_packet *packet, int number);
+int get_volume_left(struct control_packet *packet);
+
 int set_volume_right(struct control_packet *packet, int number);
+int get_volume_right(struct control_packet *packet);
 int set_volume(struct control_packet *packet, int left, int right);
+
 int set_squelch_left(struct control_packet *packet, int number);
+int get_squelch_left(struct control_packet *packet);
+
 int set_squelch_right(struct control_packet *packet, int number);
+int get_squelch_right(struct control_packet *packet);
 int set_squelch(struct control_packet *packet, int left, int right);
+
 void ptt(struct control_packet *base_packet, int ptt);
 void* send_control_packets(void *c);
 void packet_debug(const struct control_packet *packet, CONTROL_PACKET_INDEXED *input_packet_arr);

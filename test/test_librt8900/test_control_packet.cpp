@@ -123,6 +123,28 @@ TEST(TestAPISetters, test_set_L_R_volume)
         ASSERT_EQ(set_volume_left(NULL, 666), 1);
 }
 
+TEST(TestAPISetters, test_get_L_R_volume)
+{
+
+
+        // initialise packet
+        maloc_control_packet(packet);
+        memcpy(packet, &control_packet_defaults ,sizeof(*packet));
+        packet->volume_control_left.section.data = (signed char) 30;
+        packet->volume_control_right.section.data = (signed char) 70;
+
+        //normal behavor
+        EXPECT_EQ(get_volume_left(packet) , 30);
+        EXPECT_EQ(get_volume_right(packet), 70);
+
+
+        //test we properly handle a null pointers
+        free(packet);
+        packet = NULL;
+        ASSERT_EQ(get_volume_right(NULL), 0);
+        ASSERT_EQ(get_volume_left(NULL), 0);
+}
+
 ///Test squelch
 TEST(TestAPISetters, test_set_L_R_squelch)
 {
@@ -148,5 +170,23 @@ TEST(TestAPISetters, test_set_L_R_squelch)
         ASSERT_NO_THROW(set_squelch_right(NULL, 666));
         ASSERT_EQ(set_squelch_left(NULL, 666), 1);
         ASSERT_EQ(set_squelch_right(NULL, 666), 1);
+}
+
+TEST(TestAPISetters, test_get_L_R_squelch)
+{
+        maloc_control_packet(packet);
+        memcpy(packet, &control_packet_defaults ,sizeof(*packet));
+        packet->squelch_left.section.data = (signed char) 50;
+        packet->squelch_right.section.data = (signed char) 60;
+
+        //set to -100 (invalid should set to 0)
+        EXPECT_EQ(get_squelch_left(packet) , 50);
+        EXPECT_EQ(get_squelch_right(packet), 60);
+
+        //test we properly handle a null pointer
+        free(packet);
+        packet = NULL;
+        ASSERT_EQ(get_squelch_left(NULL), 0);
+        ASSERT_EQ(get_squelch_right(NULL), 0);
 }
 

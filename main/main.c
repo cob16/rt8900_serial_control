@@ -166,6 +166,8 @@ struct cmd user_commands[] = {
         {&cmd_exit, "exit" , "shutdown the application", 0, 0},
         {&cmd_get_frequency, "f" , "Shows the currently set frequency's", 0, 0},
         {&cmd_get_power, "p" , "Shows the current power", 0, 0},
+        {&cmd_get_volume, "v" , "get current speaker volumes", 0, 0},
+        {&cmd_get_squelch, "s" , "get current squelch levels", 0, 0},
         {&cmd_get_busy, "b" , "Shows if radios are reporting busy", 0, 0},
         {&cmd_get_main, "m" , "Shows which radio is main", 0, 0},
         {&cmd_get_ptt, "t" , "Shows if the radio is currently transiting", 0 , 0},
@@ -452,6 +454,17 @@ int cmd_set_volume(char **args, SERIAL_CFG *config, struct control_packet *base_
         return 1;
 }
 
+int cmd_get_volume(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        printf("%s Left volume -> %d \n Right volume %d %s\n",
+               ANSI_COLOR_GREEN,
+               get_volume_left(base_packet),
+               get_volume_right(base_packet),
+               ANSI_COLOR_RESET
+        );
+        return 1;
+}
+
 int cmd_set_squelch(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
         int left_op = (int)strtoimax(args[1], NULL, 10);
@@ -459,6 +472,17 @@ int cmd_set_squelch(char **args, SERIAL_CFG *config, struct control_packet *base
         printf("%s Setting squelch -> %d %d%s\n", ANSI_COLOR_GREEN, left_op, right_op, ANSI_COLOR_RESET);
         set_squelch(base_packet, left_op, right_op);
 
+        return 1;
+}
+
+int cmd_get_squelch(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
+{
+        printf("%s Left squelch -> %d \n Right squelch %d %s\n",
+               ANSI_COLOR_GREEN,
+               get_squelch_left(base_packet),
+               get_squelch_right(base_packet),
+               ANSI_COLOR_RESET
+        );
         return 1;
 }
 

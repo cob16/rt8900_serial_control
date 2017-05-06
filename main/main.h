@@ -36,7 +36,10 @@ int cmd_get_ptt(char **args, SERIAL_CFG *config, struct control_packet *base_pac
 int cmd_set_ptt(char **args, SERIAL_CFG *config, struct control_packet *base_packet);
 
 int cmd_set_volume(char **args, SERIAL_CFG *config, struct control_packet *base_packet);
+int cmd_get_volume(char **args, SERIAL_CFG *config, struct control_packet *base_packet);
+
 int cmd_set_squelch(char **args, SERIAL_CFG *config, struct control_packet *base_packet);
+int cmd_get_squelch(char **args, SERIAL_CFG *config, struct control_packet *base_packet);
 
 
 

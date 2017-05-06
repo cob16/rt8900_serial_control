@@ -108,6 +108,14 @@ int set_volume_left(struct control_packet *packet, int number)
         return 0;
 }
 
+int get_volume_left(struct control_packet *packet)
+{
+        if (packet == NULL) {
+                return 0;
+        }
+        return packet->volume_control_left.section.data;
+}
+
 ///set the volume between 0-127. 0 is mute.
 int set_volume_right(struct control_packet *packet, int number)
 {
@@ -116,6 +124,14 @@ int set_volume_right(struct control_packet *packet, int number)
         }
         packet->volume_control_right.section.data = safe_int_char(number);
         return 0;
+}
+
+int get_volume_right(struct control_packet *packet)
+{
+        if (packet == NULL) {
+                return 0;
+        }
+        return packet->volume_control_right.section.data;
 }
 
 /// Set the left and right volume. between 0-127. 0 is mute.
@@ -138,6 +154,14 @@ int set_squelch_left(struct control_packet *packet, int number)
         return 0;
 }
 
+int get_squelch_left(struct control_packet *packet)
+{
+        if (packet == NULL) {
+                return 0;
+        }
+        return packet->squelch_left.section.data;
+}
+
 /// Set the right squelch between 0-127.
 ///127 filters no noise.
 int set_squelch_right(struct control_packet *packet, int number)
@@ -147,6 +171,14 @@ int set_squelch_right(struct control_packet *packet, int number)
         }
         packet->squelch_right.section.data = safe_int_char(number);
         return 0;
+}
+
+int get_squelch_right(struct control_packet *packet)
+{
+        if (packet == NULL) {
+                return 0;
+        }
+        return packet->squelch_right.section.data;
 }
 
 /// Set the left and right squelch. between 0-127.
