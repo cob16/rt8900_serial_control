@@ -163,20 +163,20 @@ struct cmd{
 
 struct cmd user_commands[] = {
         {&cmd_help, "help", "Prints this help text", 0, 0},
-        {&cmd_exit, "exit" , "shutdown the application", 0, 0},
-        {&cmd_get_frequency, "f" , "Shows the currently set frequency's", 0, 0},
-        {&cmd_get_power, "p" , "Shows the current power", 0, 0},
-        {&cmd_get_volume, "v" , "get current speaker volumes", 0, 0},
-        {&cmd_get_squelch, "s" , "get current squelch levels", 0, 0},
+        {&cmd_exit, "exit" , "Shutdown the application", 0, 0},
+        {&cmd_get_frequency, "f" , "Shows the currently set frequency's (down to the fist decimal place)", 0, 0},
+        {&cmd_get_power, "p" , "Show current power levels (i.e 1 = low, 5 = high)", 0, 0},
+        {&cmd_get_volume, "v" , "Show current speaker volumes", 0, 0},
+        {&cmd_get_squelch, "s" , "Show current squelch levels (127 is fully open)", 0, 0},
         {&cmd_get_busy, "b" , "Shows if radios are reporting busy", 0, 0},
         {&cmd_get_main, "m" , "Shows which radio is main", 0, 0},
         {&cmd_get_ptt, "t" , "Shows if the radio is currently transiting", 0 , 0},
 
         {&cmd_set_frequency, "F" , "Sets the frequency of the currently main radio", "[kHz]", 1},
         {&cmd_set_main, "M" , "Sets the given side to be the main radio", "[l or r]", 1},
-        {&cmd_set_ptt, "T" , "Toggles transmit", "[1 to transmit or 0 to stop]", 1},
-        {&cmd_set_power, "P" , "Set transmission power of both radios 1 == low, 2 == medium, 5 = high", "[left power] [right power]", 2},
-        {&cmd_set_volume, "V" , "Set radio speaker volumes", "[left vol] [right vol]", 2},
+        {&cmd_set_ptt, "T" , "Sets on/off radio transmit", "[1 to transmit or 0 to stop]", 1},
+        {&cmd_set_power, "P" , "Set the transmission power of both radios 1 == low, 2 == medium, 5 = high", "[left power] [right power]", 2},
+        {&cmd_set_volume, "V" , "Set the radio speaker volumes", "[left vol] [right vol]", 2},
         {&cmd_set_squelch, "S" , "Set radio squelch levels volumes between 0 (full) and 127 (no squelch)", "[left sql] [right sql]", 2},
 };
 
@@ -233,9 +233,11 @@ int cmd_help(char **args, SERIAL_CFG *config, struct control_packet *base_packet
         puts("The following user_commands are available to use:");
         int i;
         for (i = 0; i < num_of_avalable_commands(); i++) {
-                printf("  %s %s -- %s\n\n",
+                printf("  %s %s%s%s -- %s\n\n",
                        user_commands[i].keyword,
+                       ANSI_COLOR_YELLOW,
                        user_commands[i].usage == NULL ?  "" : user_commands[i].usage,
+                       ANSI_COLOR_RESET,
                        user_commands[i].discription
                 );
         }
@@ -456,7 +458,7 @@ int cmd_set_volume(char **args, SERIAL_CFG *config, struct control_packet *base_
 
 int cmd_get_volume(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
-        printf("%s Left volume -> %d \n Right volume %d %s\n",
+        printf("%s Left volume  -> %d \n Right volume -> %d %s\n",
                ANSI_COLOR_GREEN,
                get_volume_left(base_packet),
                get_volume_right(base_packet),
@@ -477,7 +479,7 @@ int cmd_set_squelch(char **args, SERIAL_CFG *config, struct control_packet *base
 
 int cmd_get_squelch(char **args, SERIAL_CFG *config, struct control_packet *base_packet)
 {
-        printf("%s Left squelch -> %d \n Right squelch %d %s\n",
+        printf("%s Left squelch  -> %d \n Right squelch -> %d %s\n",
                ANSI_COLOR_GREEN,
                get_squelch_left(base_packet),
                get_squelch_right(base_packet),
