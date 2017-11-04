@@ -1,9 +1,9 @@
-#FT8900 Controller
+# FT8900 Controller
 
 This application and included library provide computer control for the YAESU FT-8900r radio by pretending to be the detached control head of the radio. 
 This is done by attaching a serial device to the connecting serial control lines. 
 
-##Features
+## Features
 Currency this application can be used to set and get both VFO's:
 - Frequency
 - Volume
@@ -13,7 +13,7 @@ Currency this application can be used to set and get both VFO's:
 - "Main" status
 - Busy status 
 
-##Usage
+## Usage
 ```
 Usage: rt8900c [OPTION...] <serial port path>
 Provides serial control for the YAESU FT-8900R Transceiver.
@@ -38,7 +38,7 @@ Report bugs to <cormac.brady@hotmail.co.uk>.
 ```
 During runtime type help to get a description of available commands 
 
-##Build and Install
+## Build and Install
 For ubuntu but can be adapted for other distribution's and OS
 ```bash
 sudo apt install cmake git build-essential 
@@ -48,7 +48,7 @@ cmake .
 make
 ```
 
-##Run tests
+## Run tests
 ```bash
 cmake .
 make
@@ -59,7 +59,7 @@ Or for verbose output
 ./test/test_librt8900/test_librt8900
 ```
 
-##Doxygen
+## Doxygen
 ```bash
 sudo apt install doxygen
 doxygen Doxyfile
