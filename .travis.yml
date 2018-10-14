@@ -1,6 +1,6 @@
 language: cpp
 install:
   - cmake .
-  - make
+  - make -j`nproc`
 script:
   - test/test_librt8900/test_librt8900 --gtest_color=yes
