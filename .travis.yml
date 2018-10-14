@@ -1,0 +1,6 @@
+language: cpp
+install:
+  - cmake .
+  - make
+script:
+  - test/test_librt8900/test_librt8900 --gtest_color=yes
