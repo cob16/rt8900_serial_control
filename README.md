@@ -1,4 +1,5 @@
 # FT8900 Controller
+![Build badge](https://api.travis-ci.org/cob16/rt8900_serial_control.svg?branch=master)
 
 This application and included library provide computer control for the YAESU FT-8900r radio by pretending to be the detached control head of the radio. 
 This is done by attaching a serial device to the connecting serial control lines. 
