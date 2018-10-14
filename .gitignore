@@ -58,3 +58,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+CMakeFiles/
+CMakeCache.txt
+Makefile
+Testing/
+test/gtest
