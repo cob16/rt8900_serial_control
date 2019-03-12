@@ -39,14 +39,14 @@ Report bugs to <cormac.brady@hotmail.co.uk>.
 ```
 During runtime type help to get a description of available commands 
 
-## Build and Install
+## Build
 For ubuntu but can be adapted for other distribution's and OS
 ```bash
 sudo apt install cmake git build-essential 
 git clone <this repo url> rt8900c
 cd rt8900c
 cmake .
-make
+make rt8900c
 ```
 
 ## Run tests
