@@ -42,9 +42,12 @@ Report bugs to <cormac.brady@hotmail.co.uk>.
 During runtime type help to get a description of available commands 
 
 ## Build
-For ubuntu but can be adapted for other distribution's and OS
 ```bash
+# ubuntu
 sudo apt install cmake git build-essential 
+# fedora
+sudo dnf install make automake gcc gcc-c++ kernel-devel
+
 git clone <this repo url> rt8900c
 cd rt8900c
 cmake .
