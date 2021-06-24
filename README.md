@@ -6,6 +6,8 @@ This home for this project is located at https://github.com/cob16/rt8900_serial_
 This application and included library provide computer control for the YAESU FT-8900r radio by pretending to be the detached control head of the radio. 
 This is done by attaching a serial device to the connecting serial control lines. 
 
+You can read the full writeup for this project [here](./MMP_final_year_project.pdf)
+
 ## Features
 Currency this application can be used to set and get both VFO's:
 - Frequency
